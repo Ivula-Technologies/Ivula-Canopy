@@ -98,7 +98,7 @@ export default async function ReportsPage() {
                 <div key={month} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs text-gray-500">{count}</span>
                   <div
-                    className="w-full rounded-t-sm bg-emerald-500 transition-all"
+                    className="w-full rounded-t-sm bg-[#00C4F4] transition-all"
                     style={{ height: `${(count / maxAttendance) * 100}%`, minHeight: count > 0 ? '4px' : '2px' }}
                   />
                   <span className="text-xs text-gray-400">{month}</span>
@@ -149,7 +149,7 @@ export default async function ReportsPage() {
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-emerald-500 rounded-full"
+                          className="h-full bg-[#00C4F4] rounded-full"
                           style={{ width: `${(ev.count / (eventAttendanceCounts[0]?.count || 1)) * 100}%` }}
                         />
                       </div>

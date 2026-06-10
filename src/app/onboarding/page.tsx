@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Leaf, Users, CalendarDays, BarChart3, CheckCircle } from 'lucide-react'
+import { Users, CalendarDays, BarChart3 } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 const steps = [
@@ -52,23 +53,18 @@ export default function OnboardingPage() {
   const Icon = step.icon
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-white px-4">
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600">
-              <Leaf className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold">Ivula Canopy</span>
-          </div>
+          <Image src="/logo.svg" alt="Ivula Technologies" width={120} height={40} className="h-10 w-auto" />
         </div>
 
         {/* Welcome card */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
           <div className="flex justify-center mb-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100">
-              <Icon className="h-8 w-8 text-emerald-600" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-50">
+              <Icon className="h-8 w-8 text-[#00C4F4]" />
             </div>
           </div>
 
@@ -83,7 +79,7 @@ export default function OnboardingPage() {
               <div
                 key={i}
                 className={`h-2 w-2 rounded-full transition-colors ${
-                  i <= current ? 'bg-emerald-600' : 'bg-gray-200'
+                  i <= current ? 'bg-[#00C4F4]' : 'bg-gray-200'
                 }`}
               />
             ))}

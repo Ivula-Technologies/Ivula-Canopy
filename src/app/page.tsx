@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Leaf, Users, CalendarDays, BarChart3, Shield, Zap } from 'lucide-react'
+import Image from 'next/image'
+import { Users, CalendarDays, BarChart3, Shield, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export default function LandingPage() {
@@ -8,12 +9,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="border-b border-gray-100 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600">
-              <Leaf className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-bold text-gray-900">Ivula Canopy</span>
-          </div>
+          <Image src="/logo.svg" alt="Ivula Technologies" width={100} height={32} className="h-8 w-auto" />
           <div className="flex items-center gap-3">
             <Link href="/login">
               <Button variant="ghost" size="sm">Sign in</Button>
@@ -28,12 +24,12 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="px-6 py-24 text-center">
         <div className="max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-200 px-4 py-1.5 text-sm text-emerald-700 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 border border-cyan-200 px-4 py-1.5 text-sm text-cyan-700 mb-6">
             <Zap className="h-3.5 w-3.5" /> 14-day free trial, no credit card required
           </div>
           <h1 className="text-5xl font-bold text-gray-900 leading-tight mb-6">
             The operating system for{' '}
-            <span className="text-emerald-600">mission-driven organizations</span>
+            <span className="text-[#00C4F4]">mission-driven organizations</span>
           </h1>
           <p className="text-xl text-gray-500 mb-8 leading-relaxed">
             Manage members, coordinate teams, track attendance, and measure engagement —
@@ -93,8 +89,8 @@ export default function LandingPage() {
               },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 mb-4">
-                  <Icon className="h-5 w-5 text-emerald-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-50 mb-4">
+                  <Icon className="h-5 w-5 text-[#00C4F4]" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>
                 <p className="text-sm text-gray-500">{desc}</p>
@@ -120,7 +116,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 px-6 py-8 text-center text-sm text-gray-400">
+      <footer className="border-b border-gray-100 px-6 py-8 text-center text-sm text-gray-400">
         <p>© {new Date().getFullYear()} Ivula Technologies. Building Solutions. Solving Problems.</p>
       </footer>
     </div>

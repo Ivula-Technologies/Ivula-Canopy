@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { Leaf, CheckCircle, XCircle, Search } from 'lucide-react'
+import { CheckCircle, XCircle, Search } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDateTime } from '@/lib/utils'
@@ -63,7 +64,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="h-8 w-8 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+        <div className="h-8 w-8 rounded-full border-4 border-[#00C4F4] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -83,9 +84,9 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
   if (checkedIn) {
     const member = members.find((m) => m.id === checkedIn)
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-emerald-50">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-cyan-50">
         <div className="text-center">
-          <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
+          <CheckCircle className="h-16 w-16 text-[#00C4F4] mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Checked in!</h1>
           <p className="text-lg text-gray-700 mb-1">
             {member?.first_name} {member?.last_name}
@@ -105,9 +106,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600">
-              <Leaf className="h-4 w-4 text-white" />
-            </div>
+            <Image src="/logo.svg" alt="Ivula Technologies" width={60} height={20} className="h-5 w-auto" />
             <span className="text-sm text-gray-500">{event.organization?.name}</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900">{event.title}</h1>
@@ -124,7 +123,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
-            className="w-full pl-9 pr-4 py-3 text-sm rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+            className="w-full pl-9 pr-4 py-3 text-sm rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4] bg-white"
             placeholder="Search your name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -137,9 +136,9 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
             <button
               key={member.id}
               onClick={() => handleCheckin(member.id)}
-              className="w-full flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3 text-left hover:border-emerald-400 hover:shadow-sm transition-all"
+              className="w-full flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3 text-left hover:border-[#00C4F4] hover:shadow-sm transition-all"
             >
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-[#1B2559]">
                 {member.first_name[0]}{member.last_name[0]}
               </div>
               <div>

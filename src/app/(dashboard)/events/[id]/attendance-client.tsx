@@ -74,7 +74,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-2xl font-bold text-emerald-600">{attendance.length}</p>
+              <p className="text-2xl font-bold text-[#00C4F4]">{attendance.length}</p>
               <p className="text-xs text-gray-500">of {members.length} attended</p>
             </div>
           </div>
@@ -83,7 +83,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         {/* Progress bar */}
         <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-500 rounded-full transition-all"
+            className="h-full bg-[#00C4F4] rounded-full transition-all"
             style={{ width: members.length ? `${(attendance.length / members.length) * 100}%` : '0%' }}
           />
         </div>
@@ -94,7 +94,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
             placeholder="Search members..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -114,7 +114,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           const isSaving = saving === member.id
           return (
             <div key={member.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-[#1B2559]">
                 {getInitials(`${member.first_name} ${member.last_name}`)}
               </div>
               <div className="flex-1 min-w-0">
@@ -122,7 +122,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                 {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
               </div>
               {checked && (
-                <span className="text-xs text-emerald-600 font-medium">Present</span>
+                <span className="text-xs text-[#00C4F4] font-medium">Present</span>
               )}
               {canEdit && (
                 <button
@@ -130,8 +130,8 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                   disabled={isSaving}
                   className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                     checked
-                      ? 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600'
-                      : 'border-gray-300 text-gray-300 hover:border-emerald-400 hover:text-emerald-400'
+                      ? 'bg-[#00C4F4] border-[#00C4F4] text-white hover:bg-[#00A8D8]'
+                      : 'border-gray-300 text-gray-300 hover:border-[#00C4F4] hover:text-[#00C4F4]'
                   }`}
                 >
                   {isSaving ? (

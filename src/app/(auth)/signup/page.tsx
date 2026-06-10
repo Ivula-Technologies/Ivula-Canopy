@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Leaf } from 'lucide-react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,9 +72,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600">
-              <Leaf className="h-7 w-7 text-white" />
-            </div>
+            <Image src="/logo.svg" alt="Ivula Technologies" width={120} height={40} className="h-10 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
             {step === 1 ? 'Start your free trial' : 'Create your account'}
@@ -90,7 +88,7 @@ export default function SignupPage() {
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
-                s <= step ? 'bg-emerald-600' : 'bg-gray-200'
+                s <= step ? 'bg-[#00C4F4]' : 'bg-gray-200'
               }`}
             />
           ))}
@@ -164,7 +162,7 @@ export default function SignupPage() {
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Already have an account?{' '}
-          <Link href="/login" className="text-emerald-600 font-medium hover:underline">
+          <Link href="/login" className="text-[#00C4F4] font-medium hover:underline">
             Sign in
           </Link>
         </p>

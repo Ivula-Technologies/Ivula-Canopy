@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import type { Team } from '@/types'
 
 const TEAM_TYPES = ['department', 'committee', 'ministry', 'project', 'program', 'volunteer_group']
-const TEAM_COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
+const TEAM_COLORS = ['#00C4F4', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
 interface Props {
   initialTeams: (Team & { leader?: { first_name: string; last_name: string } | null; member_count: number })[]
@@ -119,7 +119,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                   className="h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: team.color + '20' }}
                 >
-                  <div className="h-5 w-5 rounded-full" style={{ backgroundColor: team.color || '#10b981' }} />
+                  <div className="h-5 w-5 rounded-full" style={{ backgroundColor: team.color || '#00C4F4' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">{team.name}</h3>

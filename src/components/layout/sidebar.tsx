@@ -11,8 +11,8 @@ import {
   Megaphone,
   Settings,
   LogOut,
-  Leaf,
 } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -51,13 +51,8 @@ export function Sidebar({ org, profile }: SidebarProps) {
     <aside className="fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-gray-900 text-white">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500">
-          <Leaf className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold">Ivula Canopy</p>
-          <p className="text-xs text-gray-400 truncate max-w-[130px]">{org.name}</p>
-        </div>
+        <Image src="/logo.svg" alt="Ivula Technologies" width={80} height={28} className="h-7 w-auto" />
+        <p className="text-xs text-gray-400 truncate max-w-[120px]">{org.name}</p>
       </div>
 
       {/* Trial/billing banner */}
@@ -81,7 +76,7 @@ export function Sidebar({ org, profile }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 active
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-[#00C4F4] text-white'
                   : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               )}
             >
@@ -99,7 +94,7 @@ export function Sidebar({ org, profile }: SidebarProps) {
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
             pathname.startsWith('/settings')
-              ? 'bg-emerald-600 text-white'
+              ? 'bg-[#00C4F4] text-white'
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
           )}
         >
@@ -116,7 +111,7 @@ export function Sidebar({ org, profile }: SidebarProps) {
 
         {/* User info */}
         <div className="flex items-center gap-3 px-3 py-2 mt-1">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#00C4F4] text-xs font-bold">
             {getInitials(profile.full_name || profile.email)}
           </div>
           <div className="min-w-0">
