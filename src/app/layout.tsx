@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: 'Ivula Canopy — The OS for Mission-Driven Organizations',
   description:
     'Manage your members, teams, attendance, and engagement from one platform. Built for nonprofits, churches, and community organizations.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
