@@ -14,6 +14,7 @@ export default function SignupPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmEmail, setConfirmEmail] = useState(false)
 
   const [orgName, setOrgName] = useState('')
   const [fullName, setFullName] = useState('')
@@ -35,6 +36,7 @@ export default function SignupPage() {
       password,
       options: {
         data: { full_name: fullName, role: 'org_admin' },
+        emailRedirectTo: `${window.location.origin}/callback?next=/onboarding`,
       },
     })
 
@@ -64,7 +66,43 @@ export default function SignupPage() {
       return
     }
 
+    // If email confirmation is required (no session returned), show confirmation screen
+    if (!authData.session) {
+      setConfirmEmail(true)
+      setLoading(false)
+      return
+    }
+
     router.push('/onboarding')
+  }
+
+  if (confirmEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="flex justify-center mb-6">
+            <Image src="/logo.svg" alt="Ivula Technologies" width={120} height={40} className="h-10 w-auto" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+            <div className="text-4xl mb-4">📧</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+            <p className="text-gray-500 text-sm mb-6">
+              We sent a confirmation link to <strong>{email}</strong>.
+              Click the link to activate your account and get started.
+            </p>
+            <p className="text-xs text-gray-400">
+              Didn&apos;t receive it? Check your spam folder or{' '}
+              <button
+                onClick={() => { setConfirmEmail(false); setStep(2) }}
+                className="text-[#00C4F4] hover:underline"
+              >
+                try again
+              </button>.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
