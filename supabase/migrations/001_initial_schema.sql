@@ -266,6 +266,11 @@ $$;
 create policy "org_read" on organizations for select
   using (id = my_org_id() or my_role() = 'super_admin');
 
+-- Any authenticated user may insert once (for signup flow via service role)
+create policy "org_insert" on organizations for insert
+  to authenticated
+  with check (true);
+
 create policy "org_update" on organizations for update
   using (id = my_org_id() and my_role() in ('org_admin', 'super_admin'));
 
