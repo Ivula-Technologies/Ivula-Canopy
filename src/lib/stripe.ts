@@ -1,7 +1,21 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-05-27.dahlia',
+// Lazy init — constructing Stripe without a key throws at import time,
+// which crashes every route that imports this module (and the build)
+let _stripe: Stripe | null = null
+function getStripe() {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing_key', {
+      apiVersion: '2026-05-27.dahlia',
+    })
+  }
+  return _stripe
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop) {
+    return getStripe()[prop as keyof Stripe]
+  },
 })
 
 export async function createStripeCustomer(email: string, orgName: string) {

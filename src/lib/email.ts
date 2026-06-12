@@ -1,10 +1,16 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy init — constructing Resend without an API key throws at import time,
+// which crashes every route that imports this module
+let _resend: Resend | null = null
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || 're_missing_key')
+  return _resend
+}
 const FROM = process.env.RESEND_FROM_EMAIL || 'hello@ivulatechnologies.com'
 
 export async function sendWelcomeEmail(to: string, orgName: string, adminName: string) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Welcome to Ivula Canopy — ${orgName} is live!`,
@@ -20,7 +26,7 @@ export async function sendWelcomeEmail(to: string, orgName: string, adminName: s
 }
 
 export async function sendMemberInviteEmail(to: string, orgName: string, inviteUrl: string) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `You've been invited to join ${orgName} on Ivula Canopy`,
@@ -41,7 +47,7 @@ export async function sendEventReminderEmail(
   eventDate: string,
   eventLocation?: string
 ) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Reminder: ${eventTitle} is coming up`,

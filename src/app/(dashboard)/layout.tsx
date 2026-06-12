@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,13 +11,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/login')
+  // Self-heal: users created while the auth trigger was broken have no
+  // profile row. Redirecting them to /login loops forever (middleware sends
+  // signed-in users back here), so create the missing profile instead.
+  if (!profile) {
+    const admin = await createServiceClient()
+    const { data: created } = await admin
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email!,
+        full_name: (user.user_metadata?.full_name as string) || '',
+        role: (user.user_metadata?.role as string) || 'org_admin',
+      })
+      .select()
+      .single()
+    profile = created
+  }
+
+  if (!profile) redirect('/onboarding')
 
   // Super admin without org — send to super admin panel (future)
   if (!profile.organization_id && profile.role !== 'super_admin') {
