@@ -28,11 +28,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? await supabase.from('organizations').select('*').eq('id', profile.organization_id).single()
     : { data: null }
 
-  if (!org && profile.role !== 'super_admin') redirect('/onboarding')
+  // Sidebar requires an org — without this guard a null org crashes the
+  // client render and the user sees a blank page
+  if (!org) redirect('/onboarding')
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar org={org!} profile={profile} />
+      <Sidebar org={org} profile={profile} />
       <main className="flex-1 ml-64 overflow-y-auto">
         <div className="p-8">{children}</div>
       </main>
