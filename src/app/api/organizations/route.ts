@@ -36,8 +36,26 @@ export async function POST(req: NextRequest) {
 
     if (orgError) throw orgError
 
+    // Wait for the auth trigger to create the profile row (it runs async after signUp)
+    let profile = null
+    for (let i = 0; i < 10; i++) {
+      const { data } = await supabase.from('profiles').select('id').eq('id', adminId).single()
+      if (data) { profile = data; break }
+      await new Promise(r => setTimeout(r, 300))
+    }
+
+    if (!profile) {
+      // Trigger didn't fire — create the profile manually
+      await supabase.from('profiles').upsert({
+        id: adminId,
+        email: adminEmail,
+        full_name: adminName || '',
+        role: 'org_admin',
+      })
+    }
+
     // Link admin profile to org and create their member record in parallel
-    await Promise.all([
+    const [profileUpdate, memberInsert] = await Promise.all([
       supabase
         .from('profiles')
         .update({
@@ -56,12 +74,16 @@ export async function POST(req: NextRequest) {
       }),
     ])
 
+    if (profileUpdate.error) console.error('Profile update error:', profileUpdate.error)
+    if (memberInsert.error) console.error('Member insert error:', memberInsert.error)
+
     // Send welcome email (non-blocking — never slows down signup)
     sendWelcomeEmail(adminEmail, name, adminName || 'Admin').catch(() => {})
 
     return NextResponse.json({ org }, { status: 201 })
-  } catch (error) {
-    console.error('POST /api/organizations:', error)
-    return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : JSON.stringify(error)
+    console.error('POST /api/organizations:', msg)
+    return NextResponse.json({ error: msg || 'Failed to create organization' }, { status: 500 })
   }
 }
