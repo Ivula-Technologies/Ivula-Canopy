@@ -209,23 +209,32 @@ create trigger events_updated_at before update on events
   for each row execute function update_updated_at();
 
 -- Auto-create profile on new user signup
-create or replace function handle_new_user()
-returns trigger language plpgsql security definer as $$
+-- search_path is pinned and table is schema-qualified because this runs as
+-- supabase_auth_admin, whose default search_path does not include public
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into profiles (id, email, full_name, role)
+  insert into public.profiles (id, email, full_name, role)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     coalesce(new.raw_user_meta_data->>'role', 'org_admin')
-  );
+  )
+  on conflict (id) do nothing;
   return new;
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute function handle_new_user();
+  for each row execute function public.handle_new_user();
+
+-- The auth service role must be able to reach the schema and table the
+-- trigger writes to, or every signup fails with "Database error saving new user"
+grant usage on schema public to supabase_auth_admin;
+grant all on public.profiles to supabase_auth_admin;
 
 -- ================================================================
 -- ROW LEVEL SECURITY
