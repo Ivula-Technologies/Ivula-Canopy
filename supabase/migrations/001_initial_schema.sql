@@ -376,3 +376,21 @@ group by m.organization_id, m.id, m.first_name, m.last_name, m.email, m.status;
 -- (Run after you create your account)
 -- UPDATE profiles SET role = 'super_admin' WHERE email = 'your@email.com';
 -- ================================================================
+
+-- ================================================================
+-- GRANTS — required because this schema may be created after a
+-- "drop schema public cascade", which wipes Supabase's default grants.
+-- RLS (above) still controls row access for anon/authenticated.
+-- ================================================================
+grant usage on schema public to postgres, anon, authenticated, service_role, supabase_auth_admin;
+
+grant all privileges on all tables in schema public to postgres, anon, authenticated, service_role;
+grant all privileges on all sequences in schema public to postgres, anon, authenticated, service_role;
+grant all privileges on all functions in schema public to postgres, anon, authenticated, service_role;
+
+alter default privileges in schema public
+  grant all on tables to postgres, anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on sequences to postgres, anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on functions to postgres, anon, authenticated, service_role;
