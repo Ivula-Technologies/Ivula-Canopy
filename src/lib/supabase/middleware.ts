@@ -31,6 +31,12 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // API routes handle their own auth — redirecting them to /login turns
+  // JSON requests into HTML 405s and breaks fetch() callers
+  if (pathname.startsWith('/api')) {
+    return supabaseResponse
+  }
+
   // Public routes (no auth required)
   const publicRoutes = ['/', '/login', '/signup', '/callback', '/checkin']
   const isPublicRoute = publicRoutes.some(

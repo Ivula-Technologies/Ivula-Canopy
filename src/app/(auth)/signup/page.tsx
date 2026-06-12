@@ -60,8 +60,8 @@ export default function SignupPage() {
     })
 
     if (!res.ok) {
-      const data = await res.json()
-      setError(data.error || 'Failed to create organization')
+      const data = await res.json().catch(() => ({}))
+      setError(data.error || 'Failed to create organization. Please try again.')
       setLoading(false)
       return
     }
