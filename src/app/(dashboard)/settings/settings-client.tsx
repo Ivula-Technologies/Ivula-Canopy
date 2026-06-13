@@ -26,6 +26,7 @@ export function SettingsClient({ org, profile }: Props) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [billingLoading, setBillingLoading] = useState(false)
+  const [billingError, setBillingError] = useState('')
 
   async function saveOrg() {
     setSaving(true)
@@ -41,18 +42,30 @@ export function SettingsClient({ org, profile }: Props) {
 
   async function manageSubscription() {
     setBillingLoading(true)
-    const res = await fetch('/api/stripe/portal', { method: 'POST' })
-    const { url } = await res.json()
-    if (url) window.location.href = url
-    setBillingLoading(false)
+    setBillingError('')
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) throw new Error(data.error || 'Could not open billing portal')
+      window.location.href = data.url
+    } catch (e) {
+      setBillingError(e instanceof Error ? e.message : 'Something went wrong')
+      setBillingLoading(false)
+    }
   }
 
   async function startSubscription() {
     setBillingLoading(true)
-    const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-    const { url } = await res.json()
-    if (url) window.location.href = url
-    setBillingLoading(false)
+    setBillingError('')
+    try {
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.url) throw new Error(data.error || 'Could not start checkout')
+      window.location.href = data.url
+    } catch (e) {
+      setBillingError(e instanceof Error ? e.message : 'Something went wrong')
+      setBillingLoading(false)
+    }
   }
 
   const subLabel = getSubscriptionLabel(org.subscription_status, org.trial_ends_at)
@@ -135,6 +148,12 @@ export function SettingsClient({ org, profile }: Props) {
                 {subLabel}
               </Badge>
             </div>
+
+            {billingError && (
+              <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {billingError}
+              </div>
+            )}
 
             {org.subscription_status === 'active' ? (
               <Button variant="outline" onClick={manageSubscription} loading={billingLoading}>
