@@ -1,21 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" fill="none">
-  <!-- Icon: the "i" with lightning bolt -->
-  <g>
-    <!-- dot on top of i -->
-    <circle cx="20" cy="6" r="5" fill="url(#cyanGrad)"/>
-    <!-- i stem top half -->
-    <rect x="16" y="13" width="8" height="10" rx="1" fill="url(#cyanGrad)"/>
-    <!-- lightning bolt diagonal slash -->
-    <polygon points="24,18 14,30 20,30 16,42 28,26 22,26" fill="url(#cyanGrad)"/>
-  </g>
-  <!-- Wordmark: Ivula -->
-  <text x="42" y="28" font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" font-weight="800" font-size="22" fill="#1B2559" letter-spacing="-0.5">Ivula</text>
-  <!-- Wordmark: TECH -->
-  <text x="43" y="42" font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" font-weight="500" font-size="9" fill="#9CA3AF" letter-spacing="3.5">TECH</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 56" fill="none">
   <defs>
-    <linearGradient id="cyanGrad" x1="10" y1="4" x2="28" y2="44" gradientUnits="userSpaceOnUse">
+    <linearGradient id="iGrad" x1="12" y1="2" x2="32" y2="48" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#00D4FF"/>
-      <stop offset="100%" stop-color="#0099DD"/>
+      <stop offset="100%" stop-color="#0088CC"/>
+    </linearGradient>
+    <linearGradient id="boltGrad" x1="10" y1="18" x2="34" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#44CCEE"/>
+      <stop offset="100%" stop-color="#0099CC"/>
     </linearGradient>
   </defs>
+
+  <!-- Dot of i -->
+  <circle cx="20" cy="5" r="4.5" fill="url(#iGrad)"/>
+  <!-- Stem of i -->
+  <rect x="16.5" y="12" width="7" height="17" rx="2" fill="url(#iGrad)"/>
+  <!-- Lightning bolt: top-right to bottom-left arrow -->
+  <!-- Upper half of bolt -->
+  <polygon points="29,14 18,26 23.5,26 11,44 30,28 24,28" fill="url(#boltGrad)"/>
+
+  <!-- "Ivula" wordmark -->
+  <text x="44" y="33" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="700" font-size="26" fill="#0F1D4E" letter-spacing="-0.3">Ivula</text>
+  <!-- "TECH" subtext -->
+  <text x="45" y="48" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="400" font-size="10" fill="#7A8FA6" letter-spacing="4.5">TECH</text>
 </svg>
