@@ -41,7 +41,6 @@ export async function POST(_req: NextRequest) {
       orgId: org.id,
       successUrl: `${appUrl}/settings?billing=success`,
       cancelUrl: `${appUrl}/settings?billing=cancelled`,
-      trialDays: 0,
     })
 
     return NextResponse.json({ url: session.url })

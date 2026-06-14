@@ -47,7 +47,7 @@ export async function createCheckoutSession({
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: trialDays,
+      ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata: { organization_id: orgId },
     },
     metadata: { organization_id: orgId },
