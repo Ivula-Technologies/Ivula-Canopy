@@ -13,6 +13,16 @@ export function slugify(text: string): string {
     .replace(/^-|-$/g, '')
 }
 
+// Convert empty-string fields to null so Postgres can accept them in
+// nullable uuid/date/timestamp columns ('' is not a valid uuid or date)
+export function nullifyEmptyStrings<T extends Record<string, unknown>>(obj: T): T {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    out[key] = value === '' ? null : value
+  }
+  return out as T
+}
+
 export function formatDate(date: string | Date): string {
   return format(new Date(date), 'MMM d, yyyy')
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { nullifyEmptyStrings } from '@/lib/utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -7,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = await createServiceClient()
-  const body = await req.json()
+  const body = nullifyEmptyStrings(await req.json())
   const { data: team, error } = await admin
     .from('teams')
     .insert(body)
