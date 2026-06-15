@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Pin, Megaphone, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pin, Megaphone, Pencil, Trash2, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -18,12 +18,13 @@ interface Props {
   initialAnnouncements: AnnouncementCard[]
   teams: { id: string; name: string }[]
   orgId: string
+  orgName: string
   canEdit: boolean
 }
 
 const emptyForm = { title: '', body: '', team_id: '', is_pinned: false, send_email: true }
 
-export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdit }: Props) {
+export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgName, canEdit }: Props) {
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -192,11 +193,24 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
                   <p className="text-sm text-gray-600 whitespace-pre-line">{a.body}</p>
                   <p className="text-xs text-gray-400 mt-2">{formatDate(a.published_at)}</p>
                 </div>
-                {canEdit && (
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(a)} title="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Share on WhatsApp"
+                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={() => {
+                      const text = `*${a.title}*\n\n${a.body}\n\n— ${orgName}`
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+                    }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                  {canEdit && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(a)} title="Edit">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -209,10 +223,11 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
                       title="Delete"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ))
