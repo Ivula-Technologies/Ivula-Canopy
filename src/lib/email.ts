@@ -40,6 +40,37 @@ export async function sendMemberInviteEmail(to: string, orgName: string, inviteU
   })
 }
 
+export async function sendAnnouncementEmail(
+  recipients: string[],
+  orgName: string,
+  title: string,
+  body: string
+) {
+  if (recipients.length === 0) return { sent: 0 }
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
+      <p style="color:#6b7280; font-size:13px; margin-bottom:4px;">${orgName} announcement</p>
+      <h2 style="color:#1B2559; margin-top:0;">${title}</h2>
+      <div style="color:#374151; font-size:15px; line-height:1.6; white-space:pre-line;">${body}</div>
+      <hr style="border:none; border-top:1px solid #e5e7eb; margin:24px 0;"/>
+      <p style="color:#9ca3af; font-size:12px;">Sent via Ivula Canopy on behalf of ${orgName}.</p>
+    </div>
+  `
+  // Send individually so each recipient only sees their own address.
+  const results = await Promise.allSettled(
+    recipients.map((to) =>
+      getResend().emails.send({
+        from: FROM,
+        to,
+        subject: `${orgName}: ${title}`,
+        html,
+      })
+    )
+  )
+  const sent = results.filter((r) => r.status === 'fulfilled').length
+  return { sent, failed: recipients.length - sent }
+}
+
 export async function sendEventReminderEmail(
   to: string,
   memberName: string,

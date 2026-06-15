@@ -21,7 +21,7 @@ interface Props {
   canEdit: boolean
 }
 
-const emptyForm = { title: '', body: '', team_id: '', is_pinned: false }
+const emptyForm = { title: '', body: '', team_id: '', is_pinned: false, send_email: true }
 
 export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdit }: Props) {
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
@@ -30,6 +30,7 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
   const [saveError, setSaveError] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [notice, setNotice] = useState('')
   const [form, setForm] = useState(emptyForm)
 
   function openCreate() {
@@ -46,6 +47,7 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
       body: a.body || '',
       team_id: a.team_id || '',
       is_pinned: a.is_pinned || false,
+      send_email: false, // editing doesn't re-send by default
     })
     setSaveError('')
     setOpen(true)
@@ -74,6 +76,14 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
       setOpen(false)
       setForm(emptyForm)
       setEditingId(null)
+      if (data.email) {
+        if (data.email.sent > 0) {
+          setNotice(`Announcement emailed to ${data.email.sent} member${data.email.sent !== 1 ? 's' : ''}.`)
+        } else {
+          setNotice('Published, but no members had an email address to send to.')
+        }
+        setTimeout(() => setNotice(''), 6000)
+      }
     } else {
       setSaveError(data.error || 'Could not save announcement. Please try again.')
     }
@@ -101,6 +111,12 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
         }
       />
 
+      {notice && (
+        <div className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+          {notice}
+        </div>
+      )}
+
       {/* Create / Edit dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
@@ -126,6 +142,22 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
                 className="rounded"
               />
               Pin this announcement
+            </label>
+            <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer rounded-lg bg-cyan-50 border border-cyan-100 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={form.send_email}
+                onChange={(e) => setForm({ ...form, send_email: e.target.checked })}
+                className="rounded mt-0.5"
+              />
+              <span>
+                <span className="font-medium">Email this to members</span>
+                <span className="block text-xs text-gray-500">
+                  {form.team_id
+                    ? 'Sends to members of the selected team who have an email address.'
+                    : 'Sends to every active member who has an email address.'}
+                </span>
+              </span>
             </label>
           </div>
           {saveError && (
