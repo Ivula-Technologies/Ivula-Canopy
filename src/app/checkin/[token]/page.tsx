@@ -106,7 +106,9 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-2 mb-3">
-            <Image src="/logo.svg" alt="Ivula Technologies" width={60} height={20} className="h-5 w-auto" />
+            <Image src="/ivula.png" alt="Ivula" width={24} height={24} className="h-6 w-6 object-contain" />
+            <span className="text-sm font-bold text-[#1B2559]">Ivula</span>
+            <span className="text-sm text-gray-400">·</span>
             <span className="text-sm text-gray-500">{event.organization?.name}</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900">{event.title}</h1>

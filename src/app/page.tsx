@@ -9,7 +9,10 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="border-b border-gray-100 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Image src="/logo.svg" alt="Ivula Technologies" width={100} height={32} className="h-8 w-auto" />
+          <div className="flex items-center gap-2">
+            <Image src="/ivula.png" alt="Ivula" width={32} height={32} className="h-8 w-8 object-contain" />
+            <span className="text-xl font-bold text-[#1B2559]">Ivula</span>
+          </div>
           <div className="flex items-center gap-3">
             <Link href="/login">
               <Button variant="ghost" size="sm">Sign in</Button>

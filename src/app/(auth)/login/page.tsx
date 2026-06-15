@@ -33,8 +33,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <Image src="/logo.svg" alt="Ivula Technologies" width={120} height={40} className="h-10 w-auto" />
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Image src="/ivula.png" alt="Ivula" width={40} height={40} className="h-10 w-10 object-contain" />
+            <span className="text-2xl font-bold text-[#1B2559]">Ivula</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1">Sign in to your organization</p>

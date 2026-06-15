@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   description:
     'Manage your members, teams, attendance, and engagement from one platform. Built for nonprofits, churches, and community organizations.',
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/ivula.png',
+    shortcut: '/ivula.png',
+    apple: '/ivula.png',
   },
 }
 

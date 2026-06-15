@@ -50,9 +50,10 @@ export function Sidebar({ org, profile }: SidebarProps) {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-gray-900 text-white">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
-        <Image src="/logo.svg" alt="Ivula Technologies" width={80} height={28} className="h-7 w-auto" />
-        <p className="text-xs text-gray-400 truncate max-w-[120px]">{org.name}</p>
+      <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-800">
+        <Image src="/ivula.png" alt="Ivula" width={32} height={32} className="h-8 w-8 object-contain" />
+        <span className="text-lg font-bold text-white">Ivula</span>
+        <p className="text-xs text-gray-400 truncate max-w-[100px] ml-1">{org.name}</p>
       </div>
 
       {/* Trial/billing banner */}

@@ -117,8 +117,9 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-white px-4">
         <div className="w-full max-w-md">
-          <div className="flex justify-center mb-8">
-            <Image src="/logo.svg" alt="Ivula Technologies" width={120} height={40} className="h-10 w-auto" />
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <Image src="/ivula.png" alt="Ivula" width={40} height={40} className="h-10 w-10 object-contain" />
+            <span className="text-2xl font-bold text-[#1B2559]">Ivula</span>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">Set up your organization</h1>
