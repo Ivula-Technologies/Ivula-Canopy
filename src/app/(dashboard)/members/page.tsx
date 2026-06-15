@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { PageHeader } from '@/components/layout/page-header'
+import { getUserAccess } from '@/lib/permissions'
 import { MembersClient } from './members-client'
 
 export default async function MembersPage() {
@@ -24,13 +24,16 @@ export default async function MembersPage() {
     .eq('is_active', true)
     .order('name')
 
+  const { permissions } = await getUserAccess(supabase, user.id)
+
   return (
     <div>
       <MembersClient
         initialMembers={members || []}
         teams={teams || []}
         orgId={profile.organization_id}
-        canEdit={['org_admin', 'org_leader', 'super_admin'].includes(profile.role)}
+        canEdit={permissions.manage_members}
+        canDelete={permissions.delete_members}
       />
     </div>
   )

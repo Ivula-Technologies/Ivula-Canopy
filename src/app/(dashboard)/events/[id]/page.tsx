@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 import { AttendanceClient } from './attendance-client'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,13 +33,15 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     .select('*, member:members(first_name, last_name, email)')
     .eq('event_id', id)
 
+  const { permissions } = await getUserAccess(supabase, user.id)
+
   return (
     <AttendanceClient
       event={event}
       members={members || []}
       initialAttendance={attended || []}
       orgId={profile.organization_id}
-      canEdit={['org_admin', 'org_leader', 'super_admin'].includes(profile.role)}
+      canEdit={permissions.manage_events}
     />
   )
 }

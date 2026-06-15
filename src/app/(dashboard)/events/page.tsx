@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 import { EventsClient } from './events-client'
 
 export default async function EventsPage() {
@@ -22,12 +23,14 @@ export default async function EventsPage() {
     .eq('organization_id', profile.organization_id)
     .eq('is_active', true)
 
+  const { permissions } = await getUserAccess(supabase, user.id)
+
   return (
     <EventsClient
       initialEvents={events || []}
       teams={teams || []}
       orgId={profile.organization_id}
-      canEdit={['org_admin', 'org_leader', 'super_admin'].includes(profile.role)}
+      canEdit={permissions.manage_events}
       appUrl={process.env.NEXT_PUBLIC_APP_URL || ''}
     />
   )

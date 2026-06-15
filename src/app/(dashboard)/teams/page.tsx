@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 import { TeamsClient } from './teams-client'
 
 export default async function TeamsPage() {
@@ -35,12 +36,14 @@ export default async function TeamsPage() {
 
   const teamsWithCounts = (teams || []).map((t) => ({ ...t, member_count: countMap[t.id] || 0 }))
 
+  const { permissions } = await getUserAccess(supabase, user.id)
+
   return (
     <TeamsClient
       initialTeams={teamsWithCounts}
       members={members || []}
       orgId={profile.organization_id}
-      canEdit={['org_admin', 'org_leader', 'super_admin'].includes(profile.role)}
+      canEdit={permissions.manage_teams}
     />
   )
 }

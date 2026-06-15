@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { nullifyEmptyStrings } from '@/lib/utils'
 import { sendAnnouncementEmail } from '@/lib/email'
+import { getUserAccess } from '@/lib/permissions'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const access = await getUserAccess(supabase, user.id)
+  if (!access.permissions.manage_announcements) return NextResponse.json({ error: 'You do not have permission to post announcements' }, { status: 403 })
 
   const admin = await createServiceClient()
   // send_email is a UI-only flag — strip it before inserting into the table

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 
 export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const access = await getUserAccess(supabase, user.id)
+  if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to record attendance' }, { status: 403 })
+
   const admin = await createServiceClient()
   const body = await req.json()
 
@@ -19,6 +26,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const access = await getUserAccess(supabase, user.id)
+  if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to record attendance' }, { status: 403 })
+
   const admin = await createServiceClient()
   const { searchParams } = new URL(req.url)
   const event_id = searchParams.get('event_id')

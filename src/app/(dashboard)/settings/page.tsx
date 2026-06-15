@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 import { SettingsClient } from './settings-client'
 
 export default async function SettingsPage() {
@@ -13,6 +14,13 @@ export default async function SettingsPage() {
   const { data: org } = await supabase
     .from('organizations').select('*').eq('id', profile.organization_id).single()
 
-  const isAdmin = ['org_admin', 'super_admin'].includes(profile.role)
-  return <SettingsClient org={org!} profile={profile} isAdmin={isAdmin} />
+  const { permissions } = await getUserAccess(supabase, user.id)
+  return (
+    <SettingsClient
+      org={org!}
+      profile={profile}
+      canManageStaff={permissions.manage_staff}
+      canManageBilling={permissions.manage_billing}
+    />
+  )
 }

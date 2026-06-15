@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 import { AnnouncementsClient } from './announcements-client'
 
 export default async function AnnouncementsPage() {
@@ -29,13 +30,15 @@ export default async function AnnouncementsPage() {
     .eq('id', profile.organization_id)
     .single()
 
+  const { permissions } = await getUserAccess(supabase, user.id)
+
   return (
     <AnnouncementsClient
       initialAnnouncements={announcements || []}
       teams={teams || []}
       orgId={profile.organization_id}
       orgName={org?.name || 'Our organization'}
-      canEdit={['org_admin', 'org_leader', 'super_admin'].includes(profile.role)}
+      canEdit={permissions.manage_announcements}
     />
   )
 }

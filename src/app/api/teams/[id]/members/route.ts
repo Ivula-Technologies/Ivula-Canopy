@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 
 // GET /api/teams/[id]/members — list current memberships
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const access = await getUserAccess(supabase, user.id)
+  if (!access.permissions.manage_teams) return NextResponse.json({ error: 'You do not have permission to manage teams' }, { status: 403 })
 
   const { memberIds } = await req.json() as { memberIds: string[] }
   const admin = await createServiceClient()

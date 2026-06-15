@@ -17,6 +17,7 @@ interface Props {
   teams: { id: string; name: string }[]
   orgId: string
   canEdit: boolean
+  canDelete: boolean
 }
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'warning'> = {
@@ -30,7 +31,7 @@ const emptyForm = {
   status: 'active', notes: '', gender: '', address: '',
 }
 
-export function MembersClient({ initialMembers, orgId, canEdit }: Props) {
+export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Props) {
   const [members, setMembers] = useState<Member[]>(initialMembers)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -252,13 +253,13 @@ export function MembersClient({ initialMembers, orgId, canEdit }: Props) {
               <th className="text-left px-4 py-3 font-medium text-gray-600">Contact</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Joined</th>
-              {canEdit && <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>}
+              {(canEdit || canDelete) && <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={canEdit ? 5 : 4} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={canEdit || canDelete ? 5 : 4} className="px-4 py-12 text-center text-gray-400">
                   {search ? 'No members match your search' : 'No members yet. Add your first member!'}
                 </td>
               </tr>
@@ -285,26 +286,30 @@ export function MembersClient({ initialMembers, orgId, canEdit }: Props) {
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{formatDate(member.join_date)}</td>
-                  {canEdit && (
+                  {(canEdit || canDelete) && (
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(member)} title="Edit">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          loading={deletingId === member.id}
-                          onClick={() => {
-                            if (confirm(`Delete ${member.first_name} ${member.last_name}? This cannot be undone.`)) {
-                              handleDelete(member.id)
-                            }
-                          }}
-                          title="Delete"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(member)} title="Edit">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            loading={deletingId === member.id}
+                            onClick={() => {
+                              if (confirm(`Delete ${member.first_name} ${member.last_name}? This cannot be undone.`)) {
+                                handleDelete(member.id)
+                              }
+                            }}
+                            title="Delete"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   )}

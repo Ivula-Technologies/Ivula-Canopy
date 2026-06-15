@@ -36,6 +36,21 @@ export async function POST(req: NextRequest) {
 
     if (orgError) throw orgError
 
+    // Seed the org's default roles and capture the Administrator role for the creator
+    const { data: seededRoles } = await supabase
+      .from('roles')
+      .insert([
+        { organization_id: org.id, name: 'Administrator', description: 'Full access to everything', is_system: true,
+          manage_members: true, delete_members: true, manage_teams: true, manage_events: true,
+          manage_announcements: true, manage_billing: true, manage_staff: true },
+        { organization_id: org.id, name: 'Leader', description: 'Manage members, teams, events and announcements',
+          manage_members: true, delete_members: false, manage_teams: true, manage_events: true,
+          manage_announcements: true, manage_billing: false, manage_staff: false },
+        { organization_id: org.id, name: 'Member', description: 'View-only access' },
+      ])
+      .select('id, name')
+    const adminRoleId = seededRoles?.find((r) => r.name === 'Administrator')?.id || null
+
     // Wait for the auth trigger to create the profile row (it runs async after signUp)
     let profile = null
     for (let i = 0; i < 10; i++) {
@@ -62,6 +77,7 @@ export async function POST(req: NextRequest) {
           organization_id: org.id,
           full_name: adminName,
           role: 'org_admin',
+          role_id: adminRoleId,
         })
         .eq('id', adminId),
       supabase.from('members').insert({
