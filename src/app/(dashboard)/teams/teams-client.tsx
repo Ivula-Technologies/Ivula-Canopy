@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Users, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Users, Pencil, Trash2, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -9,16 +9,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
+import { getInitials } from '@/lib/utils'
 import type { Team } from '@/types'
 
 const TEAM_TYPES = ['department', 'committee', 'ministry', 'project', 'program', 'volunteer_group']
 const TEAM_COLORS = ['#00C4F4', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
 type TeamCard = Team & { leader?: { first_name: string; last_name: string } | null; member_count: number }
+type MemberOption = { id: string; first_name: string; last_name: string }
 
 interface Props {
   initialTeams: TeamCard[]
-  members: { id: string; first_name: string; last_name: string }[]
+  members: MemberOption[]
   orgId: string
   canEdit: boolean
 }
@@ -35,6 +37,13 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
+
+  // Manage members state
+  const [managingTeam, setManagingTeam] = useState<TeamCard | null>(null)
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
+  const [loadingMembers, setLoadingMembers] = useState(false)
+  const [savingMembers, setSavingMembers] = useState(false)
+  const [memberSearch, setMemberSearch] = useState('')
 
   function openCreate() {
     setEditingId(null)
@@ -56,6 +65,45 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
     setOpen(true)
   }
 
+  async function openManageMembers(team: TeamCard) {
+    setManagingTeam(team)
+    setMemberSearch('')
+    setLoadingMembers(true)
+    const res = await fetch(`/api/teams/${team.id}/members`)
+    if (res.ok) {
+      const { memberIds } = await res.json()
+      setSelectedMemberIds(new Set(memberIds))
+    }
+    setLoadingMembers(false)
+  }
+
+  function toggleMember(id: string) {
+    setSelectedMemberIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function handleSaveMembers() {
+    if (!managingTeam) return
+    setSavingMembers(true)
+    const res = await fetch(`/api/teams/${managingTeam.id}/members`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberIds: [...selectedMemberIds] }),
+    })
+    if (res.ok) {
+      const { count } = await res.json()
+      setTeams((prev) =>
+        prev.map((t) => (t.id === managingTeam.id ? { ...t, member_count: count } : t))
+      )
+      setManagingTeam(null)
+    }
+    setSavingMembers(false)
+  }
+
   async function handleSave() {
     setSaving(true)
     setSaveError('')
@@ -70,8 +118,9 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
       if (editingId) {
+        // Preserve member_count — it's not returned by PATCH
         setTeams((prev) =>
-          prev.map((t) => (t.id === editingId ? { ...t, ...data.team } : t))
+          prev.map((t) => (t.id === editingId ? { ...t, ...data.team, member_count: t.member_count } : t))
         )
       } else {
         setTeams((prev) => [...prev, { ...data.team, member_count: 0 }])
@@ -94,6 +143,10 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
     setDeletingId(null)
   }
 
+  const filteredMembers = members.filter((m) =>
+    `${m.first_name} ${m.last_name}`.toLowerCase().includes(memberSearch.toLowerCase())
+  )
+
   return (
     <div>
       <PageHeader
@@ -106,7 +159,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
         }
       />
 
-      {/* Create / Edit dialog */}
+      {/* Create / Edit team dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{editingId ? 'Edit Team' : 'Create Team'}</DialogTitle></DialogHeader>
@@ -159,6 +212,65 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* Manage members dialog */}
+      <Dialog open={!!managingTeam} onOpenChange={(v) => { if (!v) setManagingTeam(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Members — {managingTeam?.name}</DialogTitle>
+          </DialogHeader>
+          {loadingMembers ? (
+            <div className="py-8 text-center text-sm text-gray-400">Loading…</div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500 mb-3">
+                Check the members you want in this team. Unchecked members will be removed.
+              </p>
+              <input
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4] mb-3"
+                placeholder="Search members…"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+              />
+              <div className="max-h-72 overflow-y-auto space-y-1 border border-gray-100 rounded-lg p-2">
+                {filteredMembers.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">No members found</p>
+                ) : (
+                  filteredMembers.map((m) => {
+                    const checked = selectedMemberIds.has(m.id)
+                    return (
+                      <label
+                        key={m.id}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${checked ? 'bg-cyan-50' : 'hover:bg-gray-50'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleMember(m.id)}
+                          className="rounded"
+                        />
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-[#1B2559]">
+                            {getInitials(`${m.first_name} ${m.last_name}`)}
+                          </div>
+                          <span className="text-sm font-medium text-gray-800">
+                            {m.first_name} {m.last_name}
+                          </span>
+                        </div>
+                      </label>
+                    )
+                  })
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mt-2">{selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} selected</p>
+              <div className="flex gap-3 mt-4">
+                <Button variant="outline" onClick={() => setManagingTeam(null)} className="flex-1">Cancel</Button>
+                <Button onClick={handleSaveMembers} loading={savingMembers} className="flex-1">Save Members</Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.length === 0 ? (
           <div className="col-span-full text-center py-16 text-gray-400">
@@ -181,7 +293,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                 </div>
                 {canEdit && (
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(team)} title="Edit">
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(team)} title="Edit team">
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -193,7 +305,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                           handleDelete(team.id)
                         }
                       }}
-                      title="Delete"
+                      title="Delete team"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -207,7 +319,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-1 text-gray-500">
                   <Users className="h-4 w-4" />
-                  <span>{team.member_count} members</span>
+                  <span>{team.member_count} member{team.member_count !== 1 ? 's' : ''}</span>
                 </div>
                 {team.leader && (
                   <span className="text-xs text-gray-400">
@@ -215,6 +327,16 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                   </span>
                 )}
               </div>
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3"
+                  onClick={() => openManageMembers(team)}
+                >
+                  <UserCog className="h-4 w-4" /> Manage Members
+                </Button>
+              )}
             </div>
           ))
         )}
