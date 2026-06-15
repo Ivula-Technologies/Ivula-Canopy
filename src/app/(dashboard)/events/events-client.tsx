@@ -2,15 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, QrCode, Users, MapPin, Clock } from 'lucide-react'
+import { Plus, Search, QrCode, Users, MapPin, Clock, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
-import { formatDateTime, formatDate } from '@/lib/utils'
 import type { Event } from '@/types'
 
 interface Props {
@@ -28,39 +27,91 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'w
   cancelled: 'destructive',
 } as never
 
+const emptyForm = {
+  title: '', description: '', event_type: 'general',
+  location: '', starts_at: '', ends_at: '', team_id: '',
+}
+
+// Convert an ISO timestamp to the value a datetime-local input expects (YYYY-MM-DDTHH:mm in local time)
+function toLocalInput(iso?: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: Props) {
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [qrEvent, setQrEvent] = useState<Event | null>(null)
-  const [form, setForm] = useState({
-    title: '', description: '', event_type: 'general',
-    location: '', starts_at: '', ends_at: '', team_id: '',
-  })
+  const [form, setForm] = useState(emptyForm)
 
   const filtered = events.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase())
   )
 
+  function openCreate() {
+    setEditingId(null)
+    setForm(emptyForm)
+    setSaveError('')
+    setOpen(true)
+  }
+
+  function openEdit(event: Event) {
+    setEditingId(event.id)
+    setForm({
+      title: event.title || '',
+      description: event.description || '',
+      event_type: event.event_type || 'general',
+      location: event.location || '',
+      starts_at: toLocalInput(event.starts_at),
+      ends_at: toLocalInput(event.ends_at),
+      team_id: event.team_id || '',
+    })
+    setSaveError('')
+    setOpen(true)
+  }
+
   async function handleSave() {
     setSaving(true)
     setSaveError('')
-    const res = await fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, organization_id: orgId }),
-    })
+    const res = await fetch(
+      editingId ? `/api/events/${editingId}` : '/api/events',
+      {
+        method: editingId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, organization_id: orgId }),
+      }
+    )
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      setEvents((prev) => [data.event, ...prev])
+      if (editingId) {
+        setEvents((prev) => prev.map((e) => (e.id === editingId ? { ...e, ...data.event } : e)))
+      } else {
+        setEvents((prev) => [data.event, ...prev])
+      }
       setOpen(false)
-      setForm({ title: '', description: '', event_type: 'general', location: '', starts_at: '', ends_at: '', team_id: '' })
+      setForm(emptyForm)
+      setEditingId(null)
     } else {
-      setSaveError(data.error || 'Failed to create event. Please try again.')
+      setSaveError(data.error || 'Failed to save event. Please try again.')
     }
     setSaving(false)
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setEvents((prev) => prev.filter((e) => e.id !== id))
+    }
+    setDeletingId(null)
   }
 
   const checkinUrl = (token: string) => `${appUrl}/checkin/${token}`
@@ -72,55 +123,57 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
         description="Schedule events and track attendance"
         action={
           canEdit && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm"><Plus className="h-4 w-4" /> New Event</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader><DialogTitle>Create Event</DialogTitle></DialogHeader>
-                <div className="space-y-4">
-                  <Input label="Event title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input label="Start date & time *" type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
-                    <Input label="End date & time" type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
-                  </div>
-                  <Input label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Address or 'Online'" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}>
-                      <SelectTrigger label="Event type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {['general', 'meeting', 'service', 'volunteer', 'training', 'social'].map((t) => (
-                          <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
-                      <SelectTrigger label="Team (optional)">
-                        <SelectValue placeholder="All members" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teams.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
-                </div>
-                {saveError && (
-                  <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{saveError}</div>
-                )}
-                <div className="flex gap-3 mt-4">
-                  <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">Cancel</Button>
-                  <Button onClick={handleSave} loading={saving} disabled={!form.title || !form.starts_at} className="flex-1">Create Event</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4" /> New Event</Button>
           )
         }
       />
+
+      {/* Create / Edit dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{editingId ? 'Edit Event' : 'Create Event'}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <Input label="Event title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Start date & time *" type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
+              <Input label="End date & time" type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
+            </div>
+            <Input label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Address or 'Online'" />
+            <div className="grid grid-cols-2 gap-4">
+              <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}>
+                <SelectTrigger label="Event type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {['general', 'meeting', 'service', 'volunteer', 'training', 'social'].map((t) => (
+                    <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
+                <SelectTrigger label="Team (optional)">
+                  <SelectValue placeholder="All members" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
+          </div>
+          {saveError && (
+            <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{saveError}</div>
+          )}
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">Cancel</Button>
+            <Button onClick={handleSave} loading={saving} disabled={!form.title || !form.starts_at} className="flex-1">
+              {editingId ? 'Save Changes' : 'Create Event'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="relative mb-6 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -185,6 +238,27 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                 >
                   <QrCode className="h-4 w-4" />
                 </Button>
+                {canEdit && (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(event)} title="Edit">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      loading={deletingId === event.id}
+                      onClick={() => {
+                        if (confirm(`Delete event "${event.title}"? This also removes its attendance records and cannot be undone.`)) {
+                          handleDelete(event.id)
+                        }
+                      }}
+                      title="Delete"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ))
