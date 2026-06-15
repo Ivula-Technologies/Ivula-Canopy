@@ -33,6 +33,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [qrEvent, setQrEvent] = useState<Event | null>(null)
   const [form, setForm] = useState({
     title: '', description: '', event_type: 'general',
@@ -45,16 +46,19 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
 
   async function handleSave() {
     setSaving(true)
+    setSaveError('')
     const res = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, organization_id: orgId }),
     })
+    const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      const { event } = await res.json()
-      setEvents((prev) => [event, ...prev])
+      setEvents((prev) => [data.event, ...prev])
       setOpen(false)
       setForm({ title: '', description: '', event_type: 'general', location: '', starts_at: '', ends_at: '', team_id: '' })
+    } else {
+      setSaveError(data.error || 'Failed to create event. Please try again.')
     }
     setSaving(false)
   }
@@ -105,6 +109,9 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                   </div>
                   <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
                 </div>
+                {saveError && (
+                  <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{saveError}</div>
+                )}
                 <div className="flex gap-3 mt-4">
                   <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">Cancel</Button>
                   <Button onClick={handleSave} loading={saving} disabled={!form.title || !form.starts_at} className="flex-1">Create Event</Button>
