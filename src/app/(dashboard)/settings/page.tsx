@@ -13,5 +13,6 @@ export default async function SettingsPage() {
   const { data: org } = await supabase
     .from('organizations').select('*').eq('id', profile.organization_id).single()
 
-  return <SettingsClient org={org} profile={profile} />
+  const isAdmin = ['org_admin', 'super_admin'].includes(profile.role)
+  return <SettingsClient org={org!} profile={profile} isAdmin={isAdmin} />
 }
