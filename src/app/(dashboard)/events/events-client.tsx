@@ -82,26 +82,26 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                   </div>
                   <Input label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Address or 'Online'" />
                   <div className="grid grid-cols-2 gap-4">
-                    <SelectTrigger label="Event type">
-                      <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}>
+                    <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}>
+                      <SelectTrigger label="Event type">
                         <SelectValue />
-                        <SelectContent>
-                          {['general', 'meeting', 'service', 'volunteer', 'training', 'social'].map((t) => (
-                            <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </SelectTrigger>
-                    <SelectTrigger label="Team (optional)">
-                      <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['general', 'meeting', 'service', 'volunteer', 'training', 'social'].map((t) => (
+                          <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
+                      <SelectTrigger label="Team (optional)">
                         <SelectValue placeholder="All members" />
-                        <SelectContent>
-                          {teams.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </SelectTrigger>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
                 </div>

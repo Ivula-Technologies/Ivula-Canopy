@@ -1,25 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 56" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 56" fill="none">
   <defs>
-    <linearGradient id="iGrad" x1="12" y1="2" x2="32" y2="48" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#00D4FF"/>
-      <stop offset="100%" stop-color="#0088CC"/>
-    </linearGradient>
-    <linearGradient id="boltGrad" x1="10" y1="18" x2="34" y2="50" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#44CCEE"/>
-      <stop offset="100%" stop-color="#0099CC"/>
+    <linearGradient id="ivGrad" x1="14" y1="2" x2="46" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#27B6E8"/>
+      <stop offset="100%" stop-color="#21C7F0"/>
     </linearGradient>
   </defs>
 
-  <!-- Dot of i -->
-  <circle cx="20" cy="5" r="4.5" fill="url(#iGrad)"/>
-  <!-- Stem of i -->
-  <rect x="16.5" y="12" width="7" height="17" rx="2" fill="url(#iGrad)"/>
-  <!-- Lightning bolt: top-right to bottom-left arrow -->
-  <!-- Upper half of bolt -->
-  <polygon points="29,14 18,26 23.5,26 11,44 30,28 24,28" fill="url(#boltGrad)"/>
+  <!-- Icon: stylized "iv" mark -->
+  <g fill="url(#ivGrad)">
+    <!-- dot of the i -->
+    <circle cx="22" cy="6" r="5"/>
+    <!-- left stroke: i-stem forming an upward chevron then down arrow -->
+    <path d="M18 15 h8 v20 l6 6 l-6 6 l-10 -10 l-8 8 l14 -16 v-14 z"/>
+    <!-- right stroke: lightning/arrow descending to the right -->
+    <path d="M38 16 l6 0 l-12 12 l5 0 l-11 13 l3 -10 l-4 0 z"/>
+  </g>
 
-  <!-- "Ivula" wordmark -->
-  <text x="44" y="33" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="700" font-size="26" fill="#0F1D4E" letter-spacing="-0.3">Ivula</text>
-  <!-- "TECH" subtext -->
-  <text x="45" y="48" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="400" font-size="10" fill="#7A8FA6" letter-spacing="4.5">TECH</text>
+  <!-- Wordmark -->
+  <text x="58" y="33" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="700" font-size="26" fill="#16224A" letter-spacing="-0.3">Ivula</text>
+  <text x="59" y="48" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="400" font-size="10" fill="#7A8190" letter-spacing="5">TECH</text>
 </svg>

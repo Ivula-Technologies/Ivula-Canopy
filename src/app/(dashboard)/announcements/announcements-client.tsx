@@ -57,16 +57,16 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, canEdi
                 <div className="space-y-4">
                   <Input label="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                   <Textarea label="Message *" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={4} />
-                  <SelectTrigger label="Audience (optional — defaults to all)">
-                    <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
+                  <Select value={form.team_id} onValueChange={(v) => setForm({ ...form, team_id: v })}>
+                    <SelectTrigger label="Audience (optional — defaults to all)">
                       <SelectValue placeholder="Entire organization" />
-                      <SelectContent>
-                        {teams.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SelectTrigger>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teams.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"

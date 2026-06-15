@@ -116,27 +116,27 @@ export function MembersClient({ initialMembers, teams, orgId, canEdit }: Props) 
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     />
-                    <SelectTrigger label="Gender">
-                      <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                    <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                      <SelectTrigger label="Gender">
                         <SelectValue placeholder="Select..." />
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="prefer_not">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </SelectTrigger>
-                    <SelectTrigger label="Status">
-                      <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="prefer_not">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      <SelectTrigger label="Status">
                         <SelectValue />
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </SelectTrigger>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Input
                     label="Address"

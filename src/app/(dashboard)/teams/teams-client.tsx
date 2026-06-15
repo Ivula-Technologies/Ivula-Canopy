@@ -60,26 +60,26 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                 <DialogHeader><DialogTitle>Create Team</DialogTitle></DialogHeader>
                 <div className="space-y-4">
                   <Input label="Team name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                  <SelectTrigger label="Team type">
-                    <Select value={form.team_type} onValueChange={(v) => setForm({ ...form, team_type: v })}>
+                  <Select value={form.team_type} onValueChange={(v) => setForm({ ...form, team_type: v })}>
+                    <SelectTrigger label="Team type">
                       <SelectValue />
-                      <SelectContent>
-                        {TEAM_TYPES.map((t) => (
-                          <SelectItem key={t} value={t}>{t.replace('_', ' ')}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SelectTrigger>
-                  <SelectTrigger label="Team leader (optional)">
-                    <Select value={form.leader_id} onValueChange={(v) => setForm({ ...form, leader_id: v })}>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TEAM_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>{t.replace('_', ' ')}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={form.leader_id} onValueChange={(v) => setForm({ ...form, leader_id: v })}>
+                    <SelectTrigger label="Team leader (optional)">
                       <SelectValue placeholder="No leader assigned" />
-                      <SelectContent>
-                        {members.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>{m.first_name} {m.last_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </SelectTrigger>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {members.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.first_name} {m.last_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
