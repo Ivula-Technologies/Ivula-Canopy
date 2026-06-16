@@ -15,9 +15,21 @@ export default async function TeamsPage() {
     .single()
   if (!profile?.organization_id) redirect('/onboarding')
 
-  const [{ data: teams }, { data: memberCounts }, { data: members }] = await Promise.all([
-    supabase.from('teams').select('*, leader:members(first_name, last_name)').eq('organization_id', profile.organization_id).order('name'),
-    supabase.from('team_memberships').select('team_id'),
+  const { data: teams } = await supabase
+    .from('teams')
+    .select('*, leader:members(first_name, last_name)')
+    .eq('organization_id', profile.organization_id)
+    .order('name')
+
+  const teamIds = (teams || []).map((t) => t.id)
+
+  // Only count memberships for THIS org's teams. Previously this fetched
+  // every team_membership row platform-wide and counted them in JS, which
+  // gets slower for everyone as total membership grows.
+  const [{ data: memberCounts }, { data: members }] = await Promise.all([
+    teamIds.length
+      ? supabase.from('team_memberships').select('team_id').in('team_id', teamIds)
+      : Promise.resolve({ data: [] as { team_id: string }[] }),
     supabase.from('members').select('id, first_name, last_name').eq('organization_id', profile.organization_id).eq('status', 'active').order('first_name'),
   ])
 
