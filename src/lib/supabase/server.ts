@@ -24,7 +24,7 @@ export const createClient = cache(async () => {
       },
     }
   )
-}
+})
 
 export async function createServiceClient() {
   const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')

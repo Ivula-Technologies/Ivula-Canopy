@@ -53,8 +53,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar org={org} profile={profile} />
-      <main className="flex-1 ml-64 overflow-y-auto">
-        <div className="p-8">{children}</div>
+      {/* On mobile the sidebar is a drawer (no left margin) but a 14h top bar
+          covers the content, so pad the top. On lg the sidebar is static so
+          we offset by its width and drop the top padding. */}
+      <main className="flex-1 lg:ml-64 overflow-y-auto pt-14 lg:pt-0">
+        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>
   )

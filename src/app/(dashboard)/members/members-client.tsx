@@ -244,9 +244,10 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      {/* Table — wrapper scrolls horizontally on narrow screens instead of
+          breaking the layout */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-600">Member</th>
