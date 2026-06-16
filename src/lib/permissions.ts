@@ -42,6 +42,21 @@ export interface UserAccess {
   isSuperAdmin: boolean
 }
 
+// Permission sets for the legacy coarse text `role` column. Used as a fallback
+// when a profile has no fine-grained role_id attached (e.g. admins created
+// before custom roles existed, or whose role_id never got backfilled). Without
+// this, such admins silently lose every Add/Upgrade button.
+const LEGACY_ROLE_PERMISSIONS: Record<string, Permissions> = {
+  org_admin: PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {} as Permissions),
+  org_leader: {
+    ...NO_PERMISSIONS,
+    manage_members: true,
+    manage_teams: true,
+    manage_events: true,
+    manage_announcements: true,
+  },
+}
+
 // Derive permissions from a profile row that already has the role join embedded.
 // Use this when you have the profile in hand to avoid a second DB round-trip.
 export function getPermissionsFromProfile(profile: {
@@ -60,6 +75,16 @@ export function getPermissionsFromProfile(profile: {
     }
   }
   if (!r) {
+    // No fine-grained role assigned — fall back to the coarse text role so
+    // admins/leaders aren't locked out of their own org.
+    const legacy = profile?.role ? LEGACY_ROLE_PERMISSIONS[profile.role] : undefined
+    if (legacy) {
+      return {
+        isSuperAdmin: false,
+        roleName: profile!.role!.replace('_', ' '),
+        permissions: { ...legacy },
+      }
+    }
     return { isSuperAdmin: false, roleName: 'No role', permissions: { ...NO_PERMISSIONS } }
   }
   return {
