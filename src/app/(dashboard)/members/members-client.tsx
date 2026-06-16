@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, Download, UserPlus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,7 @@ const emptyForm = {
 }
 
 export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Props) {
+  const router = useRouter()
   const [members, setMembers] = useState<Member[]>(initialMembers)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -92,6 +94,7 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
       setOpen(false)
       setForm(emptyForm)
       setEditingId(null)
+      router.refresh()
     } else {
       setSaveError(data.error || 'Could not save member. Please try again.')
     }
@@ -103,6 +106,7 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
     const res = await fetch(`/api/members/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setMembers((prev) => prev.filter((m) => m.id !== id))
+      router.refresh()
     }
     setDeletingId(null)
   }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Users, Pencil, Trash2, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +31,7 @@ const emptyForm = {
 }
 
 export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
+  const router = useRouter()
   const [teams, setTeams] = useState(initialTeams)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -42,7 +44,6 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
   const [managingTeam, setManagingTeam] = useState<TeamCard | null>(null)
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
   const [loadingMembers, setLoadingMembers] = useState(false)
-  const [savingMembers, setSavingMembers] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
 
   function openCreate() {
@@ -88,20 +89,33 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
 
   async function handleSaveMembers() {
     if (!managingTeam) return
-    setSavingMembers(true)
-    const res = await fetch(`/api/teams/${managingTeam.id}/members`, {
+    const teamId = managingTeam.id
+    const newCount = selectedMemberIds.size
+    const prevCount = managingTeam.member_count
+
+    // Close dialog immediately — feels instant to the user
+    setManagingTeam(null)
+    // Optimistically update the count on the card
+    setTeams((prev) =>
+      prev.map((t) => (t.id === teamId ? { ...t, member_count: newCount } : t))
+    )
+
+    // Persist to DB in the background
+    const res = await fetch(`/api/teams/${teamId}/members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberIds: [...selectedMemberIds] }),
     })
+
     if (res.ok) {
-      const { count } = await res.json()
+      // Bust Next.js router cache so the server re-fetches on next navigation
+      router.refresh()
+    } else {
+      // Revert the optimistic update if the save failed
       setTeams((prev) =>
-        prev.map((t) => (t.id === managingTeam.id ? { ...t, member_count: count } : t))
+        prev.map((t) => (t.id === teamId ? { ...t, member_count: prevCount } : t))
       )
-      setManagingTeam(null)
     }
-    setSavingMembers(false)
   }
 
   async function handleSave() {
@@ -118,7 +132,6 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
       if (editingId) {
-        // Preserve member_count — it's not returned by PATCH
         setTeams((prev) =>
           prev.map((t) => (t.id === editingId ? { ...t, ...data.team, member_count: t.member_count } : t))
         )
@@ -128,6 +141,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
       setOpen(false)
       setForm(emptyForm)
       setEditingId(null)
+      router.refresh()
     } else {
       setSaveError(data.error || 'Could not save team. Please try again.')
     }
@@ -139,6 +153,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
     const res = await fetch(`/api/teams/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setTeams((prev) => prev.filter((t) => t.id !== id))
+      router.refresh()
     }
     setDeletingId(null)
   }
@@ -264,7 +279,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
               <p className="text-xs text-gray-400 mt-2">{selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} selected</p>
               <div className="flex gap-3 mt-4">
                 <Button variant="outline" onClick={() => setManagingTeam(null)} className="flex-1">Cancel</Button>
-                <Button onClick={handleSaveMembers} loading={savingMembers} className="flex-1">Save Members</Button>
+                <Button onClick={handleSaveMembers} className="flex-1">Save Members</Button>
               </div>
             </>
           )}

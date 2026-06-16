@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Search, QrCode, Users, MapPin, Clock, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,7 @@ function toLocalInput(iso?: string): string {
 }
 
 export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: Props) {
+  const router = useRouter()
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
@@ -99,6 +101,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
       setOpen(false)
       setForm(emptyForm)
       setEditingId(null)
+      router.refresh()
     } else {
       setSaveError(data.error || 'Failed to save event. Please try again.')
     }
@@ -110,6 +113,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
     const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setEvents((prev) => prev.filter((e) => e.id !== id))
+      router.refresh()
     }
     setDeletingId(null)
   }

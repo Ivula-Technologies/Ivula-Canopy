@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Pin, Megaphone, Pencil, Trash2, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +26,7 @@ interface Props {
 const emptyForm = { title: '', body: '', team_id: '', is_pinned: false, send_email: true }
 
 export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgName, canEdit }: Props) {
+  const router = useRouter()
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -77,6 +79,7 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
       setOpen(false)
       setForm(emptyForm)
       setEditingId(null)
+      router.refresh()
       if (data.email) {
         if (data.email.sent > 0) {
           setNotice(`Announcement emailed to ${data.email.sent} member${data.email.sent !== 1 ? 's' : ''}.`)
@@ -96,6 +99,7 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
     const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setAnnouncements((prev) => prev.filter((a) => a.id !== id))
+      router.refresh()
     }
     setDeletingId(null)
   }
