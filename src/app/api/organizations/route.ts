@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     if (orgError) throw orgError
 
     // Seed the org's default roles and capture the Administrator role for the creator
-    const { data: seededRoles } = await supabase
+    const { data: seededRoles, error: rolesError } = await supabase
       .from('roles')
       .insert([
         { organization_id: org.id, name: 'Administrator', description: 'Full access to everything', is_system: true,
@@ -49,6 +49,10 @@ export async function POST(req: NextRequest) {
         { organization_id: org.id, name: 'Member', description: 'View-only access' },
       ])
       .select('id, name')
+    // Don't fail signup if seeding breaks (e.g. roles table missing) — the
+    // admin still gets full access via the legacy-role fallback. But log it
+    // loudly so a broken roles table never silently locks admins out again.
+    if (rolesError) console.error('Role seeding failed for org', org.id, ':', rolesError.message)
     const adminRoleId = seededRoles?.find((r) => r.name === 'Administrator')?.id || null
 
     // Wait for the auth trigger to create the profile row (it runs async after signUp)
