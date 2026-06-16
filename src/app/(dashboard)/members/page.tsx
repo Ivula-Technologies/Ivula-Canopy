@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getUserAccess } from '@/lib/permissions'
+import { getPermissionsFromProfile } from '@/lib/permissions'
 import { MembersClient } from './members-client'
 
 export default async function MembersPage() {
@@ -8,23 +8,19 @@ export default async function MembersPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .eq('id', user.id)
+    .single()
   if (!profile?.organization_id) redirect('/onboarding')
 
-  const { data: members } = await supabase
-    .from('members')
-    .select('*')
-    .eq('organization_id', profile.organization_id)
-    .order('first_name')
+  const [{ data: members }, { data: teams }] = await Promise.all([
+    supabase.from('members').select('*').eq('organization_id', profile.organization_id).order('first_name'),
+    supabase.from('teams').select('id, name').eq('organization_id', profile.organization_id).eq('is_active', true).order('name'),
+  ])
 
-  const { data: teams } = await supabase
-    .from('teams')
-    .select('id, name')
-    .eq('organization_id', profile.organization_id)
-    .eq('is_active', true)
-    .order('name')
-
-  const { permissions } = await getUserAccess(supabase, user.id)
+  const { permissions } = getPermissionsFromProfile(profile)
 
   return (
     <div>

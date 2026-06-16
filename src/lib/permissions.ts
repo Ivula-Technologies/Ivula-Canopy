@@ -42,6 +42,33 @@ export interface UserAccess {
   isSuperAdmin: boolean
 }
 
+// Derive permissions from a profile row that already has the role join embedded.
+// Use this when you have the profile in hand to avoid a second DB round-trip.
+export function getPermissionsFromProfile(profile: {
+  role?: string | null
+  assigned_role?: unknown
+} | null): UserAccess {
+  const isSuperAdmin = profile?.role === 'super_admin'
+  const rel = profile?.assigned_role as unknown
+  const r = (Array.isArray(rel) ? rel[0] : rel) as (Permissions & { name: string }) | null
+
+  if (isSuperAdmin) {
+    return {
+      isSuperAdmin: true,
+      roleName: 'Super Admin',
+      permissions: PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {} as Permissions),
+    }
+  }
+  if (!r) {
+    return { isSuperAdmin: false, roleName: 'No role', permissions: { ...NO_PERMISSIONS } }
+  }
+  return {
+    isSuperAdmin: false,
+    roleName: r.name,
+    permissions: PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: !!r[k] }), {} as Permissions),
+  }
+}
+
 // Load the signed-in user's effective permissions by joining profile -> role.
 // super_admin always gets everything.
 export async function getUserAccess(
@@ -54,29 +81,5 @@ export async function getUserAccess(
     .eq('id', userId)
     .single()
 
-  const isSuperAdmin = profile?.role === 'super_admin'
-  // Supabase returns the embedded relation as an object (or array); normalise it.
-  const rel = profile?.assigned_role as unknown
-  const r = (Array.isArray(rel) ? rel[0] : rel) as (Permissions & { name: string }) | null
-
-  if (isSuperAdmin) {
-    return {
-      isSuperAdmin: true,
-      roleName: 'Super Admin',
-      permissions: PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {} as Permissions),
-    }
-  }
-
-  if (!r) {
-    return { isSuperAdmin: false, roleName: 'No role', permissions: { ...NO_PERMISSIONS } }
-  }
-
-  return {
-    isSuperAdmin: false,
-    roleName: r.name,
-    permissions: PERMISSION_KEYS.reduce(
-      (acc, k) => ({ ...acc, [k]: !!r[k] }),
-      {} as Permissions
-    ),
-  }
+  return getPermissionsFromProfile(profile)
 }
