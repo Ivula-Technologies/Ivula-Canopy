@@ -355,7 +355,8 @@ create policy "audit_logs_insert" on audit_logs for insert
 -- VIEWS for analytics
 -- ================================================================
 
-create or replace view member_engagement_summary as
+create or replace view member_engagement_summary
+with (security_invoker = on) as
 select
   m.organization_id,
   m.id as member_id,
