@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Heart, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Search, Heart, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -284,6 +285,14 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-gray-400 text-xs">{new Date(don.donated_at).toLocaleDateString()}</span>
+                            <Link
+                              href={`/donors/receipt/${don.id}`}
+                              target="_blank"
+                              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-[#00C4F4]"
+                              title="View receipt"
+                            >
+                              <FileText className="h-3.5 w-3.5" /> Receipt
+                            </Link>
                             {canEdit && (
                               <button
                                 onClick={() => { if (confirm('Delete this donation?')) deleteDonation(don.id, don.amount, donor.id) }}

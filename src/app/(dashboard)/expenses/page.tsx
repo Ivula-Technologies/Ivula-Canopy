@@ -19,7 +19,7 @@ export default async function ExpensesPage() {
 
   const [{ data: expenses }, { data: events }] = await Promise.all([
     admin.from('expenses').select('*, event:events(title)').eq('organization_id', profile.organization_id).order('expense_date', { ascending: false }),
-    admin.from('events').select('id, title').eq('organization_id', profile.organization_id).order('starts_at', { ascending: false }).limit(50),
+    admin.from('events').select('id, title, budget').eq('organization_id', profile.organization_id).order('starts_at', { ascending: false }).limit(50),
   ])
 
   return (

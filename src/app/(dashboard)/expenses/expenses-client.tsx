@@ -23,7 +23,7 @@ const emptyForm = { title: '', amount: '', category: 'other', expense_date: new 
 
 interface Props {
   initialExpenses: (Expense & { event?: { title: string } | null })[]
-  events: { id: string; title: string }[]
+  events: { id: string; title: string; budget?: number | null }[]
   canEdit: boolean
 }
 
@@ -45,6 +45,18 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
 
   const total = filtered.reduce((s, e) => s + Number(e.amount), 0)
   const totalAll = expenses.reduce((s, e) => s + Number(e.amount), 0)
+
+  const budgetedEvents = events
+    .filter((ev) => ev.budget != null && Number(ev.budget) > 0)
+    .map((ev) => {
+      const budget = Number(ev.budget)
+      const spent = expenses
+        .filter((e) => e.event_id === ev.id)
+        .reduce((s, e) => s + Number(e.amount), 0)
+      const pct = budget > 0 ? (spent / budget) * 100 : 0
+      const barColor = pct > 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
+      return { id: ev.id, title: ev.title, budget, spent, pct, barColor }
+    })
 
   function openAdd() { setForm(emptyForm); setEditId(null); setError(''); setOpen(true) }
   function openEdit(exp: Expense) {
@@ -119,6 +131,31 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
         </select>
         <Button variant="outline" size="sm" onClick={exportCSV}>Export CSV</Button>
       </div>
+
+      {/* Budget by Event */}
+      {budgetedEvents.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Budget by Event</h2>
+          <div className="space-y-3">
+            {budgetedEvents.map((b) => (
+              <div key={b.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-900">{b.title}</p>
+                  <span className="text-xs font-medium text-gray-500">{Math.round(b.pct)}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+                  <div className={`h-full rounded-full ${b.barColor}`} style={{ width: `${Math.min(b.pct, 100)}%` }} />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  ${b.spent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} of $
+                  {b.budget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {b.pct > 100 && <span className="text-red-500 font-medium ml-2">Over budget</span>}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">

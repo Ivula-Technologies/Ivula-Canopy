@@ -88,6 +88,7 @@ export interface Event {
   description?: string
   event_type: string
   location?: string
+  budget?: number | null
   starts_at: string
   ends_at?: string
   checkin_token: string

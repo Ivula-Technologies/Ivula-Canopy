@@ -30,7 +30,7 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'w
 
 const emptyForm = {
   title: '', description: '', event_type: 'general',
-  location: '', starts_at: '', ends_at: '', team_id: '',
+  location: '', starts_at: '', ends_at: '', team_id: '', budget: '',
 }
 
 // Convert an ISO timestamp to the value a datetime-local input expects (YYYY-MM-DDTHH:mm in local time)
@@ -75,6 +75,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
       starts_at: toLocalInput(event.starts_at),
       ends_at: toLocalInput(event.ends_at),
       team_id: event.team_id || '',
+      budget: event.budget != null ? String(event.budget) : '',
     })
     setSaveError('')
     setOpen(true)
@@ -88,7 +89,11 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
       {
         method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, organization_id: orgId }),
+        body: JSON.stringify({
+          ...form,
+          budget: form.budget === '' ? null : parseFloat(form.budget),
+          organization_id: orgId,
+        }),
       }
     )
     const data = await res.json().catch(() => ({}))
@@ -165,6 +170,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                 </SelectContent>
               </Select>
             </div>
+            <Input label="Budget (USD)" type="number" min="0" step="0.01" placeholder="Optional" value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })} />
             <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
           </div>
           {saveError && (
