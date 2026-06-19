@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -46,6 +46,8 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   const [shiftForm, setShiftForm] = useState(emptyShiftForm)
   const [shiftError, setShiftError] = useState('')
   const [copiedLink, setCopiedLink] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
 
   const signupUrl = `${appUrl}/signup/${event.checkin_token}`
 
@@ -130,6 +132,16 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   async function markAll() {
     const unattended = members.filter((m) => !attendedIds.has(m.id))
     for (const m of unattended) await toggle(m.id, false)
+  }
+
+  async function importSignups() {
+    setImporting(true)
+    setImportMsg('')
+    const res = await fetch(`/api/events/${event.id}/import-signups`, { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) setImportMsg(`${data.imported} attendance record${data.imported !== 1 ? 's' : ''} imported`)
+    else setImportMsg(data.error || 'Import failed')
+    setImporting(false)
   }
 
   function copyLink() {
@@ -300,12 +312,19 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                 <Button size="sm" variant="outline" onClick={exportSignups}>Export CSV</Button>
               )}
               {canEdit && (
+                <Button size="sm" variant="outline" onClick={importSignups} loading={importing}>
+                  <Download className="h-4 w-4" /> Import as attendance
+                </Button>
+              )}
+              {canEdit && (
                 <Button size="sm" onClick={() => { setShiftForm(emptyShiftForm); setShiftError(''); setShiftOpen(true) }}>
                   <Plus className="h-4 w-4" /> Add Shift
                 </Button>
               )}
             </div>
           </div>
+
+          {importMsg && <p className="text-xs text-gray-500">{importMsg}</p>}
 
           {shifts.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 py-12 text-center text-gray-400">

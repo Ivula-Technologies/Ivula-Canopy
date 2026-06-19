@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Users, CalendarDays, UsersRound, TrendingUp, UserCheck, AlertTriangle } from 'lucide-react'
+import { Users, CalendarDays, UsersRound, TrendingUp, UserCheck, AlertTriangle, UserPlus, Heart, CheckSquare } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/layout/page-header'
@@ -32,6 +32,9 @@ export default async function DashboardPage() {
     { count: newMembersThisMonth },
     { data: recentAnnouncements },
     { data: atRiskMembers },
+    { count: totalSignups },
+    { data: donationRows },
+    { count: openTasks },
   ] = await Promise.all([
     supabase.from('members').select('*', { count: 'exact', head: true }).eq('organization_id', orgId),
     supabase.from('members').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'active'),
@@ -42,7 +45,12 @@ export default async function DashboardPage() {
     supabase.from('announcements').select('id, title, published_at, is_pinned').eq('organization_id', orgId).order('published_at', { ascending: false }).limit(3),
     // Members with no attendance in last 60 days
     supabase.from('members').select('id, first_name, last_name, email').eq('organization_id', orgId).eq('status', 'active').limit(5),
+    supabase.from('shift_signups').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'confirmed'),
+    supabase.from('donations').select('amount').eq('organization_id', orgId),
+    supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).neq('status', 'done'),
   ])
+
+  const totalRaised = donationRows?.reduce((sum, d) => sum + (d.amount || 0), 0) || 0
 
   const engagementRate = totalMembers && totalMembers > 0
     ? Math.round(((attendanceThisMonth || 0) / totalMembers) * 100)
@@ -55,6 +63,9 @@ export default async function DashboardPage() {
     { label: 'New This Month', value: newMembersThisMonth || 0, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', href: '/members' },
     { label: 'Attendance / Month', value: attendanceThisMonth || 0, icon: CalendarDays, color: 'text-cyan-600', bg: 'bg-cyan-50', href: '/events' },
     { label: 'Engagement Rate', value: `${engagementRate}%`, icon: TrendingUp, color: 'text-pink-600', bg: 'bg-pink-50', href: '/reports' },
+    { label: 'Volunteer Sign-ups', value: totalSignups || 0, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/events' },
+    { label: 'Total Raised', value: `$${totalRaised.toLocaleString()}`, icon: Heart, color: 'text-rose-600', bg: 'bg-rose-50', href: '/donors' },
+    { label: 'Open Tasks', value: openTasks || 0, icon: CheckSquare, color: 'text-amber-600', bg: 'bg-amber-50', href: '/tasks' },
   ]
 
   return (
