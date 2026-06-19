@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Heart,
+  CheckSquare,
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/events', label: 'Events', icon: CalendarDays },
   { href: '/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/donors', label: 'Donors', icon: Heart },
+  { href: '/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 

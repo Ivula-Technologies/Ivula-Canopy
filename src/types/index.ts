@@ -162,6 +162,27 @@ export interface Announcement {
   team?: Team
 }
 
+export type TaskStatus = 'todo' | 'in_progress' | 'done'
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
+
+export interface Task {
+  id: string
+  organization_id: string
+  team_id?: string | null
+  assigned_to_member_id?: string | null
+  created_by?: string | null
+  title: string
+  description?: string | null
+  status: TaskStatus
+  priority: TaskPriority
+  due_date?: string | null
+  completed_at?: string | null
+  created_at: string
+  updated_at: string
+  team?: { name: string } | null
+  assigned_to?: { first_name: string; last_name: string } | null
+}
+
 export interface DashboardStats {
   total_members: number
   active_members: number
