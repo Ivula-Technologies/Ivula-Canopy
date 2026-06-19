@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 // Lazy init — constructing Resend without an API key throws at import time,
 // which crashes every route that imports this module
 let _resend: Resend | null = null
-function getResend() {
+export function getResend() {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || 're_missing_key')
   return _resend
 }

@@ -33,6 +33,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       initialAttendance={attended || []}
       orgId={profile.organization_id}
       canEdit={permissions.manage_events}
+      appUrl={process.env.NEXT_PUBLIC_APP_URL || ''}
     />
   )
 }

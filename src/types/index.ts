@@ -162,6 +162,39 @@ export interface Announcement {
   team?: Team
 }
 
+export interface Shift {
+  id: string
+  event_id: string
+  organization_id: string
+  title: string
+  description?: string | null
+  starts_at?: string | null
+  ends_at?: string | null
+  capacity: number
+  created_at: string
+  updated_at: string
+  signup_count?: number
+  signups?: ShiftSignup[]
+}
+
+export interface ShiftSignup {
+  id: string
+  shift_id: string
+  event_id: string
+  organization_id: string
+  member_id?: string | null
+  first_name: string
+  last_name: string
+  email: string
+  phone?: string | null
+  notes?: string | null
+  status: 'confirmed' | 'cancelled'
+  cancel_token?: string
+  signed_up_at: string
+  created_at: string
+  shift?: Pick<Shift, 'id' | 'title'> | null
+}
+
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
 
