@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, CheckSquare, Pencil, Trash2, Circle, Clock, AlertTriangle, ChevronDown } from 'lucide-react'
+import { Plus, CheckSquare, Pencil, Trash2, Circle, Clock, AlertTriangle, ChevronDown, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -201,17 +201,39 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
 
   const overdueTasks = tasks.filter((t) => isOverdue(t))
 
+  function exportCSV() {
+    const allTasks = [...tasks.filter((t) => t.status === 'todo'), ...tasks.filter((t) => t.status === 'in_progress'), ...tasks.filter((t) => t.status === 'done')]
+    const rows = [
+      ['Title', 'Status', 'Priority', 'Due Date', 'Assigned To', 'Team'].join(','),
+      ...allTasks.map((t) => [
+        t.title,
+        t.status,
+        t.priority,
+        t.due_date || '',
+        t.assigned_to ? `${t.assigned_to.first_name} ${t.assigned_to.last_name}` : '',
+        t.team?.name || ''
+      ].join(','))
+    ].join('\n')
+    const url = URL.createObjectURL(new Blob([rows], { type: 'text/csv' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'tasks.csv'; a.click()
+  }
+
   return (
     <div>
       <PageHeader
         title="Tasks"
         description="Track what needs to get done across your organization"
         action={
-          canEdit && (
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> New Task
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Download className="h-4 w-4" /> Export CSV
             </Button>
-          )
+            {canEdit && (
+              <Button size="sm" onClick={openCreate}>
+                <Plus className="h-4 w-4" /> New Task
+              </Button>
+            )}
+          </div>
         }
       />
 

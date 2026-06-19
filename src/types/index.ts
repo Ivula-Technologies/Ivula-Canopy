@@ -216,6 +216,23 @@ export interface Task {
   assigned_to?: { first_name: string; last_name: string } | null
 }
 
+export interface Expense {
+  id: string
+  organization_id: string
+  event_id?: string | null
+  title: string
+  amount: number
+  currency: string
+  category: string
+  expense_date: string
+  paid_to?: string | null
+  notes?: string | null
+  created_by?: string | null
+  created_at: string
+  updated_at: string
+  event?: { title: string } | null
+}
+
 export interface DashboardStats {
   total_members: number
   active_members: number
