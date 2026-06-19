@@ -6,8 +6,10 @@
 -- ================================================================
 alter table attendance add column if not exists hours decimal(5,2);
 
--- Update the engagement summary to include total volunteer hours
-create or replace view member_engagement_summary
+-- Recreate the engagement summary to add total_hours.
+-- CREATE OR REPLACE can't rename/reorder columns, so we drop first.
+drop view if exists member_engagement_summary;
+create view member_engagement_summary
 with (security_invoker = on) as
 select
   m.organization_id,
