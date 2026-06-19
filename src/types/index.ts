@@ -107,9 +107,45 @@ export interface Attendance {
   organization_id: string
   checked_in_at: string
   method: AttendanceMethod
+  hours?: number | null
   notes?: string
   member?: Member
   event?: Event
+}
+
+export interface Donor {
+  id: string
+  organization_id: string
+  member_id?: string | null
+  first_name: string
+  last_name: string
+  email?: string | null
+  phone?: string | null
+  address?: string | null
+  notes?: string | null
+  is_anonymous: boolean
+  created_at: string
+  updated_at: string
+  member?: Pick<Member, 'first_name' | 'last_name'> | null
+  total_donated?: number
+  donation_count?: number
+}
+
+export interface Donation {
+  id: string
+  organization_id: string
+  donor_id?: string | null
+  amount: number
+  currency: string
+  donated_at: string
+  method: string
+  campaign?: string | null
+  notes?: string | null
+  is_anonymous: boolean
+  receipt_number?: string | null
+  created_at: string
+  updated_at: string
+  donor?: Pick<Donor, 'id' | 'first_name' | 'last_name'> | null
 }
 
 export interface Announcement {

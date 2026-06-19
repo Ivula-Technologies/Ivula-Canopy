@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, X, Search, Users, Clock, MapPin, QrCode } from 'lucide-react'
+import { ArrowLeft, Check, Search, Users, Clock, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getInitials, formatDateTime } from '@/lib/utils'
@@ -20,8 +20,11 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   const [attendance, setAttendance] = useState(initialAttendance)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
+  // Track hours inputs per member (keyed by member id)
+  const [hoursInput, setHoursInput] = useState<Record<string, string>>({})
 
   const attendedIds = new Set(attendance.map((a) => a.member_id))
+  const totalHours = attendance.reduce((sum, a) => sum + (a.hours || 0), 0)
 
   const filtered = members.filter((m) =>
     `${m.first_name} ${m.last_name} ${m.email}`.toLowerCase().includes(search.toLowerCase())
@@ -32,15 +35,20 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
     setSaving(memberId)
 
     if (isCheckedIn) {
-      // Remove attendance
       await fetch(`/api/attendance?event_id=${event.id}&member_id=${memberId}`, { method: 'DELETE' })
       setAttendance((prev) => prev.filter((a) => a.member_id !== memberId))
     } else {
-      // Add attendance
+      const hours = parseFloat(hoursInput[memberId] || '') || null
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: event.id, member_id: memberId, organization_id: orgId, method: 'admin' }),
+        body: JSON.stringify({
+          event_id: event.id,
+          member_id: memberId,
+          organization_id: orgId,
+          method: 'admin',
+          hours,
+        }),
       })
       if (res.ok) {
         const { record } = await res.json()
@@ -48,6 +56,24 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       }
     }
     setSaving(null)
+  }
+
+  async function updateHours(memberId: string, hours: number | null) {
+    const res = await fetch('/api/attendance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_id: event.id,
+        member_id: memberId,
+        organization_id: orgId,
+        method: 'admin',
+        hours,
+      }),
+    })
+    if (res.ok) {
+      const { record } = await res.json()
+      setAttendance((prev) => prev.map((a) => (a.member_id === memberId ? record : a)))
+    }
   }
 
   async function markAll() {
@@ -63,20 +89,26 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         <Link href="/events" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
           <ArrowLeft className="h-4 w-4" /> Back to Events
         </Link>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
-            <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
               <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatDateTime(event.starts_at)}</span>
               {event.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location}</span>}
               {event.team && <Badge variant="secondary">{event.team.name}</Badge>}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
+          <div className="flex items-center gap-6">
+            <div className="text-center">
               <p className="text-2xl font-bold text-[#00C4F4]">{attendance.length}</p>
               <p className="text-xs text-gray-500">of {members.length} attended</p>
             </div>
+            {totalHours > 0 && (
+              <div className="text-center">
+                <p className="text-2xl font-bold text-emerald-600">{totalHours.toFixed(1)}</p>
+                <p className="text-xs text-gray-500">volunteer hours</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -90,8 +122,8 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       </div>
 
       {/* Controls */}
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
@@ -112,6 +144,8 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         {filtered.map((member) => {
           const checked = attendedIds.has(member.id)
           const isSaving = saving === member.id
+          const record = attendance.find((a) => a.member_id === member.id)
+
           return (
             <div key={member.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-[#1B2559]">
@@ -121,6 +155,30 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                 <p className="text-sm font-medium text-gray-900">{member.first_name} {member.last_name}</p>
                 {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
               </div>
+
+              {/* Hours input — shown when present */}
+              {canEdit && checked && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min="0"
+                    max="24"
+                    step="0.5"
+                    placeholder="hrs"
+                    className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
+                    defaultValue={record?.hours ?? ''}
+                    onBlur={(e) => {
+                      const val = e.target.value ? parseFloat(e.target.value) : null
+                      if (val !== (record?.hours ?? null)) updateHours(member.id, val)
+                    }}
+                  />
+                  <span className="text-xs text-gray-400">hrs</span>
+                </div>
+              )}
+              {!canEdit && checked && record?.hours && (
+                <span className="text-xs text-emerald-600 font-medium">{record.hours}h</span>
+              )}
+
               {checked && (
                 <span className="text-xs text-[#00C4F4] font-medium">Present</span>
               )}

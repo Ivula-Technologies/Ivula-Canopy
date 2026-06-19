@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  Heart,
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/teams', label: 'Teams', icon: UsersRound },
   { href: '/events', label: 'Events', icon: CalendarDays },
   { href: '/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/donors', label: 'Donors', icon: Heart },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 
