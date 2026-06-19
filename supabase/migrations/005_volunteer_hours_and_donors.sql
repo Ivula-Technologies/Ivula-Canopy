@@ -1,6 +1,16 @@
 -- 005_volunteer_hours_and_donors.sql
 -- Adds volunteer hours to attendance and a full donors/giving section.
 
+-- Ensure the updated_at trigger function exists (defined in 001 but
+-- migrations run in isolation in the SQL editor).
+create or replace function update_updated_at_column()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 -- ================================================================
 -- 1. VOLUNTEER HOURS on attendance
 -- ================================================================

@@ -1,6 +1,14 @@
 -- 006_tasks.sql
 -- Task/to-do management for organizations.
 
+create or replace function update_updated_at_column()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 create table if not exists tasks (
   id uuid primary key default uuid_generate_v4(),
   organization_id uuid not null references organizations(id) on delete cascade,
