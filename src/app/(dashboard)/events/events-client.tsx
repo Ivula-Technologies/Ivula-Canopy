@@ -24,9 +24,22 @@ interface Props {
 const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'warning'> = {
   upcoming: 'info',
   active: 'default',
+  past: 'secondary',
   completed: 'secondary',
   cancelled: 'destructive',
 } as never
+
+// Derive a display status from real timestamps so past events never show "upcoming"
+function getEffectiveStatus(event: Event): string {
+  if (event.status === 'cancelled') return 'cancelled'
+  const now = new Date()
+  const start = new Date(event.starts_at)
+  const end = event.ends_at ? new Date(event.ends_at) : null
+  if (end && now > end) return 'past'
+  if (!end && now > start) return 'past'
+  if (now >= start && (!end || now <= end)) return 'active'
+  return 'upcoming'
+}
 
 const emptyForm = {
   title: '', description: '', event_type: 'general',
@@ -218,7 +231,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                   <Link href={`/events/${event.id}`} className="font-semibold text-gray-900 hover:text-[#00C4F4] transition-colors">
                     {event.title}
                   </Link>
-                  <Badge variant={statusVariant[event.status] || 'secondary'}>{event.status}</Badge>
+                  <Badge variant={statusVariant[getEffectiveStatus(event)] || 'secondary'}>{getEffectiveStatus(event)}</Badge>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span className="flex items-center gap-1">
