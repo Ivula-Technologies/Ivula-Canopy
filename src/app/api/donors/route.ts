@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile } from '@/lib/permissions'
+import { enforceSubscription } from '@/lib/subscription-guard'
 import { nullifyEmptyStrings } from '@/lib/utils'
 
 export async function GET(req: NextRequest) {
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const blocked = await enforceSubscription(supabase, user.id)
+  if (blocked) return blocked
 
   const { data: profile } = await supabase
     .from('profiles')

@@ -3,11 +3,15 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { nullifyEmptyStrings } from '@/lib/utils'
 import { sendAnnouncementEmail } from '@/lib/email'
 import { getUserAccess } from '@/lib/permissions'
+import { enforceSubscription } from '@/lib/subscription-guard'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const blocked = await enforceSubscription(supabase, user.id)
+  if (blocked) return blocked
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_announcements) return NextResponse.json({ error: 'You do not have permission to post announcements' }, { status: 403 })

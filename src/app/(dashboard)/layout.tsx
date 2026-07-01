@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
+import { TrialBanner } from '@/components/billing/trial-banner'
+import { getAccessState } from '@/lib/subscription'
+import { getPermissionsFromProfile } from '@/lib/permissions'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -50,6 +53,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // client render and the user sees a blank page
   if (!org) redirect('/onboarding')
 
+  const access = getAccessState(org)
+  const { permissions } = getPermissionsFromProfile(profile)
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar org={org} profile={profile} />
@@ -57,6 +63,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           covers the content, so pad the top. On lg the sidebar is static so
           we offset by its width and drop the top padding. */}
       <main className="flex-1 lg:ml-64 overflow-y-auto pt-14 lg:pt-0">
+        <TrialBanner access={access} canManageBilling={permissions.manage_billing} />
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>
