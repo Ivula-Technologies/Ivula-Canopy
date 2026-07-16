@@ -3,50 +3,53 @@
 import { motion } from 'framer-motion'
 
 const audiences = [
-  { title: 'Volunteer Groups & Nonprofits', description: 'Organize and track volunteer activities and events easily.', image: '/landing/Volunteers.png' },
-  { title: 'Churches & Fellowships', description: 'Coordinate members, services, and church events from a single platform.', image: '/landing/churches.png' },
-  { title: 'Youth & Membership Organizations', description: 'Engage and manage youth programs and activities at a glance with a clear dashboard.', image: '/landing/youthorg.png' },
-  { title: 'Charities & Community Organizations', description: 'Track outreach programs and community support.', image: '/landing/charities.png' },
-  { title: 'Educational Programs', description: 'Manage student groups, clubs, and events effectively.', image: '/landing/school.png' },
+  { title: 'Volunteer Groups & Nonprofits', description: 'Coordinate volunteers, attendance, outreach, and leadership reports without juggling disconnected spreadsheets.', image: '/landing/Volunteers.png' },
+  { title: 'Churches & Ministries', description: 'Manage members, ministries, services, events, and care teams from one operational dashboard.', image: '/landing/churches.png' },
+  { title: 'Youth & Membership Organizations', description: 'Keep youth programs, clubs, chapters, and member activities organized as participation grows.', image: '/landing/youthorg.png' },
+  { title: 'Charities & Community Organizations', description: 'Track programs, outreach, donors, volunteers, and community support in one place.', image: '/landing/charities.png' },
+  { title: 'Educational Programs', description: 'Support clubs, cohorts, student groups, and extracurricular events with clear records and reporting.', image: '/landing/school.png' },
 ]
 
 export function LandingAudience() {
   return (
-    <section id="audience" className="py-20 bg-gradient-to-br from-sky-100 via-sky-200 to-sky-100">
-      <div className="container max-w-7xl mx-auto px-10">
-        <h2 className="text-4xl font-bold text-center text-gray-900">Who Is It For?</h2>
-        <p className="text-center text-gray-600 mt-4 max-w-2xl mx-auto">
-          Built specifically for organizations that bring people together and create impact.
-        </p>
+    <section id="audience" className="bg-gradient-to-br from-sky-100 via-sky-50 to-white py-20">
+      <div className="container mx-auto max-w-7xl px-6 lg:px-10">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Who it serves</p>
+          <h2 className="mt-3 text-4xl font-bold text-gray-900">Made for organizations that bring people together</h2>
+          <p className="mt-4 text-lg text-gray-600">
+            If your team is responsible for people, programs, service, and impact, Ivula Canopy helps you keep the work visible and manageable.
+          </p>
+        </div>
 
         <div className="mt-12">
           {audiences.map((item, index) => (
             <div
               key={item.title}
-              className={`flex flex-col md:flex-row items-center gap-12 mb-24 ${
+              className={`mb-16 flex flex-col items-center gap-8 rounded-3xl bg-white/70 p-5 shadow-sm ring-1 ring-white/80 md:flex-row md:p-8 lg:mb-20 lg:gap-12 ${
                 index % 2 !== 0 ? 'md:flex-row-reverse' : ''
               }`}
             >
               {/* Image */}
               <motion.div
                 className="w-full md:w-2/5"
-                initial={{ opacity: 0, x: index % 2 === 0 ? -60 : 60 }}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -40 : 40 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.6 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-80 object-cover rounded-2xl shadow-lg transition-transform duration-300 hover:scale-105"
+                  className="h-72 w-full rounded-2xl object-cover shadow-lg transition-transform duration-300 hover:scale-[1.02] md:h-80"
                 />
               </motion.div>
 
               {/* Text */}
               <div className="w-full md:w-1/2">
-                <h3 className="text-3xl md:text-4xl font-normal mb-4 text-gray-900">{item.title}</h3>
-                <p className="text-gray-600 text-lg">{item.description}</p>
+                <h3 className="text-3xl font-semibold text-gray-900 md:text-4xl">{item.title}</h3>
+                <p className="mt-4 text-lg leading-8 text-gray-600">{item.description}</p>
               </div>
             </div>
           ))}
