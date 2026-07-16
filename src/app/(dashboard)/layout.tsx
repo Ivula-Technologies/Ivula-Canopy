@@ -57,14 +57,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { permissions } = getPermissionsFromProfile(profile)
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh min-w-0 overflow-hidden">
       <Sidebar org={org} profile={profile} />
       {/* On mobile the sidebar is a drawer (no left margin) but a 14h top bar
           covers the content, so pad the top. On lg the sidebar is static so
           we offset by its width and drop the top padding. */}
-      <main className="flex-1 lg:ml-64 overflow-y-auto pt-14 lg:pt-0">
+      <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain pt-14 lg:ml-64 lg:pt-0">
         <TrialBanner access={access} canManageBilling={permissions.manage_billing} />
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>
   )
