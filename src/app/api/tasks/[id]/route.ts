@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile } from '@/lib/permissions'
-import { nullifyEmptyStrings } from '@/lib/utils'
+import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const admin = await createServiceClient()
-  const body = nullifyEmptyStrings(await req.json())
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'assigned_to_member_id', 'title', 'description', 'status', 'priority', 'due_date', 'completed_at'])
 
   // Auto-set completed_at when status flips to done
   if (body.status === 'done' && !body.completed_at) body.completed_at = new Date().toISOString()

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { nullifyEmptyStrings } from '@/lib/utils'
+import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 import { getUserAccess } from '@/lib/permissions'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!access.permissions.manage_members) return NextResponse.json({ error: 'You do not have permission to edit members' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const body = nullifyEmptyStrings(await req.json())
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['profile_id', 'first_name', 'last_name', 'email', 'phone', 'date_of_birth', 'gender', 'address', 'join_date', 'status', 'notes', 'custom_fields'])
   const { data: member, error } = await admin
     .from('members')
     .update(body)
