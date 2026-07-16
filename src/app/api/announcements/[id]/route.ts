@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { nullifyEmptyStrings } from '@/lib/utils'
+import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 import { getUserAccess } from '@/lib/permissions'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!access.permissions.manage_announcements) return NextResponse.json({ error: 'You do not have permission to manage announcements' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const body = nullifyEmptyStrings(await req.json())
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'title', 'body', 'is_pinned', 'expires_at'])
   const { data: announcement, error } = await admin
     .from('announcements')
     .update(body)

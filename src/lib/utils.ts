@@ -23,6 +23,20 @@ export function nullifyEmptyStrings<T extends Record<string, unknown>>(obj: T): 
   return out as T
 }
 
+
+
+// Keep API PATCH/POST payloads aligned with database columns. Client forms can
+// include UI-only values (for example, send_email) or joined objects that should
+// never be passed to Supabase updates.
+export function pickAllowedFields<T extends Record<string, unknown>>(obj: T, allowedFields: readonly string[]): Partial<T> {
+  const allowed = new Set(allowedFields)
+  const out: Partial<T> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (allowed.has(key)) out[key as keyof T] = value as T[keyof T]
+  }
+  return out
+}
+
 export function formatDate(date: string | Date): string {
   return format(new Date(date), 'MMM d, yyyy')
 }
