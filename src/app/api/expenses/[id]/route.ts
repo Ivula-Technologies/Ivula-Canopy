@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile } from '@/lib/permissions'
+import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!permissions.manage_events) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const body = await req.json()
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['event_id', 'title', 'amount', 'currency', 'category', 'expense_date', 'paid_to', 'notes'])
   const { data: expense, error } = await admin.from('expenses').update(body).eq('id', id).select('*, event:events(title)').single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ expense })

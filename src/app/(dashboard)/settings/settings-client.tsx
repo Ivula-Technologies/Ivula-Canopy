@@ -352,17 +352,17 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
 
         {/* Role create/edit dialog */}
         <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>{editingRoleId ? 'Edit Role' : 'New Role'}</DialogTitle></DialogHeader>
-            <div className="space-y-4">
+          <DialogContent className="max-w-md p-0">
+            <DialogHeader className="sticky top-0 z-10 mb-0 border-b border-gray-100 bg-white px-4 py-4 sm:px-6"><DialogTitle>{editingRoleId ? 'Edit Role' : 'New Role'}</DialogTitle></DialogHeader>
+            <div className="space-y-4 px-4 py-4 sm:px-6">
               <Input label="Role name *" placeholder="e.g. Elder, Deacon, Usher" value={roleForm.name} onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })} />
               <Input label="Description" value={roleForm.description} onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })} />
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">Permissions</p>
                 <p className="text-xs text-gray-500 mb-3">Leave all unchecked for a view-only role.</p>
-                <div className="space-y-2">
+                <div className="max-h-[42dvh] space-y-2 overflow-y-auto overscroll-contain rounded-xl border border-gray-100 bg-gray-50/40 p-2 pr-1">
                   {PERMISSION_META.map((p) => (
-                    <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer rounded-lg px-2 py-1.5 hover:bg-gray-50">
+                    <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer rounded-lg bg-white px-2 py-2 shadow-sm ring-1 ring-gray-100 hover:bg-gray-50">
                       <input
                         type="checkbox"
                         className="rounded mt-0.5"
@@ -378,8 +378,8 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
                 </div>
               </div>
             </div>
-            {roleError && <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{roleError}</div>}
-            <div className="flex gap-3 mt-4">
+            {roleError && <div className="mx-4 mb-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 sm:mx-6">{roleError}</div>}
+            <div className="sticky bottom-0 z-10 flex gap-3 border-t border-gray-100 bg-white px-4 py-4 shadow-[0_-8px_20px_rgba(15,23,42,0.06)] sm:px-6">
               <Button variant="outline" onClick={() => setRoleDialogOpen(false)} className="flex-1">Cancel</Button>
               <Button onClick={handleSaveRole} loading={savingRole} disabled={!roleForm.name.trim()} className="flex-1">
                 {editingRoleId ? 'Save Role' : 'Create Role'}

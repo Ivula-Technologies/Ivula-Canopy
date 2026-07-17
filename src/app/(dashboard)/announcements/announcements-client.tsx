@@ -148,22 +148,24 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
               />
               Pin this announcement
             </label>
-            <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer rounded-lg bg-cyan-50 border border-cyan-100 px-3 py-2.5">
-              <input
-                type="checkbox"
-                checked={form.send_email}
-                onChange={(e) => setForm({ ...form, send_email: e.target.checked })}
-                className="rounded mt-0.5"
-              />
-              <span>
-                <span className="font-medium">Email this to members</span>
-                <span className="block text-xs text-gray-500">
-                  {form.team_id
-                    ? 'Sends to members of the selected team who have an email address.'
-                    : 'Sends to every active member who has an email address.'}
+            {!editingId && (
+              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer rounded-lg bg-cyan-50 border border-cyan-100 px-3 py-2.5">
+                <input
+                  type="checkbox"
+                  checked={form.send_email}
+                  onChange={(e) => setForm({ ...form, send_email: e.target.checked })}
+                  className="rounded mt-0.5"
+                />
+                <span>
+                  <span className="font-medium">Email this to members</span>
+                  <span className="block text-xs text-gray-500">
+                    {form.team_id
+                      ? 'Sends to members of the selected team who have an email address.'
+                      : 'Sends to every active member who has an email address.'}
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            )}
           </div>
           {saveError && (
             <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{saveError}</div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { nullifyEmptyStrings } from '@/lib/utils'
+import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 import { getUserAccess } from '@/lib/permissions'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to manage events' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const body = nullifyEmptyStrings(await req.json())
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'title', 'description', 'event_type', 'location', 'starts_at', 'ends_at', 'is_recurring', 'recurrence_rule', 'checkin_enabled', 'status'])
   const { data: event, error } = await admin
     .from('events')
     .update(body)

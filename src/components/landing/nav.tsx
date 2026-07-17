@@ -14,7 +14,7 @@ export function LandingNav() {
       <div className="hidden md:flex gap-8 font-medium text-gray-700">
         <a href="#features" className="hover:text-blue-600 transition-colors duration-200">Features</a>
         <a href="#how-it-works" className="hover:text-blue-600 transition-colors duration-200">How It Works</a>
-        <a href="#audience" className="hover:text-blue-600 transition-colors duration-200">Audience</a>
+        <a href="#audience" className="hover:text-blue-600 transition-colors duration-200">Who It Serves</a>
       </div>
 
       {/* Action Buttons */}
@@ -29,7 +29,7 @@ export function LandingNav() {
           href="/signup"
           className="bg-sky-700 text-white px-5 md:px-6 py-2.5 md:py-3 rounded-lg hover:bg-sky-600 transition-colors duration-200 inline-block font-medium"
         >
-          Get Started
+          Start Free
         </Link>
       </div>
     </nav>
