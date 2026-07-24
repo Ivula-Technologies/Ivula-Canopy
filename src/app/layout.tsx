@@ -6,9 +6,34 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Ivula Canopy — The OS for Mission-Driven Organizations',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://canopy.ivulatechnologies.com'),
+  title: {
+    default: 'Nonprofit & Church Management Software | Ivula Canopy',
+    template: '%s | Ivula Canopy',
+  },
   description:
-    'Manage your members, teams, attendance, and engagement from one platform. Built for nonprofits, churches, and community organizations.',
+    'Manage people, volunteers, events, attendance, announcements, and reports in one simple workspace. Built for growing nonprofits, churches, and community organizations.',
+  keywords: [
+    'nonprofit management software',
+    'church management software',
+    'volunteer management software',
+    'attendance tracking software',
+    'community organization management',
+  ],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: '/',
+    siteName: 'Ivula Canopy',
+    title: 'Nonprofit & Church Management Software | Ivula Canopy',
+    description: 'Bring people, programs, attendance, volunteers, and reporting into one organized workspace.',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Nonprofit & Church Management Software | Ivula Canopy',
+    description: 'Bring people, programs, attendance, volunteers, and reporting into one organized workspace.',
+  },
   icons: {
     icon: '/ivula.png',
     shortcut: '/ivula.png',

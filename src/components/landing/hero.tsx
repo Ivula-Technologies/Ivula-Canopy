@@ -13,15 +13,15 @@ export function LandingHero() {
         {/* Left Side */}
         <div>
           <p className="mb-4 inline-flex rounded-full border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-sm">
-            Member and volunteer operations without spreadsheet chaos
+            A simpler way to run people-powered programs
           </p>
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-gray-950 sm:text-5xl md:text-6xl">
-            Run your community organization with less admin work and clearer insight.
+            Stop running your organization from scattered spreadsheets.
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-            Ivula Canopy helps growing U.S. churches, nonprofits, youth programs, and volunteer groups manage people,
-            events, attendance, teams, outreach, and engagement from one easy dashboard.
+            Ivula Canopy gives growing U.S. nonprofits, churches, and community teams one clear place to manage people,
+            volunteers, events, attendance, announcements, and reports.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -29,7 +29,7 @@ export function LandingHero() {
               href="/signup"
               className="inline-flex justify-center rounded-lg bg-sky-700 px-6 py-3 font-semibold text-white shadow-lg shadow-sky-700/20 transition-colors duration-200 hover:bg-sky-600"
             >
-              Start Free
+              Start your free trial
             </Link>
             <a
               href="mailto:hello@ivulatechnologies.com?subject=Ivula%20Canopy%20Demo%20Request"
@@ -38,6 +38,7 @@ export function LandingHero() {
               Request a Demo
             </a>
           </div>
+          <p className="mt-3 text-center text-sm text-gray-500 sm:text-left">14 days free. No credit card required.</p>
 
           <ul className="mt-8 grid gap-3 text-sm text-gray-700 sm:grid-cols-3">
             {proofPoints.map((point) => (
