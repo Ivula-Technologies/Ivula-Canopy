@@ -1,13 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 
 const audiences = [
-  { title: 'Volunteer Groups & Nonprofits', description: 'Coordinate volunteers, attendance, outreach, and leadership reports without juggling disconnected spreadsheets.', image: '/landing/Volunteers.png' },
-  { title: 'Churches & Ministries', description: 'Manage members, ministries, services, events, and care teams from one operational dashboard.', image: '/landing/churches.png' },
-  { title: 'Youth & Membership Organizations', description: 'Keep youth programs, clubs, chapters, and member activities organized as participation grows.', image: '/landing/youthorg.png' },
-  { title: 'Charities & Community Organizations', description: 'Track programs, outreach, donors, volunteers, and community support in one place.', image: '/landing/charities.png' },
-  { title: 'Educational Programs', description: 'Support clubs, cohorts, student groups, and extracurricular events with clear records and reporting.', image: '/landing/school.png' },
+  { title: 'Volunteer Groups & Nonprofits', description: 'Coordinate volunteers, attendance, outreach, and leadership reports without juggling disconnected spreadsheets.', image: '/landing/Volunteers.png', width: 552, height: 369 },
+  { title: 'Churches & Ministries', description: 'Manage members, ministries, services, events, and care teams from one operational dashboard.', image: '/landing/churches.png', width: 315, height: 314 },
+  { title: 'Youth & Membership Organizations', description: 'Keep youth programs, clubs, chapters, and member activities organized as participation grows.', image: '/landing/youthorg.webp', width: 960, height: 640 },
+  { title: 'Charities & Community Organizations', description: 'Track programs, outreach, donors, volunteers, and community support in one place.', image: '/landing/charities.webp', width: 960, height: 698 },
+  { title: 'Educational Programs', description: 'Support clubs, cohorts, student groups, and extracurricular events with clear records and reporting.', image: '/landing/school.png', width: 606, height: 607 },
 ]
 
 export function LandingAudience() {
@@ -38,10 +39,12 @@ export function LandingAudience() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={item.image}
                   alt={item.title}
+                  width={item.width}
+                  height={item.height}
+                  sizes="(min-width: 768px) 40vw, 100vw"
                   className="h-72 w-full rounded-2xl object-cover shadow-lg transition-transform duration-300 hover:scale-[1.02] md:h-80"
                 />
               </motion.div>

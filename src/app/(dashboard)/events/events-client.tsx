@@ -303,6 +303,8 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
               <img
                 src={`/api/events/${qrEvent.id}/qr`}
                 alt="QR Code"
+                width={192}
+                height={192}
                 className="w-48 h-48 border border-gray-200 rounded-lg"
               />
             </div>

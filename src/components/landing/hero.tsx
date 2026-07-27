@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 const proofPoints = [
   'Built for U.S. nonprofits, churches, and community teams',
@@ -54,20 +55,39 @@ export function LandingHero() {
         <div className="relative mx-auto h-[520px] w-full max-w-xl sm:h-[620px] lg:h-[650px]">
           {/* Left Dashboard */}
           <div className="absolute left-0 top-72 z-10 w-[72%] rounded-2xl bg-white p-3 shadow-2xl transition-transform duration-300 hover:scale-[1.02] sm:-left-8 sm:w-[75%]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/landing/participation.png" alt="Program participation dashboard" className="w-full rounded-xl" />
+            <Image
+              src="/landing/participation.png"
+              alt="Program participation dashboard"
+              width={527}
+              height={433}
+              sizes="(min-width: 1024px) 34vw, 72vw"
+              className="w-full rounded-xl"
+            />
           </div>
 
           {/* Main Dashboard */}
           <div className="absolute left-1/2 top-4 z-30 w-[94%] -translate-x-1/2 rounded-2xl bg-white p-3 shadow-2xl transition-transform duration-300 hover:scale-[1.02]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/landing/engagement.png" alt="Engagement dashboard" className="w-full rounded-xl" />
+            <Image
+              src="/landing/engagement.png"
+              alt="Engagement dashboard"
+              width={1072}
+              height={455}
+              sizes="(min-width: 1024px) 45vw, 94vw"
+              priority
+              className="w-full rounded-xl"
+            />
           </div>
 
           {/* Right Dashboard */}
           <div className="absolute right-0 top-72 z-20 w-[72%] rounded-2xl bg-white p-3 shadow-2xl transition-transform duration-300 hover:scale-[1.02] sm:-right-8 sm:w-[75%]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/landing/attendance.png" alt="Attendance dashboard" className="w-full rounded-xl" />
+            <Image
+              src="/landing/attendance.png"
+              alt="Attendance dashboard"
+              width={511}
+              height={424}
+              sizes="(min-width: 1024px) 34vw, 72vw"
+              className="w-full rounded-xl"
+            />
           </div>
         </div>
       </div>
