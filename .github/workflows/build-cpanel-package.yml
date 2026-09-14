@@ -1,0 +1,135 @@
+name: Build cPanel Package
+
+on:
+  push:
+    branches:
+      - claude/blissful-planck-jw0eg3
+    paths:
+      - '.github/workflows/build-cpanel-package.yml'
+  workflow_dispatch:
+
+jobs:
+  build-cpanel-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Enable standalone output for this build
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('next.config.ts')
+          s = p.read_text()
+          s = s.replace("const nextConfig: NextConfig = {", "const nextConfig: NextConfig = {\n  output: 'standalone',")
+          p.write_text(s)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production app
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+          STRIPE_SECRET_KEY: sk_test_placeholder
+          STRIPE_WEBHOOK_SECRET: whsec_placeholder
+          STRIPE_PRICE_ID: price_placeholder
+          NEXT_PUBLIC_APP_URL: https://canopy.ivulatechnologies.com
+          NEXT_PUBLIC_TRIAL_DAYS: '14'
+          RESEND_API_KEY: re_placeholder
+          RESEND_FROM_EMAIL: hello@ivulatechnologies.com
+        run: npm run build
+
+      - name: Assemble cPanel package
+        shell: bash
+        run: |
+          mkdir -p cpanel-package/.next
+          cp -a .next/standalone/. cpanel-package/
+          cp -a .next/static cpanel-package/.next/static
+          cp -a public cpanel-package/public
+          cp .env.example cpanel-package/.env.example
+          cat > cpanel-package/CPANEL_DEPLOYMENT.md <<'EOF'
+          # Ivula Canopy — cPanel Deployment
+
+          This package is a production Next.js standalone server build for `canopy.ivulatechnologies.com`.
+
+          ## Requirements
+          - cPanel hosting with Node.js Application Manager / Setup Node.js App
+          - Node.js 20 or newer
+          - HTTPS enabled on `canopy.ivulatechnologies.com`
+          - Existing Supabase project and database migrations already applied
+
+          ## Upload
+          1. Create a folder such as `ivula-canopy` outside `public_html` if your host allows it.
+          2. Upload this ZIP and extract it into that folder.
+          3. In cPanel, open **Setup Node.js App** or **Application Manager**.
+          4. Create a production Node.js app for `canopy.ivulatechnologies.com`.
+          5. Set the application root to the extracted folder.
+          6. Set the startup file to `server.js`.
+          7. Use Node.js 20+.
+
+          ## Required environment variables
+          Add these in cPanel's Node.js app environment settings. Do not place secrets in public files.
+
+          ```
+          NEXT_PUBLIC_SUPABASE_URL=...
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+          SUPABASE_SERVICE_ROLE_KEY=...
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...
+          STRIPE_SECRET_KEY=...
+          STRIPE_WEBHOOK_SECRET=...
+          STRIPE_PRICE_ID=...
+          NEXT_PUBLIC_APP_URL=https://canopy.ivulatechnologies.com
+          NEXT_PUBLIC_TRIAL_DAYS=14
+          RESEND_API_KEY=...
+          RESEND_FROM_EMAIL=hello@ivulatechnologies.com
+          ```
+
+          ## Stripe webhook
+          Set the Stripe webhook endpoint to:
+
+          `https://canopy.ivulatechnologies.com/api/stripe/webhook`
+
+          ## Supabase authentication
+          In Supabase Auth URL Configuration, set the production site URL to:
+
+          `https://canopy.ivulatechnologies.com`
+
+          Add the callback URL used by the app, including:
+
+          `https://canopy.ivulatechnologies.com/callback`
+
+          ## Security
+          - Never upload a real `.env` file into a publicly served directory.
+          - Keep `SUPABASE_SERVICE_ROLE_KEY`, Stripe secret keys, webhook secret, and Resend API key server-side only.
+          - Keep Supabase RLS enabled.
+          - Use SSL/HTTPS only.
+          - Confirm member accounts cannot access admin routes after deployment.
+
+          ## Start
+          cPanel/Passenger should start `server.js`. If your cPanel provides a terminal instead, from the application root run:
+
+          `node server.js`
+
+          EOF
+
+      - name: Upload cPanel ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ivula-canopy-cpanel
+          path: cpanel-package/
+          if-no-files-found: error
+          retention-days: 7
