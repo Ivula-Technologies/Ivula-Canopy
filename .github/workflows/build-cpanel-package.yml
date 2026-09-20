@@ -126,10 +126,20 @@ jobs:
 
           EOF
 
+      - name: Verify cPanel package contents
+        shell: bash
+        run: |
+          test -f cpanel-package/server.js
+          test -f cpanel-package/.next/BUILD_ID
+          test -d cpanel-package/.next/server
+          test -d cpanel-package/.next/static
+          echo "cPanel package contains the required Next.js production build."
+
       - name: Upload cPanel ZIP artifact
         uses: actions/upload-artifact@v4
         with:
           name: ivula-canopy-cpanel
           path: cpanel-package/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
