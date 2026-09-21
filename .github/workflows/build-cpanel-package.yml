@@ -40,8 +40,9 @@ jobs:
 
       - name: Build production app
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_SUPABASE_URL: https://gqbexgzripypojpvgsbu.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_9tUBZFZjQY_N5pg3Qh7eaQ_WLTwROhz
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_9tUBZFZjQY_N5pg3Qh7eaQ_WLTwROhz
           SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
           STRIPE_SECRET_KEY: sk_test_placeholder
@@ -81,20 +82,22 @@ jobs:
           6. Set the startup file to `server.js`.
           7. Use Node.js 20+.
 
-          ## Required environment variables
-          Add these in cPanel's Node.js app environment settings. Do not place secrets in public files.
+          ## Supabase browser configuration
+          The production browser bundle has already been built with the Canopy Supabase project URL and publishable key.
+
+          ## Runtime environment variables
+          Add the server-side values in cPanel's Node.js application environment settings.
 
           ```
-          NEXT_PUBLIC_SUPABASE_URL=...
-          NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-          SUPABASE_SERVICE_ROLE_KEY=...
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...
-          STRIPE_SECRET_KEY=...
-          STRIPE_WEBHOOK_SECRET=...
-          STRIPE_PRICE_ID=...
+          NEXT_PUBLIC_SUPABASE_URL=https://gqbexgzripypojpvgsbu.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<same public publishable key used at build>
+          SUPABASE_SERVICE_ROLE_KEY=<server-side secret>
+          STRIPE_SECRET_KEY=<server-side secret>
+          STRIPE_WEBHOOK_SECRET=<server-side secret>
+          STRIPE_PRICE_ID=<price id>
           NEXT_PUBLIC_APP_URL=https://canopy.ivulatechnologies.com
           NEXT_PUBLIC_TRIAL_DAYS=14
-          RESEND_API_KEY=...
+          RESEND_API_KEY=<server-side secret>
           RESEND_FROM_EMAIL=hello@ivulatechnologies.com
           ```
 
@@ -108,13 +111,14 @@ jobs:
 
           `https://canopy.ivulatechnologies.com`
 
-          Add the callback URL used by the app, including:
+          Add:
 
           `https://canopy.ivulatechnologies.com/callback`
 
+          to the allowed redirect URLs.
+
           ## Security
-          - Never upload a real `.env` file into a publicly served directory.
-          - Keep `SUPABASE_SERVICE_ROLE_KEY`, Stripe secret keys, webhook secret, and Resend API key server-side only.
+          - Never expose `SUPABASE_SERVICE_ROLE_KEY`, Stripe secret keys, webhook secret, or Resend API key in browser code.
           - Keep Supabase RLS enabled.
           - Use SSL/HTTPS only.
           - Confirm member accounts cannot access admin routes after deployment.
@@ -133,12 +137,17 @@ jobs:
           test -f cpanel-package/.next/BUILD_ID
           test -d cpanel-package/.next/server
           test -d cpanel-package/.next/static
-          echo "cPanel package contains the required Next.js production build."
+          grep -R -q "gqbexgzripypojpvgsbu.supabase.co" cpanel-package/.next/static
+          if grep -R -q "example.supabase.co" cpanel-package/.next/static; then
+            echo "Placeholder Supabase URL still present in browser bundle."
+            exit 1
+          fi
+          echo "cPanel package contains the required production build and real Supabase browser configuration."
 
       - name: Upload cPanel ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ivula-canopy-cpanel
+          name: ivula-canopy-cpanel-supabase-fixed
           path: cpanel-package/
           include-hidden-files: true
           if-no-files-found: error
