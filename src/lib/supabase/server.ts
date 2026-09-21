@@ -6,9 +6,17 @@ import { cache } from 'react'
 // auth.getUser() is only called once per page render, not once per import.
 export const createClient = cache(async () => {
   const cookieStore = await cookies()
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!key) {
+    throw new Error('Missing Supabase publishable key')
+  }
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    key,
     {
       cookies: {
         getAll() {
