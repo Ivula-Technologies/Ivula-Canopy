@@ -15,6 +15,7 @@ export function LandingNav() {
         <a href="#features" className="hover:text-canopy-600 transition-colors duration-200">Features</a>
         <a href="#how-it-works" className="hover:text-canopy-600 transition-colors duration-200">How It Works</a>
         <a href="#audience" className="hover:text-canopy-600 transition-colors duration-200">Who It Serves</a>
+        <a href="#pricing" className="hover:text-canopy-600 transition-colors duration-200">Pricing</a>
         <a href="#faq" className="hover:text-canopy-600 transition-colors duration-200">FAQ</a>
       </div>
 

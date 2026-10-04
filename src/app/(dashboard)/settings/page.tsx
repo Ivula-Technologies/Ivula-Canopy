@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile } from '@/lib/permissions'
 import { SettingsClient } from './settings-client'
+import { planForPriceId } from '@/lib/plans'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
       profile={profile}
       canManageStaff={permissions.manage_staff}
       canManageBilling={permissions.manage_billing}
+      currentPlanId={planForPriceId(org?.stripe_price_id)?.id ?? null}
     />
   )
 }

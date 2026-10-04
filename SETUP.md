@@ -3,7 +3,7 @@
 ## Stack
 - **Frontend/Backend:** Next.js 15 (App Router) → Vercel
 - **Database/Auth:** Supabase (PostgreSQL + RLS)
-- **Billing:** Stripe ($25/mo per org, 14-day trial)
+- **Billing:** Stripe (Starter $29, Growth $59, Pro $119 per org per month; 14-day trial)
 - **Email:** Resend (hello@ivulatechnologies.com)
 
 ---
@@ -23,11 +23,13 @@
 ## Step 2 — Stripe Setup
 
 1. Go to [stripe.com](https://stripe.com) → Dashboard
-2. **Create a Product:**
-   - Products → Add Product
-   - Name: `Ivula Canopy`
-   - Pricing: Recurring, $25.00/month
-   - Copy the **Price ID** (starts with `price_...`) → `STRIPE_PRICE_ID`
+2. **Create a Product with three prices:**
+   - Products → Add Product → Name: `Ivula Canopy`
+   - Add three recurring monthly prices and copy each **Price ID** (starts with `price_...`):
+     - $29.00/month (Starter, up to 150 people) → `STRIPE_PRICE_ID_STARTER`
+     - $59.00/month (Growth, up to 750 people) → `STRIPE_PRICE_ID_GROWTH`
+     - $119.00/month (Pro, unlimited people) → `STRIPE_PRICE_ID_PRO`
+   - Organizations already on the original $25 price keep it with no people limit.
 3. **Get API Keys** → Developers → API Keys:
    - Publishable key → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
    - Secret key → `STRIPE_SECRET_KEY`
@@ -43,6 +45,7 @@
    - Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET`
 5. **Enable Billing Portal:**
    - Settings → Billing → Customer portal → Activate
+   - Under **Subscriptions**, allow customers to switch plans and add all three prices so orgs can upgrade themselves
 
 ---
 
@@ -72,7 +75,9 @@ SUPABASE_SERVICE_ROLE_KEY=         (from Step 1)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=(from Step 2)
 STRIPE_SECRET_KEY=                 (from Step 2)
 STRIPE_WEBHOOK_SECRET=             (from Step 2 — after deploy)
-STRIPE_PRICE_ID=                   (from Step 2)
+STRIPE_PRICE_ID_STARTER=           (from Step 2)
+STRIPE_PRICE_ID_GROWTH=            (from Step 2)
+STRIPE_PRICE_ID_PRO=               (from Step 2)
 NEXT_PUBLIC_APP_URL=               https://your-app.vercel.app (or custom domain)
 NEXT_PUBLIC_TRIAL_DAYS=            14
 RESEND_API_KEY=                    (from Step 3)
