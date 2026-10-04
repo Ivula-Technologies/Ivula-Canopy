@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { Reveal } from './motion'
 
 const audiences = [
   { title: 'Volunteer Groups & Nonprofits', description: 'Coordinate volunteers, attendance, outreach, and leadership reports without juggling disconnected spreadsheets.', image: '/landing/Volunteers.png', width: 552, height: 369 },
@@ -13,15 +14,15 @@ const audiences = [
 
 export function LandingAudience() {
   return (
-    <section id="audience" className="bg-gradient-to-br from-sky-100 via-sky-50 to-white py-20">
+    <section id="audience" className="bg-gradient-to-br from-canopy-100 via-canopy-50 to-white py-20">
       <div className="container mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Who it serves</p>
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-canopy-700">Who it serves</p>
           <h2 className="mt-3 text-4xl font-bold text-gray-900">Made for organizations that bring people together</h2>
           <p className="mt-4 text-lg text-gray-600">
             If your team is responsible for people, programs, service, and impact, Ivula Canopy helps you keep the work visible and manageable.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-12">
           {audiences.map((item, index) => (
@@ -50,10 +51,10 @@ export function LandingAudience() {
               </motion.div>
 
               {/* Text */}
-              <div className="w-full md:w-1/2">
+              <Reveal delay={0.15} className="w-full md:w-1/2">
                 <h3 className="text-3xl font-semibold text-gray-900 md:text-4xl">{item.title}</h3>
                 <p className="mt-4 text-lg leading-8 text-gray-600">{item.description}</p>
-              </div>
+              </Reveal>
             </div>
           ))}
         </div>

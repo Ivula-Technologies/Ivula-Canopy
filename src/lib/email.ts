@@ -50,7 +50,7 @@ export async function sendAnnouncementEmail(
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
       <p style="color:#6b7280; font-size:13px; margin-bottom:4px;">${orgName} announcement</p>
-      <h2 style="color:#1B2559; margin-top:0;">${title}</h2>
+      <h2 style="color:#1b3d33; margin-top:0;">${title}</h2>
       <div style="color:#374151; font-size:15px; line-height:1.6; white-space:pre-line;">${body}</div>
       <hr style="border:none; border-top:1px solid #e5e7eb; margin:24px 0;"/>
       <p style="color:#9ca3af; font-size:12px;">Sent via Ivula Canopy on behalf of ${orgName}.</p>

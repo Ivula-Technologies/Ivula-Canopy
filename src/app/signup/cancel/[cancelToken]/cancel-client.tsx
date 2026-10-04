@@ -51,8 +51,8 @@ export default function CancelClient({ signup, cancelToken }: Props) {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full mx-auto">
         <div className="flex items-center gap-2 mb-6 justify-center">
-          <Image src="/ivula.png" alt="Ivula" width={32} height={32} className="h-8 w-8 object-contain" />
-          <span className="font-semibold text-gray-900 text-lg">Ivula Canopy</span>
+          <Image src="/canopy-mark.svg" alt="Canopy" width={41} height={32} className="h-8 w-auto object-contain" />
+          <span className="font-display font-bold text-canopy-900 text-lg">Canopy</span>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">

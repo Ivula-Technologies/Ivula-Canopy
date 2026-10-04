@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+/* Canopy brand palette, taken from the Canopy logo:
+   forest green background, amber-to-copper canopy, cream wordmark. */
+@theme {
+  --color-canopy-50: #f1f7f4;
+  --color-canopy-100: #dcebe3;
+  --color-canopy-200: #bbd7c9;
+  --color-canopy-300: #8fbba7;
+  --color-canopy-400: #5f9a82;
+  --color-canopy-500: #3f7d66;
+  --color-canopy-600: #2f6552;
+  --color-canopy-700: #265244;
+  --color-canopy-800: #1f4338;
+  --color-canopy-900: #1b3d33;
+  --color-canopy-950: #0f241e;
+
+  --color-sun-50: #fdf8ee;
+  --color-sun-100: #f8ecd2;
+  --color-sun-200: #f0dcb0;
+  --color-sun-300: #ebc27f;
+  --color-sun-400: #e8a548;
+  --color-sun-500: #d9862f;
+  --color-sun-600: #c06d2a;
+  --color-sun-700: #a05524;
+  --color-sun-800: #824424;
+  --color-sun-900: #6b3920;
+  --color-sun-950: #3b1c0e;
+}
+
+@theme inline {
+  --font-display: var(--font-lora), Georgia, "Times New Roman", serif;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -21,6 +53,11 @@
   canvas,
   svg {
     max-width: 100%;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-display);
   }
 
   input,

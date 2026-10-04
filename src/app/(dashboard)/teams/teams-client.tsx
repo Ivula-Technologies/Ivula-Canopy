@@ -14,7 +14,7 @@ import { getInitials } from '@/lib/utils'
 import type { Team } from '@/types'
 
 const TEAM_TYPES = ['department', 'committee', 'ministry', 'project', 'program', 'volunteer_group']
-const TEAM_COLORS = ['#00C4F4', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
+const TEAM_COLORS = ['#2f6552', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16']
 
 type TeamCard = Team & { leader?: { first_name: string; last_name: string } | null; member_count: number }
 type MemberOption = { id: string; first_name: string; last_name: string }
@@ -241,7 +241,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                 Check the members you want in this team. Unchecked members will be removed.
               </p>
               <input
-                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4] mb-3"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-canopy-600 mb-3"
                 placeholder="Search members…"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
@@ -255,7 +255,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                     return (
                       <label
                         key={m.id}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${checked ? 'bg-cyan-50' : 'hover:bg-gray-50'}`}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${checked ? 'bg-canopy-50' : 'hover:bg-gray-50'}`}
                       >
                         <input
                           type="checkbox"
@@ -264,7 +264,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                           className="rounded"
                         />
                         <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-[#1B2559]">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900">
                             {getInitials(`${m.first_name} ${m.last_name}`)}
                           </div>
                           <span className="text-sm font-medium text-gray-800">
@@ -300,7 +300,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                   className="h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: team.color + '20' }}
                 >
-                  <div className="h-5 w-5 rounded-full" style={{ backgroundColor: team.color || '#00C4F4' }} />
+                  <div className="h-5 w-5 rounded-full" style={{ backgroundColor: team.color || '#2f6552' }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">{team.name}</h3>

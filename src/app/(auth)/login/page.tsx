@@ -34,8 +34,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Image src="/ivula.png" alt="Ivula" width={40} height={40} className="h-10 w-10 object-contain" />
-            <span className="text-2xl font-bold text-[#1B2559]">Ivula</span>
+            <Image src="/canopy-mark.svg" alt="Canopy" width={51} height={40} className="h-10 w-auto object-contain" />
+            <span className="font-display text-2xl font-bold text-canopy-900">Canopy</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1">Sign in to your organization</p>
@@ -72,7 +72,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-[#00C4F4] font-medium hover:underline">
+          <Link href="/signup" className="text-canopy-600 font-medium hover:underline">
             Start free trial
           </Link>
         </p>

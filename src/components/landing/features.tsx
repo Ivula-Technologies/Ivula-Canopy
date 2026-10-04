@@ -1,3 +1,5 @@
+import { Reveal, Stagger, StaggerItem } from './motion'
+
 const features = [
   {
     title: 'People Directory',
@@ -37,33 +39,33 @@ const outcomes = [
 
 export function LandingFeatures() {
   return (
-    <section id="features" className="bg-sky-50 px-6 py-20">
+    <section id="features" className="bg-canopy-50 px-6 py-20">
       <div className="mx-auto max-w-7xl">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Built for daily operations</p>
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-canopy-700">Built for daily operations</p>
           <h2 className="mt-3 text-4xl font-bold text-gray-900">Everything your community team needs to stay organized</h2>
           <p className="mt-4 text-lg text-gray-600">
             Replace disconnected spreadsheets and scattered tools with a single workspace for the people, programs, and
             decisions that keep your organization moving.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="mt-10 grid gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-sky-100 sm:grid-cols-3">
+        <Reveal delay={0.1} className="mt-10 grid gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-canopy-100 sm:grid-cols-3">
           {outcomes.map((outcome) => (
-            <div key={outcome} className="rounded-xl bg-sky-50 px-4 py-3 text-center text-sm font-semibold text-sky-900">
+            <div key={outcome} className="rounded-xl bg-canopy-50 px-4 py-3 text-center text-sm font-semibold text-canopy-900">
               {outcome}
             </div>
           ))}
-        </div>
+        </Reveal>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <div key={feature.title} className="rounded-2xl border border-sky-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+            <StaggerItem key={feature.title} hover className="rounded-2xl border border-canopy-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
               <h3 className="text-xl font-semibold text-gray-900">{feature.title}</h3>
               <p className="mt-3 leading-7 text-gray-600">{feature.description}</p>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </div>
     </section>
   )

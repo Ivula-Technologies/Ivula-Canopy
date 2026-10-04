@@ -244,7 +244,7 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
             key={tab.key}
             onClick={() => setFilter(tab.key)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filter === tab.key ? 'bg-[#00C4F4] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              filter === tab.key ? 'bg-canopy-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             {tab.label}

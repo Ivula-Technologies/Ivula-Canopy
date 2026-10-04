@@ -87,8 +87,8 @@ export default function SignupPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <Image src="/ivula.png" alt="Ivula" width={40} height={40} className="h-10 w-10 object-contain" />
-            <span className="text-2xl font-bold text-[#1B2559]">Ivula</span>
+            <Image src="/canopy-mark.svg" alt="Canopy" width={51} height={40} className="h-10 w-auto object-contain" />
+            <span className="font-display text-2xl font-bold text-canopy-900">Canopy</span>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <div className="text-4xl mb-4">📧</div>
@@ -101,7 +101,7 @@ export default function SignupPage() {
               Didn&apos;t receive it? Check your spam folder or{' '}
               <button
                 onClick={() => { setConfirmEmail(false); setStep(2) }}
-                className="text-[#00C4F4] hover:underline"
+                className="text-canopy-600 hover:underline"
               >
                 try again
               </button>.
@@ -117,8 +117,8 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Image src="/ivula.png" alt="Ivula" width={40} height={40} className="h-10 w-10 object-contain" />
-            <span className="text-2xl font-bold text-[#1B2559]">Ivula</span>
+            <Image src="/canopy-mark.svg" alt="Canopy" width={51} height={40} className="h-10 w-auto object-contain" />
+            <span className="font-display text-2xl font-bold text-canopy-900">Canopy</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
             {step === 1 ? 'Start your free trial' : 'Create your account'}
@@ -134,7 +134,7 @@ export default function SignupPage() {
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
-                s <= step ? 'bg-[#00C4F4]' : 'bg-gray-200'
+                s <= step ? 'bg-canopy-600' : 'bg-gray-200'
               }`}
             />
           ))}
@@ -218,7 +218,7 @@ export default function SignupPage() {
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Already have an account?{' '}
-          <Link href="/login" className="text-[#00C4F4] font-medium hover:underline">
+          <Link href="/login" className="text-canopy-600 font-medium hover:underline">
             Sign in
           </Link>
         </p>
