@@ -1,9 +1,10 @@
 import Link from 'next/link'
+import { Reveal } from './motion'
 
 export function LandingCta() {
   return (
     <section className="bg-sky-800 px-6 py-20 text-white">
-      <div className="mx-auto max-w-4xl text-center">
+      <Reveal className="mx-auto max-w-4xl text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-sky-200">Ready when you are</p>
         <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Give your team one place to run the work that matters.</h2>
         <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-sky-100">
@@ -17,7 +18,7 @@ export function LandingCta() {
             Talk to our team
           </a>
         </div>
-      </div>
+      </Reveal>
     </section>
   )
 }

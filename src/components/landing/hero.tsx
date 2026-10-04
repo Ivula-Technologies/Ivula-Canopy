@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { DriftingGlow, Reveal, Stagger, StaggerItem } from './motion'
 
 const proofPoints = [
   'Built for U.S. nonprofits, churches, and community teams',
@@ -9,22 +10,30 @@ const proofPoints = [
 
 export function LandingHero() {
   return (
-    <section className="overflow-hidden bg-gradient-to-br from-sky-50 via-white to-cyan-50 px-6 py-16 sm:py-20 lg:py-24">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_0.98fr]">
+    <section className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-white to-cyan-50 px-6 py-16 sm:py-20 lg:py-24">
+      <DriftingGlow className="-left-32 -top-32 h-96 w-96 bg-sky-300/30" />
+      <DriftingGlow className="-bottom-40 right-0 h-[28rem] w-[28rem] bg-cyan-200/40" distance={-50} duration={18} />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_0.98fr]">
         {/* Left Side */}
-        <div>
+        <Stagger stagger={0.12}>
+          <StaggerItem>
           <p className="mb-4 inline-flex rounded-full border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-sm">
             A simpler way to run people-powered programs
           </p>
+          </StaggerItem>
+          <StaggerItem>
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-gray-950 sm:text-5xl md:text-6xl">
             Stop running your organization from scattered spreadsheets.
           </h1>
+          </StaggerItem>
+          <StaggerItem>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
             Ivula Canopy gives growing U.S. nonprofits, churches, and community teams one clear place to manage people,
             volunteers, events, attendance, announcements, and reports.
           </p>
-
+          </StaggerItem>
+          <StaggerItem>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/signup"
@@ -41,6 +50,8 @@ export function LandingHero() {
           </div>
           <p className="mt-3 text-center text-sm text-gray-500 sm:text-left">14 days free. No credit card required.</p>
 
+          </StaggerItem>
+          <StaggerItem>
           <ul className="mt-8 grid gap-3 text-sm text-gray-700 sm:grid-cols-3">
             {proofPoints.map((point) => (
               <li key={point} className="rounded-xl border border-gray-100 bg-white/80 p-4 shadow-sm">
@@ -49,10 +60,11 @@ export function LandingHero() {
               </li>
             ))}
           </ul>
-        </div>
+          </StaggerItem>
+        </Stagger>
 
         {/* Right Side Dashboard Showcase */}
-        <div className="relative mx-auto h-[520px] w-full max-w-xl sm:h-[620px] lg:h-[650px]">
+        <Reveal delay={0.3} y={48} className="relative mx-auto h-[520px] w-full max-w-xl sm:h-[620px] lg:h-[650px]">
           {/* Left Dashboard */}
           <div className="absolute left-0 top-72 z-10 w-[72%] rounded-2xl bg-white p-3 shadow-2xl transition-transform duration-300 hover:scale-[1.02] sm:-left-8 sm:w-[75%]">
             <Image
@@ -89,7 +101,7 @@ export function LandingHero() {
               className="w-full rounded-xl"
             />
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

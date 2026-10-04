@@ -6,6 +6,7 @@ import { LandingAudience } from '@/components/landing/audience'
 import { LandingFooter } from '@/components/landing/footer'
 import { LandingFaq } from '@/components/landing/faq'
 import { LandingCta } from '@/components/landing/cta'
+import { LandingMotion } from '@/components/landing/motion'
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -56,6 +57,7 @@ const structuredData = {
 
 export default function LandingPage() {
   return (
+    <LandingMotion>
     <div className="min-h-screen bg-white">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <LandingNav />
@@ -67,5 +69,6 @@ export default function LandingPage() {
       <LandingCta />
       <LandingFooter />
     </div>
+    </LandingMotion>
   )
 }
