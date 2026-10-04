@@ -1,5 +1,6 @@
 // Canopy pricing tiers. Every plan includes every feature; plans differ only in
-// how many people (members, volunteers, donors) an organization can keep.
+// how many member records an organization can keep. Shift sign-ups from public
+// links and standalone donor records don't count toward the limit.
 // Stripe price IDs come from env so test and live mode can differ.
 
 export type PlanId = 'starter' | 'growth' | 'pro'
