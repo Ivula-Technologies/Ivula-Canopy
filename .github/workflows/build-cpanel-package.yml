@@ -3,7 +3,7 @@ name: Build cPanel Package
 on:
   push:
     branches:
-      - claude/blissful-planck-jw0eg3
+      - main
     paths:
       - '.github/workflows/build-cpanel-package.yml'
   workflow_dispatch:
