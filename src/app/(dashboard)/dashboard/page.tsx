@@ -58,10 +58,10 @@ export default async function DashboardPage() {
 
   const stats = [
     { label: 'Total Members', value: totalMembers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/members' },
-    { label: 'Active Members', value: activeMembers || 0, icon: UserCheck, color: 'text-[#00C4F4]', bg: 'bg-cyan-50', href: '/members' },
+    { label: 'Active Members', value: activeMembers || 0, icon: UserCheck, color: 'text-canopy-600', bg: 'bg-canopy-50', href: '/members' },
     { label: 'Active Teams', value: totalTeams || 0, icon: UsersRound, color: 'text-purple-600', bg: 'bg-purple-50', href: '/teams' },
     { label: 'New This Month', value: newMembersThisMonth || 0, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', href: '/members' },
-    { label: 'Attendance / Month', value: attendanceThisMonth || 0, icon: CalendarDays, color: 'text-cyan-600', bg: 'bg-cyan-50', href: '/events' },
+    { label: 'Attendance / Month', value: attendanceThisMonth || 0, icon: CalendarDays, color: 'text-canopy-600', bg: 'bg-canopy-50', href: '/events' },
     { label: 'Engagement Rate', value: `${engagementRate}%`, icon: TrendingUp, color: 'text-pink-600', bg: 'bg-pink-50', href: '/reports' },
     { label: 'Volunteer Sign-ups', value: totalSignups || 0, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/events' },
     { label: 'Total Raised', value: `$${totalRaised.toLocaleString()}`, icon: Heart, color: 'text-rose-600', bg: 'bg-rose-50', href: '/donors' },

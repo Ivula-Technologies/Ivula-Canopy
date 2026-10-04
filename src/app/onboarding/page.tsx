@@ -107,19 +107,19 @@ export default function OnboardingPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#00C4F4] border-t-transparent" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-canopy-50 to-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-canopy-600 border-t-transparent" />
       </div>
     )
   }
 
   if (needsOrg) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-white px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-canopy-50 to-white px-4">
         <div className="w-full max-w-md">
           <div className="flex items-center justify-center gap-2 mb-8">
-            <Image src="/ivula.png" alt="Ivula" width={40} height={40} className="h-10 w-10 object-contain" />
-            <span className="text-2xl font-bold text-[#1B2559]">Ivula</span>
+            <Image src="/canopy-mark.svg" alt="Canopy" width={51} height={40} className="h-10 w-auto object-contain" />
+            <span className="font-display text-2xl font-bold text-canopy-900">Canopy</span>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">Set up your organization</h1>
@@ -150,7 +150,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-canopy-50 to-white px-4">
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -160,8 +160,8 @@ export default function OnboardingPage() {
         {/* Welcome card */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
           <div className="flex justify-center mb-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-50">
-              <Icon className="h-8 w-8 text-[#00C4F4]" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-canopy-50">
+              <Icon className="h-8 w-8 text-canopy-600" />
             </div>
           </div>
 
@@ -176,7 +176,7 @@ export default function OnboardingPage() {
               <div
                 key={i}
                 className={`h-2 w-2 rounded-full transition-colors ${
-                  i <= current ? 'bg-[#00C4F4]' : 'bg-gray-200'
+                  i <= current ? 'bg-canopy-600' : 'bg-gray-200'
                 }`}
               />
             ))}

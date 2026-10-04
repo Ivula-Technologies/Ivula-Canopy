@@ -81,7 +81,7 @@ export function PortalClient() {
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center gap-3 mb-8">
-          <Image src="/ivula.png" alt="Ivula" width={32} height={32} className="h-8 w-8 object-contain" />
+          <Image src="/canopy-mark.svg" alt="Canopy" width={41} height={32} className="h-8 w-auto object-contain" />
           <div>
             <h1 className="text-lg font-bold text-gray-900">Volunteer Portal</h1>
             <p className="text-xs text-gray-500">View your shifts and track your hours</p>
@@ -132,7 +132,7 @@ export function PortalClient() {
                     <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-4">
                       <p className="text-sm font-medium text-gray-900">{s.shifts?.title}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{s.shifts?.events?.title}</p>
-                      <p className="text-xs text-[#00C4F4] mt-1 flex items-center gap-1">
+                      <p className="text-xs text-canopy-600 mt-1 flex items-center gap-1">
                         <CalendarDays className="h-3.5 w-3.5" />
                         {fmtDate(s.shifts?.starts_at)}{s.shifts?.starts_at ? ` · ${fmtTime(s.shifts.starts_at)}` : ''}
                         {s.shifts?.ends_at ? ` – ${fmtTime(s.shifts.ends_at)}` : ''}
@@ -167,7 +167,7 @@ export function PortalClient() {
                             <div className="flex items-center gap-2 flex-shrink-0">
                               <input
                                 type="number" min="0" max="24" step="0.5" placeholder="hrs"
-                                className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
+                                className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-canopy-600"
                                 value={hoursInput[s.id] || ''}
                                 onChange={(e) => setHoursInput((prev) => ({ ...prev, [s.id]: e.target.value }))}
                               />

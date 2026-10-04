@@ -27,16 +27,16 @@ export function LandingFaq() {
     <section id="faq" className="bg-white px-6 py-20">
       <div className="mx-auto max-w-4xl">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Questions, answered</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-canopy-700">Questions, answered</p>
           <h2 className="mt-3 text-4xl font-bold text-gray-900">Software should make your work feel lighter</h2>
           <p className="mt-4 text-lg text-gray-600">Here is what to expect when you bring your everyday operations into Canopy.</p>
         </Reveal>
-        <Reveal delay={0.1} className="mt-10 divide-y divide-sky-100 rounded-2xl border border-sky-100 bg-sky-50/50 px-6">
+        <Reveal delay={0.1} className="mt-10 divide-y divide-canopy-100 rounded-2xl border border-canopy-100 bg-canopy-50/50 px-6">
           {questions.map((item) => (
             <details key={item.question} className="group py-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-lg font-semibold text-gray-900">
                 {item.question}
-                <span className="text-2xl font-normal text-sky-700 transition-transform group-open:rotate-45">+</span>
+                <span className="text-2xl font-normal text-canopy-700 transition-transform group-open:rotate-45">+</span>
               </summary>
               <p className="max-w-3xl pt-3 leading-7 text-gray-600">{item.answer}</p>
             </details>

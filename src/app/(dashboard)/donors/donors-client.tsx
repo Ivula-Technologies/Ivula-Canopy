@@ -207,7 +207,7 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
       <div className="relative max-w-sm mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
-          className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
+          className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-canopy-600"
           placeholder="Search donors..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -288,7 +288,7 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
                             <Link
                               href={`/donors/receipt/${don.id}`}
                               target="_blank"
-                              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-[#00C4F4]"
+                              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-canopy-600"
                               title="View receipt"
                             >
                               <FileText className="h-3.5 w-3.5" /> Receipt

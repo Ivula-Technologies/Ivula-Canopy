@@ -14,10 +14,10 @@ const audiences = [
 
 export function LandingAudience() {
   return (
-    <section id="audience" className="bg-gradient-to-br from-sky-100 via-sky-50 to-white py-20">
+    <section id="audience" className="bg-gradient-to-br from-canopy-100 via-canopy-50 to-white py-20">
       <div className="container mx-auto max-w-7xl px-6 lg:px-10">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Who it serves</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-canopy-700">Who it serves</p>
           <h2 className="mt-3 text-4xl font-bold text-gray-900">Made for organizations that bring people together</h2>
           <p className="mt-4 text-lg text-gray-600">
             If your team is responsible for people, programs, service, and impact, Ivula Canopy helps you keep the work visible and manageable.

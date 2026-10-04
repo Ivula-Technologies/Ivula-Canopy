@@ -101,7 +101,7 @@ export function SignupClient({ token, event, shifts, orgName }: Props) {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Image src="/ivula.png" alt="Ivula" width={32} height={32} className="h-8 w-8 object-contain" />
+          <Image src="/canopy-mark.svg" alt="Canopy" width={41} height={32} className="h-8 w-auto object-contain" />
           <span className="text-sm text-gray-500">{orgName}</span>
         </div>
 
@@ -112,13 +112,13 @@ export function SignupClient({ token, event, shifts, orgName }: Props) {
           <div className="flex flex-wrap gap-3 text-sm text-gray-500">
             {event.starts_at && (
               <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4 text-[#00C4F4]" />
+                <Clock className="h-4 w-4 text-canopy-600" />
                 {fmt(event.starts_at)}
               </span>
             )}
             {event.location && (
               <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-[#00C4F4]" />
+                <MapPin className="h-4 w-4 text-canopy-600" />
                 {event.location}
               </span>
             )}
@@ -149,7 +149,7 @@ export function SignupClient({ token, event, shifts, orgName }: Props) {
                       key={shift.id}
                       className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
                         full ? 'opacity-50 cursor-not-allowed border-gray-100 bg-gray-50' :
-                        selected ? 'border-[#00C4F4] bg-cyan-50' : 'border-gray-200 hover:border-gray-300'
+                        selected ? 'border-canopy-600 bg-canopy-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <input
@@ -159,7 +159,7 @@ export function SignupClient({ token, event, shifts, orgName }: Props) {
                         disabled={full}
                         checked={selected}
                         onChange={() => setSelectedShiftId(shift.id)}
-                        className="mt-0.5 accent-[#00C4F4]"
+                        className="mt-0.5 accent-canopy-600"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">{shift.title}</p>

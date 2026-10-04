@@ -53,7 +53,7 @@ export function ReceiptClient({ donation, org }: Props) {
         <div className="print:hidden flex items-center justify-between mb-6">
           <Link
             href="/donors"
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#00C4F4] transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-canopy-600 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Donors
           </Link>
@@ -68,10 +68,10 @@ export function ReceiptClient({ donation, org }: Props) {
           <div className="border-b border-gray-100 pb-6 mb-6">
             <h1 className="text-3xl font-bold text-gray-900">{org.name}</h1>
             {org.address && <p className="text-sm text-gray-500 mt-1">{org.address}</p>}
-            {org.website && <p className="text-sm text-[#00C4F4] mt-0.5">{org.website}</p>}
+            {org.website && <p className="text-sm text-canopy-600 mt-0.5">{org.website}</p>}
           </div>
 
-          <p className="text-xs font-semibold tracking-wide uppercase text-[#00C4F4] mb-1">
+          <p className="text-xs font-semibold tracking-wide uppercase text-canopy-600 mb-1">
             Official Donation Receipt
           </p>
 
@@ -120,7 +120,7 @@ export function ReceiptClient({ donation, org }: Props) {
             <p>This receipt may be used for tax purposes.</p>
             {org.website && <p className="mt-1">{org.website}</p>}
             <div className="flex items-center gap-1.5 mt-4">
-              <Image src="/ivula.png" alt="Ivula" width={16} height={16} className="h-4 w-4 object-contain" />
+              <Image src="/canopy-mark.svg" alt="Canopy" width={20} height={16} className="h-4 w-auto object-contain" />
               <span>Powered by Ivula Canopy</span>
             </div>
           </div>

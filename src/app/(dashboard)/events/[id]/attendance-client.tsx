@@ -183,7 +183,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           </div>
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-[#00C4F4]">{attendance.length}</p>
+              <p className="text-2xl font-bold text-canopy-600">{attendance.length}</p>
               <p className="text-xs text-gray-500">of {members.length} attended</p>
             </div>
             {totalHours > 0 && (
@@ -195,7 +195,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           </div>
         </div>
         <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-[#00C4F4] rounded-full transition-all"
+          <div className="h-full bg-canopy-600 rounded-full transition-all"
             style={{ width: members.length ? `${(attendance.length / members.length) * 100}%` : '0%' }} />
         </div>
       </div>
@@ -204,13 +204,13 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setTab('attendance')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'attendance' ? 'bg-[#00C4F4] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'attendance' ? 'bg-canopy-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
         >
           Attendance
         </button>
         <button
           onClick={switchToShifts}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'shifts' ? 'bg-[#00C4F4] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'shifts' ? 'bg-canopy-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
         >
           Volunteer Sign-ups
         </button>
@@ -223,7 +223,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
             <div className="relative flex-1 min-w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
-                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
+                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-canopy-600"
                 placeholder="Search members..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -242,7 +242,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
               const record = attendance.find((a) => a.member_id === member.id)
               return (
                 <div key={member.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-[#1B2559]">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-sm font-bold text-canopy-900">
                     {getInitials(`${member.first_name} ${member.last_name}`)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -253,7 +253,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                     <div className="flex items-center gap-1.5">
                       <input
                         type="number" min="0" max="24" step="0.5" placeholder="hrs"
-                        className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#00C4F4]"
+                        className="w-16 rounded-md border border-gray-300 px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-canopy-600"
                         defaultValue={record?.hours ?? ''}
                         onBlur={(e) => {
                           const val = e.target.value ? parseFloat(e.target.value) : null
@@ -266,13 +266,13 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                   {!canEdit && checked && record?.hours && (
                     <span className="text-xs text-emerald-600 font-medium">{record.hours}h</span>
                   )}
-                  {checked && <span className="text-xs text-[#00C4F4] font-medium">Present</span>}
+                  {checked && <span className="text-xs text-canopy-600 font-medium">Present</span>}
                   {canEdit && (
                     <button
                       onClick={() => toggle(member.id, checked)}
                       disabled={isSaving}
                       className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                        checked ? 'bg-[#00C4F4] border-[#00C4F4] text-white hover:bg-[#00A8D8]' : 'border-gray-300 text-gray-300 hover:border-[#00C4F4] hover:text-[#00C4F4]'
+                        checked ? 'bg-canopy-600 border-canopy-600 text-white hover:bg-canopy-700' : 'border-gray-300 text-gray-300 hover:border-canopy-600 hover:text-canopy-600'
                       }`}
                     >
                       {isSaving ? <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <Check className="h-4 w-4" />}
@@ -289,9 +289,9 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       {tab === 'shifts' && (
         <div className="space-y-4">
           {/* Signup link card */}
-          <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-4">
-            <p className="text-sm font-medium text-cyan-800 mb-2">Public volunteer sign-up link</p>
-            <p className="text-xs text-cyan-600 break-all mb-3">{signupUrl}</p>
+          <div className="bg-canopy-50 border border-canopy-200 rounded-xl p-4">
+            <p className="text-sm font-medium text-canopy-800 mb-2">Public volunteer sign-up link</p>
+            <p className="text-xs text-canopy-600 break-all mb-3">{signupUrl}</p>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={copyLink}>
                 <Copy className="h-4 w-4" /> {copiedLink ? 'Copied!' : 'Copy link'}
@@ -363,7 +363,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                     <div className="divide-y divide-gray-50">
                       {confirmed.map((r) => (
                         <div key={r.id} className="flex items-center gap-3 px-4 py-2.5">
-                          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-[#1B2559]">
+                          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900">
                             {getInitials(`${r.first_name} ${r.last_name}`)}
                           </div>
                           <div className="flex-1 min-w-0">

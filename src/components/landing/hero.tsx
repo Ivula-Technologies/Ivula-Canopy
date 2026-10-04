@@ -10,25 +10,25 @@ const proofPoints = [
 
 export function LandingHero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-white to-cyan-50 px-6 py-16 sm:py-20 lg:py-24">
-      <DriftingGlow className="-left-32 -top-32 h-96 w-96 bg-sky-300/30" />
-      <DriftingGlow className="-bottom-40 right-0 h-[28rem] w-[28rem] bg-cyan-200/40" distance={-50} duration={18} />
+    <section className="relative overflow-hidden bg-gradient-to-br from-canopy-950 via-canopy-900 to-canopy-700 px-6 py-16 sm:py-20 lg:py-24">
+      <DriftingGlow className="-left-32 -top-32 h-96 w-96 bg-sun-400/20" />
+      <DriftingGlow className="-bottom-40 right-0 h-[28rem] w-[28rem] bg-canopy-400/30" distance={-50} duration={18} />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_0.98fr]">
         {/* Left Side */}
         <Stagger stagger={0.12}>
           <StaggerItem>
-          <p className="mb-4 inline-flex rounded-full border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-sm">
+          <p className="mb-4 inline-flex rounded-full border border-sun-300/30 bg-white/5 px-4 py-2 text-sm font-semibold text-sun-200 shadow-sm">
             A simpler way to run people-powered programs
           </p>
           </StaggerItem>
           <StaggerItem>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-gray-950 sm:text-5xl md:text-6xl">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight text-sun-100 sm:text-5xl md:text-6xl">
             Stop running your organization from scattered spreadsheets.
           </h1>
           </StaggerItem>
           <StaggerItem>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-canopy-100">
             Ivula Canopy gives growing U.S. nonprofits, churches, and community teams one clear place to manage people,
             volunteers, events, attendance, announcements, and reports.
           </p>
@@ -37,25 +37,25 @@ export function LandingHero() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/signup"
-              className="inline-flex justify-center rounded-lg bg-sky-700 px-6 py-3 font-semibold text-white shadow-lg shadow-sky-700/20 transition-colors duration-200 hover:bg-sky-600"
+              className="inline-flex justify-center rounded-lg bg-sun-400 px-6 py-3 font-semibold text-canopy-950 shadow-lg shadow-sun-500/30 transition-colors duration-200 hover:bg-sun-300"
             >
               Start your free trial
             </Link>
             <a
               href="mailto:hello@ivulatechnologies.com?subject=Ivula%20Canopy%20Demo%20Request"
-              className="inline-flex justify-center rounded-lg border border-sky-600 bg-white px-6 py-3 font-semibold text-sky-700 transition-colors duration-200 hover:bg-sky-50"
+              className="inline-flex justify-center rounded-lg border border-sun-200/60 bg-transparent px-6 py-3 font-semibold text-sun-100 transition-colors duration-200 hover:bg-white/10"
             >
               Request a Demo
             </a>
           </div>
-          <p className="mt-3 text-center text-sm text-gray-500 sm:text-left">14 days free. No credit card required.</p>
+          <p className="mt-3 text-center text-sm text-canopy-200 sm:text-left">14 days free. No credit card required.</p>
 
           </StaggerItem>
           <StaggerItem>
-          <ul className="mt-8 grid gap-3 text-sm text-gray-700 sm:grid-cols-3">
+          <ul className="mt-8 grid gap-3 text-sm text-canopy-50 sm:grid-cols-3">
             {proofPoints.map((point) => (
-              <li key={point} className="rounded-xl border border-gray-100 bg-white/80 p-4 shadow-sm">
-                <span className="mb-2 block h-1.5 w-8 rounded-full bg-sky-500" />
+              <li key={point} className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm">
+                <span className="mb-2 block h-1.5 w-8 rounded-full bg-sun-400" />
                 {point}
               </li>
             ))}

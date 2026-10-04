@@ -15,7 +15,7 @@ const structuredData = {
       '@type': 'Organization',
       name: 'Ivula Technologies',
       url: process.env.NEXT_PUBLIC_APP_URL || 'https://canopy.ivulatechnologies.com',
-      logo: '/ivula.png',
+      logo: '/canopy-logo.png',
     },
     {
       '@type': 'SoftwareApplication',

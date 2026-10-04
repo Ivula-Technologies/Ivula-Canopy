@@ -149,7 +149,7 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
               Pin this announcement
             </label>
             {!editingId && (
-              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer rounded-lg bg-cyan-50 border border-cyan-100 px-3 py-2.5">
+              <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer rounded-lg bg-canopy-50 border border-canopy-100 px-3 py-2.5">
                 <input
                   type="checkbox"
                   checked={form.send_email}

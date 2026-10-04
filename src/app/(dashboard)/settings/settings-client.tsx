@@ -323,7 +323,7 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
               <div className="divide-y divide-gray-100">
                 {roles.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 py-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-100 text-[#1B2559] flex-shrink-0">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-canopy-100 text-canopy-900 flex-shrink-0">
                       <ShieldCheck className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -462,7 +462,7 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
                 <div className="divide-y divide-gray-100">
                   {staff.map((s) => (
                     <div key={s.id} className="flex items-center gap-3 py-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-xs font-bold text-[#1B2559] flex-shrink-0">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900 flex-shrink-0">
                         {s.full_name ? getInitials(s.full_name) : s.email[0].toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">

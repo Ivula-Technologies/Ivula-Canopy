@@ -13,7 +13,7 @@ export function LandingHowItWorks() {
     <section id="how-it-works" className="bg-slate-50 px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-sky-700">Simple rollout</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-canopy-700">Simple rollout</p>
           <h2 className="mt-3 text-4xl font-bold text-gray-900">Launch without a complicated implementation project</h2>
           <p className="mt-4 text-lg text-gray-600">
             Ivula Canopy is designed for lean teams that need practical software they can adopt quickly.
@@ -23,7 +23,7 @@ export function LandingHowItWorks() {
         <Stagger stagger={0.12} className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
           {steps.map((step) => (
             <StaggerItem key={step.number} hover className="rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-gray-100">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-800 text-lg font-bold text-white">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sun-400 text-lg font-bold text-canopy-950">
                 {step.number}
               </div>
               <h3 className="mt-4 text-lg font-semibold text-gray-900">{step.title}</h3>

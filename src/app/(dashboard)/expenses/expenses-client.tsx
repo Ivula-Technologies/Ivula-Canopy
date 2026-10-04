@@ -13,7 +13,7 @@ const CATEGORIES = ['program', 'operations', 'staffing', 'travel', 'supplies', '
 const CATEGORY_COLORS: Record<string, string> = {
   program: 'bg-blue-100 text-blue-700',
   operations: 'bg-purple-100 text-purple-700',
-  staffing: 'bg-cyan-100 text-cyan-700',
+  staffing: 'bg-canopy-100 text-canopy-700',
   travel: 'bg-orange-100 text-orange-700',
   supplies: 'bg-emerald-100 text-emerald-700',
   other: 'bg-gray-100 text-gray-700',
@@ -115,7 +115,7 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4 col-span-2 sm:col-span-1">
           <p className="text-xs text-gray-500 mb-1">Filtered Total</p>
-          <p className="text-2xl font-bold text-[#00C4F4]">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-canopy-600">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
 
@@ -123,9 +123,9 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]" placeholder="Search expenses..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-canopy-600" placeholder="Search expenses..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <select className="rounded-lg border border-gray-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+        <select className="rounded-lg border border-gray-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-canopy-600" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="all">All categories</option>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
         </select>
@@ -213,7 +213,7 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
               <Input label="Amount (USD) *" type="number" min="0" step="0.01" placeholder="0.00" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select className="w-full rounded-lg border border-gray-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                <select className="w-full rounded-lg border border-gray-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-canopy-600" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
                 </select>
               </div>
@@ -224,7 +224,7 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Link to Event (optional)</label>
-              <select className="w-full rounded-lg border border-gray-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00C4F4]" value={form.event_id} onChange={(e) => setForm({ ...form, event_id: e.target.value })}>
+              <select className="w-full rounded-lg border border-gray-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-canopy-600" value={form.event_id} onChange={(e) => setForm({ ...form, event_id: e.target.value })}>
                 <option value="">— No event —</option>
                 {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
               </select>
