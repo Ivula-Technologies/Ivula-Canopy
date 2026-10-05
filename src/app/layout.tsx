@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Lora } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { MetaPixel } from '@/components/analytics/meta-pixel'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'] })
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geist.className} antialiased bg-gray-50 text-gray-900`}>
         {children}
         <SpeedInsights />
+        <MetaPixel />
       </body>
     </html>
   )

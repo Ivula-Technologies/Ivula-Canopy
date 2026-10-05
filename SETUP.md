@@ -82,6 +82,7 @@ STRIPE_PRICE_ID_GROWTH=            (from Step 2)
 STRIPE_PRICE_ID_PRO=               (from Step 2)
 NEXT_PUBLIC_APP_URL=               https://your-app.vercel.app (or custom domain)
 NEXT_PUBLIC_TRIAL_DAYS=            14
+NEXT_PUBLIC_META_PIXEL_ID=         (optional, Meta Events Manager → your pixel's dataset ID)
 RESEND_API_KEY=                    (from Step 3)
 RESEND_FROM_EMAIL=                 hello@ivulatechnologies.com
 ```
