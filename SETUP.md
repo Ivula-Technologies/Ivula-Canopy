@@ -30,7 +30,8 @@
      - $59.00/month (Growth, up to 750 people) → `STRIPE_PRICE_ID_GROWTH`
      - $119.00/month (Pro, unlimited people) → `STRIPE_PRICE_ID_PRO`
    - Organizations already on the original $25 price keep it with no people limit.
-   - Founding-customer discount: Products → Coupons → create a 50% off coupon (duration: repeating, 12 months), then add a customer-facing promotion code such as `FOUNDING50`. Checkout accepts promotion codes.
+   - Live price IDs (created 2026-10-05): Starter `price_1UN6xNCDWpOZW8BFX1vooCKr`, Growth `price_1UMucNCDWpOZW8BFmczyxbsr`, Pro `price_1UN6xTCDWpOZW8BFYgm6L0Q8`.
+   - Founding-customer discount: the live promotion code `FOUNDING50` (50% off for 12 months, first 10 redemptions) already exists. Checkout accepts promotion codes.
 3. **Get API Keys** → Developers → API Keys:
    - Publishable key → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
    - Secret key → `STRIPE_SECRET_KEY`
