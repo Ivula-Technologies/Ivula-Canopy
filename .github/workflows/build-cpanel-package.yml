@@ -52,6 +52,7 @@ jobs:
           STRIPE_PRICE_ID_PRO: price_placeholder
           NEXT_PUBLIC_APP_URL: https://canopy.ivulatechnologies.com
           NEXT_PUBLIC_TRIAL_DAYS: '14'
+          NEXT_PUBLIC_META_PIXEL_ID: ${{ vars.NEXT_PUBLIC_META_PIXEL_ID }}
           RESEND_API_KEY: re_placeholder
           RESEND_FROM_EMAIL: hello@ivulatechnologies.com
         run: npm run build

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { slugify } from '@/lib/utils'
+import { trackMetaEvent } from '@/lib/meta-pixel'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -71,6 +72,9 @@ export default function SignupPage() {
       setLoading(false)
       return
     }
+
+    // The organization now exists on a free trial, so count it as a trial signup for ads
+    trackMetaEvent('StartTrial', { value: 0, currency: 'USD' })
 
     // If email confirmation is required (no session returned), show confirmation screen
     if (!authData.session) {
