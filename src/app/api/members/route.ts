@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { nullifyEmptyStrings } from '@/lib/utils'
 import { getUserAccess } from '@/lib/permissions'
 import { enforceSubscription } from '@/lib/subscription-guard'
+import { enforcePeopleLimit } from '@/lib/plan-guard'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
 
   const admin = await createServiceClient()
   const body = nullifyEmptyStrings(await req.json())
+
+  const overLimit = await enforcePeopleLimit(admin, user.id)
+  if (overLimit) return overLimit
   const { data: member, error } = await admin
     .from('members')
     .insert(body)

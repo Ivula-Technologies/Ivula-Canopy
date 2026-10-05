@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { getSubscriptionLabel, formatDate, getInitials } from '@/lib/utils'
 import { PERMISSION_META, PERMISSION_KEYS, type PermissionKey } from '@/lib/permissions'
 import type { Organization, Profile } from '@/types'
+import { PLANS, getPlan, formatPeopleLimit, type PlanId } from '@/lib/plans'
 
 interface StaffMember {
   id: string
@@ -43,6 +44,7 @@ interface Props {
   profile: Profile
   canManageStaff: boolean
   canManageBilling: boolean
+  currentPlanId: PlanId | null
 }
 
 const emptyRoleForm = {
@@ -57,7 +59,7 @@ const emptyRoleForm = {
   manage_staff: false,
 }
 
-export function SettingsClient({ org, profile, canManageStaff, canManageBilling }: Props) {
+export function SettingsClient({ org, profile, canManageStaff, canManageBilling, currentPlanId }: Props) {
   const [orgForm, setOrgForm] = useState({
     name: org.name,
     description: org.description || '',
@@ -229,11 +231,15 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
     }
   }
 
-  async function startSubscription() {
+  async function startSubscription(plan: PlanId) {
     setBillingLoading(true)
     setBillingError('')
     try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.url) throw new Error(data.error || 'Could not start checkout')
       window.location.href = data.url
@@ -282,7 +288,11 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
             <CardContent>
               <div className="flex items-center justify-between mb-4 p-4 rounded-lg bg-gray-50">
                 <div>
-                  <p className="font-medium text-gray-900">Current plan</p>
+                  <p className="font-medium text-gray-900">
+                    {org.subscription_status === 'active' && getPlan(currentPlanId)
+                      ? `${getPlan(currentPlanId)!.name} plan`
+                      : 'Current plan'}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {org.subscription_status === 'active'
                       ? `Renews ${org.current_period_end ? formatDate(org.current_period_end) : 'monthly'}`
@@ -301,7 +311,27 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling 
               {org.subscription_status === 'active' ? (
                 <Button variant="outline" onClick={manageSubscription} loading={billingLoading}>Manage Subscription</Button>
               ) : (
-                <Button onClick={startSubscription} loading={billingLoading}>Upgrade to Paid Plan</Button>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {PLANS.map((plan) => (
+                    <div key={plan.id} className="flex flex-col rounded-lg border border-gray-200 p-4">
+                      <p className="font-semibold text-gray-900">{plan.name}</p>
+                      <p className="mt-1 text-2xl font-bold text-gray-900">
+                        ${plan.monthlyPrice}
+                        <span className="text-sm font-normal text-gray-500">/mo</span>
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">{formatPeopleLimit(plan)}</p>
+                      <Button
+                        className="mt-4"
+                        size="sm"
+                        variant={plan.id === 'growth' ? 'default' : 'outline'}
+                        onClick={() => startSubscription(plan.id)}
+                        loading={billingLoading}
+                      >
+                        Choose {plan.name}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

@@ -18,7 +18,7 @@ const questions = [
   },
   {
     question: 'Can we try Canopy before committing?',
-    answer: 'Yes. Start with a 14-day free trial. No credit card is required.',
+    answer: 'Yes. Start with a 14-day free trial. No credit card is required. After that, plans start at $29 a month.',
   },
 ]
 

@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createCheckoutSession, createStripeCustomer } from '@/lib/stripe'
+import { isPlanId, priceIdForPlan } from '@/lib/plans'
 
 export async function POST(_req: NextRequest) {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json({ error: 'Billing is not configured (missing Stripe secret key).' }, { status: 500 })
     }
-    if (!process.env.STRIPE_PRICE_ID) {
-      return NextResponse.json({ error: 'Billing is not configured (missing price ID).' }, { status: 500 })
+    const body = await _req.json().catch(() => ({}))
+    const plan = isPlanId(body?.plan) ? body.plan : 'starter'
+    const priceId = priceIdForPlan(plan)
+    if (!priceId) {
+      return NextResponse.json({ error: `Billing is not configured (missing price ID for the ${plan} plan).` }, { status: 500 })
     }
 
     const supabase = await createClient()
@@ -37,7 +41,7 @@ export async function POST(_req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(_req.url).origin
     const session = await createCheckoutSession({
       customerId,
-      priceId: process.env.STRIPE_PRICE_ID,
+      priceId,
       orgId: org.id,
       successUrl: `${appUrl}/settings?billing=success`,
       cancelUrl: `${appUrl}/settings?billing=cancelled`,

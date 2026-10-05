@@ -47,7 +47,9 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
           STRIPE_SECRET_KEY: sk_test_placeholder
           STRIPE_WEBHOOK_SECRET: whsec_placeholder
-          STRIPE_PRICE_ID: price_placeholder
+          STRIPE_PRICE_ID_STARTER: price_placeholder
+          STRIPE_PRICE_ID_GROWTH: price_placeholder
+          STRIPE_PRICE_ID_PRO: price_placeholder
           NEXT_PUBLIC_APP_URL: https://canopy.ivulatechnologies.com
           NEXT_PUBLIC_TRIAL_DAYS: '14'
           RESEND_API_KEY: re_placeholder
@@ -94,7 +96,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY=<server-side secret>
           STRIPE_SECRET_KEY=<server-side secret>
           STRIPE_WEBHOOK_SECRET=<server-side secret>
-          STRIPE_PRICE_ID=<price id>
+          STRIPE_PRICE_ID_STARTER=price_1UN6xNCDWpOZW8BFX1vooCKr
+          STRIPE_PRICE_ID_GROWTH=price_1UMucNCDWpOZW8BFmczyxbsr
+          STRIPE_PRICE_ID_PRO=price_1UN6xTCDWpOZW8BFYgm6L0Q8
           NEXT_PUBLIC_APP_URL=https://canopy.ivulatechnologies.com
           NEXT_PUBLIC_TRIAL_DAYS=14
           RESEND_API_KEY=<server-side secret>

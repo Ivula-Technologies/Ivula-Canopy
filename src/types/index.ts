@@ -15,6 +15,7 @@ export interface Organization {
   address?: string
   stripe_customer_id?: string
   stripe_subscription_id?: string
+  stripe_price_id?: string
   subscription_status: SubscriptionStatus
   trial_ends_at?: string
   current_period_end?: string
