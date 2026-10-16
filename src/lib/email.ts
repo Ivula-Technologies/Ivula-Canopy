@@ -93,3 +93,29 @@ export async function sendEventReminderEmail(
     `,
   })
 }
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+}
+
+export async function sendTrialReminderEmail(to: string, orgName: string, kind: 'three_days' | 'ended') {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://canopy.ivulatechnologies.com'
+  const name = escapeHtml(orgName)
+  const intro =
+    kind === 'three_days'
+      ? `Your Canopy free trial for <strong>${name}</strong> ends in 3 days. After that, adding or editing members, events and donations is paused until you choose a plan. Everything you've entered stays safe.`
+      : `Your Canopy free trial for <strong>${name}</strong> has ended, so adding or editing data is paused. Everything you've entered is still there, and it unlocks the moment you choose a plan.`
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: kind === 'three_days' ? 'Your Canopy trial ends in 3 days' : 'Your Canopy trial has ended',
+    html: `
+      <p>Hi,</p>
+      <p>${intro}</p>
+      <p>Plans start at $29/month (Starter, up to 150 people). Growth is $59 and Pro is $119.</p>
+      <p><a href="${appUrl}/settings">Choose a plan →</a></p>
+      <p>Questions? Just reply to this email.</p>
+      <p>— The Ivula Canopy Team</p>
+    `,
+  })
+}

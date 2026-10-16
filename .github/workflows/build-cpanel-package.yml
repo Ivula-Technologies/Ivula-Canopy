@@ -116,6 +116,10 @@ jobs:
 
           `curl -fsS -H "Authorization: Bearer YOUR_CRON_SECRET" https://canopy.ivulatechnologies.com/api/cron/shift-reminders > /dev/null`
 
+          Add a second daily job that emails org admins before and when their trial ends:
+
+          `curl -fsS -H "Authorization: Bearer YOUR_CRON_SECRET" https://canopy.ivulatechnologies.com/api/cron/trial-reminders > /dev/null`
+
           ## Uptime monitoring
           `https://canopy.ivulatechnologies.com/api/health` returns 200 when the settings
           are complete and the database answers, and 503 with the names of any missing
