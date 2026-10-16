@@ -31,7 +31,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         id: user.id,
         email: user.email!,
         full_name: (user.user_metadata?.full_name as string) || '',
-        role: (user.user_metadata?.role as string) || 'org_admin',
+        // user_metadata is editable by the user, so never take super_admin from it.
+        role: ['org_admin', 'org_leader', 'member'].includes(user.user_metadata?.role as string)
+          ? (user.user_metadata?.role as string)
+          : 'org_admin',
       })
       .select()
       .single()

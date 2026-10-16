@@ -13,6 +13,20 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServiceClient()
 
+    // This route runs right after sign-up, often before the email is
+    // confirmed, so there is no session to check. Instead make sure the
+    // account is real, the email matches it, and it doesn't already belong
+    // to an organization, so nobody can pull another user into a new org.
+    const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(adminId)
+    if (authUserError || !authUser?.user || authUser.user.email?.toLowerCase() !== String(adminEmail).toLowerCase()) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 400 })
+    }
+    const { data: currentProfile } = await supabase
+      .from('profiles').select('organization_id').eq('id', adminId).maybeSingle()
+    if (currentProfile?.organization_id) {
+      return NextResponse.json({ error: 'This account already belongs to an organization' }, { status: 409 })
+    }
+
     // Ensure unique slug
     let slug = slugify(name)
     const { data: existing } = await supabase
