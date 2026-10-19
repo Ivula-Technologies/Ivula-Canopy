@@ -17,7 +17,9 @@ import {
   Heart,
   CheckSquare,
   Receipt,
+  CalendarClock,
 } from 'lucide-react'
+import { BOOKING_URL } from '@/lib/booking'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -138,6 +140,16 @@ export function Sidebar({ org, profile }: SidebarProps) {
 
         {/* Bottom: profile + settings */}
         <div className="border-t border-canopy-800 px-3 py-3 space-y-0.5">
+          <a
+            href={BOOKING_URL}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-canopy-200 hover:bg-canopy-800 hover:text-white transition-colors"
+          >
+            <CalendarClock className="h-4 w-4" />
+            Book a help call
+          </a>
           <Link
             href="/settings"
             onClick={() => setOpen(false)}

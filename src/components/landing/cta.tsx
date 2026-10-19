@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Reveal } from './motion'
+import { BOOKING_URL } from '@/lib/booking'
 
 export function LandingCta() {
   return (
@@ -14,8 +15,8 @@ export function LandingCta() {
           <Link href="/signup" className="rounded-lg bg-white px-6 py-3 font-semibold text-canopy-800 transition-colors hover:bg-canopy-50">
             Start free for 14 days
           </Link>
-          <a href="mailto:hello@ivulatechnologies.com?subject=Ivula%20Canopy%20Demo%20Request" className="rounded-lg border border-canopy-300 px-6 py-3 font-semibold text-white transition-colors hover:bg-canopy-700">
-            Talk to our team
+          <a href={BOOKING_URL} target="_blank" rel="noreferrer" className="rounded-lg border border-canopy-300 px-6 py-3 font-semibold text-white transition-colors hover:bg-canopy-700">
+            Book a call with our founder
           </a>
         </div>
       </Reveal>

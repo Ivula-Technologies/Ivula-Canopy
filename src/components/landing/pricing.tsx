@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { PLANS, formatPeopleLimit } from '@/lib/plans'
+import { BOOKING_URL } from '@/lib/booking'
 import { Reveal, Stagger, StaggerItem } from './motion'
 
 const included = [
@@ -69,6 +70,13 @@ export function LandingPricing() {
               </li>
             ))}
           </ul>
+        </Reveal>
+
+        <Reveal delay={0.15} className="mt-8 text-center text-gray-700">
+          Not sure which plan fits your church or team?{' '}
+          <a href={BOOKING_URL} target="_blank" rel="noreferrer" className="font-semibold text-canopy-700 underline-offset-4 hover:underline">
+            Book a free call with our founder
+          </a>
         </Reveal>
       </div>
     </section>

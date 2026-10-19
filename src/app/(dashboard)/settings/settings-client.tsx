@@ -14,6 +14,7 @@ import { getSubscriptionLabel, formatDate, getInitials } from '@/lib/utils'
 import { PERMISSION_META, PERMISSION_KEYS, type PermissionKey } from '@/lib/permissions'
 import type { Organization, Profile } from '@/types'
 import { PLANS, getPlan, formatPeopleLimit, type PlanId } from '@/lib/plans'
+import { BOOKING_URL } from '@/lib/booking'
 
 interface StaffMember {
   id: string
@@ -333,6 +334,12 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
                   ))}
                 </div>
               )}
+              <p className="mt-4 text-sm text-gray-500">
+                Questions about plans or setup?{' '}
+                <a href={BOOKING_URL} target="_blank" rel="noreferrer" className="font-medium text-canopy-700 hover:underline">
+                  Book a free call with our founder
+                </a>
+              </p>
             </CardContent>
           </Card>
         )}
