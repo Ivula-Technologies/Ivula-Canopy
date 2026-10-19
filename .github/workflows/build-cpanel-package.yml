@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/build-cpanel-package.yml'
   workflow_dispatch:
 
 jobs:
@@ -54,6 +52,7 @@ jobs:
           NEXT_PUBLIC_TRIAL_DAYS: '14'
           RESEND_API_KEY: re_placeholder
           RESEND_FROM_EMAIL: hello@ivulatechnologies.com
+          CRON_SECRET: placeholder
         run: npm run build
 
       - name: Assemble cPanel package
@@ -103,7 +102,28 @@ jobs:
           NEXT_PUBLIC_TRIAL_DAYS=14
           RESEND_API_KEY=<server-side secret>
           RESEND_FROM_EMAIL=hello@ivulatechnologies.com
+          CRON_SECRET=<long random string>
           ```
+
+          ## Database migrations
+          Run every file in `supabase/migrations` that the database doesn't have yet,
+          in order, in the Supabase SQL editor. `010_lock_roles_and_billing.sql` is
+          required: it stops users from editing their own role or billing status.
+
+          ## Daily shift reminders (cPanel cron)
+          The Vercel cron in `vercel.json` does not run on cPanel. In cPanel > Cron Jobs,
+          add a job once a day (for example 10:00) with this command:
+
+          `curl -fsS -H "Authorization: Bearer YOUR_CRON_SECRET" https://canopy.ivulatechnologies.com/api/cron/shift-reminders > /dev/null`
+
+          Add a second daily job that emails org admins before and when their trial ends:
+
+          `curl -fsS -H "Authorization: Bearer YOUR_CRON_SECRET" https://canopy.ivulatechnologies.com/api/cron/trial-reminders > /dev/null`
+
+          ## Uptime monitoring
+          `https://canopy.ivulatechnologies.com/api/health` returns 200 when the settings
+          are complete and the database answers, and 503 with the names of any missing
+          settings otherwise. Add it to a free UptimeRobot HTTP monitor with email alerts.
 
           ## Stripe webhook
           Set the Stripe webhook endpoint to:

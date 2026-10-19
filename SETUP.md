@@ -44,6 +44,7 @@
      - `customer.subscription.deleted`
      - `invoice.payment_failed`
      - `invoice.payment_succeeded`
+     - `checkout.session.completed`
    - Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET`
 5. **Enable Billing Portal:**
    - Settings → Billing → Customer portal → Activate
