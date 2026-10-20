@@ -5,21 +5,20 @@ import { CheckCircle, XCircle, Search } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTimeIn, orgTimeZone } from '@/lib/timezone'
 
 interface EventData {
   id: string
   title: string
   starts_at: string
   location?: string
-  organization: { name: string }
+  organization: { name: string; timezone?: string | null }
 }
 
 interface Member {
   id: string
   first_name: string
   last_name: string
-  email?: string
 }
 
 export default function CheckinPage({ params }: { params: Promise<{ token: string }> }) {
@@ -30,6 +29,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
   const [loading, setLoading] = useState(true)
   const [checkedIn, setCheckedIn] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -37,7 +37,6 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
       if (res.ok) {
         const data = await res.json()
         setEvent(data.event)
-        setMembers(data.members)
       } else {
         setError('Event not found or check-in is not enabled.')
       }
@@ -46,9 +45,21 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
     load()
   }, [token])
 
-  const filtered = members.filter((m) =>
-    `${m.first_name} ${m.last_name} ${m.email}`.toLowerCase().includes(search.toLowerCase())
-  )
+  // Names are looked up as people type, a few at a time, so the link never
+  // exposes the whole member list.
+  useEffect(() => {
+    const q = search.trim()
+    if (q.length < 2) { setMembers([]); return }
+    setSearching(true)
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/checkin/${token}?q=${encodeURIComponent(q)}`)
+      if (res.ok) setMembers((await res.json()).members)
+      setSearching(false)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [search, token])
+
+  const filtered = members
 
   async function handleCheckin(memberId: string) {
     const res = await fetch('/api/checkin/record', {
@@ -112,7 +123,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
             <span className="text-sm text-gray-500">{event.organization?.name}</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900">{event.title}</h1>
-          <p className="text-sm text-gray-500">{formatDateTime(event.starts_at)}</p>
+          <p className="text-sm text-gray-500">{formatDateTimeIn(event.starts_at, orgTimeZone(event.organization))}</p>
           {event.location && <p className="text-sm text-gray-500">{event.location}</p>}
         </div>
       </div>
@@ -120,7 +131,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
       {/* Search + list */}
       <div className="max-w-md mx-auto px-4 py-6">
         <p className="text-sm text-gray-600 mb-4 font-medium">
-          Find your name to check in:
+          Type your name to check in:
         </p>
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -134,7 +145,7 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
         </div>
 
         <div className="space-y-2">
-          {filtered.slice(0, 20).map((member) => (
+          {filtered.map((member) => (
             <button
               key={member.id}
               onClick={() => handleCheckin(member.id)}
@@ -143,13 +154,10 @@ export default function CheckinPage({ params }: { params: Promise<{ token: strin
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-sm font-bold text-canopy-900">
                 {member.first_name[0]}{member.last_name[0]}
               </div>
-              <div>
-                <p className="font-medium text-gray-900">{member.first_name} {member.last_name}</p>
-                {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
-              </div>
+              <p className="font-medium text-gray-900">{member.first_name} {member.last_name}</p>
             </button>
           ))}
-          {search && filtered.length === 0 && (
+          {search.trim().length >= 2 && !searching && filtered.length === 0 && (
             <p className="text-center text-gray-400 py-8 text-sm">
               No members found. Contact your organization admin.
             </p>
