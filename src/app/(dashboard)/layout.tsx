@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
 import { TrialBanner } from '@/components/billing/trial-banner'
-import { getAccessState } from '@/lib/subscription'
+import { getAccessState, hasSubscription } from '@/lib/subscription'
 import { getPermissionsFromProfile } from '@/lib/permissions'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -66,7 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           covers the content, so pad the top. On lg the sidebar is static so
           we offset by its width and drop the top padding. */}
       <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain pt-14 lg:ml-64 lg:pt-0">
-        <TrialBanner access={access} canManageBilling={permissions.manage_billing} />
+        <TrialBanner access={access} canManageBilling={permissions.manage_billing} subscribed={hasSubscription(org)} />
         <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
     </div>

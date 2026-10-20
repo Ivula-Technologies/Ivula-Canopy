@@ -16,8 +16,10 @@ export default async function SettingsPage() {
     .single()
   if (!profile?.organization_id) redirect('/onboarding')
 
-  const { data: org } = await supabase
-    .from('organizations').select('*').eq('id', profile.organization_id).single()
+  const [{ data: org }, { count: peopleCount }] = await Promise.all([
+    supabase.from('organizations').select('*').eq('id', profile.organization_id).single(),
+    supabase.from('members').select('id', { count: 'exact', head: true }).eq('organization_id', profile.organization_id),
+  ])
 
   const { permissions } = getPermissionsFromProfile(profile)
 
@@ -28,6 +30,7 @@ export default async function SettingsPage() {
       canManageStaff={permissions.manage_staff}
       canManageBilling={permissions.manage_billing}
       currentPlanId={planForPriceId(org?.stripe_price_id)?.id ?? null}
+      peopleCount={peopleCount ?? 0}
     />
   )
 }
