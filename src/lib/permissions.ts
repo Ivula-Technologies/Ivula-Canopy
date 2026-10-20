@@ -40,6 +40,8 @@ export interface UserAccess {
   permissions: Permissions
   roleName: string
   isSuperAdmin: boolean
+  /** The organization every read and write must stay inside. */
+  organizationId: string | null
 }
 
 // Permission sets for the legacy coarse text `role` column. Used as a fallback
@@ -61,15 +63,18 @@ const LEGACY_ROLE_PERMISSIONS: Record<string, Permissions> = {
 // Use this when you have the profile in hand to avoid a second DB round-trip.
 export function getPermissionsFromProfile(profile: {
   role?: string | null
+  organization_id?: string | null
   assigned_role?: unknown
 } | null): UserAccess {
   const isSuperAdmin = profile?.role === 'super_admin'
+  const organizationId = profile?.organization_id ?? null
   const rel = profile?.assigned_role as unknown
   const r = (Array.isArray(rel) ? rel[0] : rel) as (Permissions & { name: string }) | null
 
   if (isSuperAdmin) {
     return {
       isSuperAdmin: true,
+      organizationId,
       roleName: 'Super Admin',
       permissions: PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {} as Permissions),
     }
@@ -81,14 +86,16 @@ export function getPermissionsFromProfile(profile: {
     if (legacy) {
       return {
         isSuperAdmin: false,
+        organizationId,
         roleName: profile!.role!.replace('_', ' '),
         permissions: { ...legacy },
       }
     }
-    return { isSuperAdmin: false, roleName: 'No role', permissions: { ...NO_PERMISSIONS } }
+    return { isSuperAdmin: false, organizationId, roleName: 'No role', permissions: { ...NO_PERMISSIONS } }
   }
   return {
     isSuperAdmin: false,
+    organizationId,
     roleName: r.name,
     permissions: PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: !!r[k] }), {} as Permissions),
   }
@@ -102,7 +109,7 @@ export async function getUserAccess(
 ): Promise<UserAccess> {
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .select('role, organization_id, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
     .eq('id', userId)
     .single()
 

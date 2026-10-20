@@ -9,11 +9,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: profile } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single()
+  if (!profile?.organization_id) return NextResponse.json({ error: 'No organization' }, { status: 403 })
+
   const admin = await createServiceClient()
   const { data: shifts } = await admin
     .from('shifts')
     .select('*, signups:shift_signups(id, first_name, last_name, email, phone, status, signed_up_at)')
     .eq('event_id', id)
+    .eq('organization_id', profile.organization_id)
     .order('starts_at', { ascending: true, nullsFirst: true })
     .order('created_at')
 
@@ -35,14 +39,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .from('profiles')
     .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
     .eq('id', user.id).single()
-  const { permissions } = getPermissionsFromProfile(profile)
+  const { permissions, organizationId: orgId } = getPermissionsFromProfile(profile)
   if (!permissions.manage_events) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
+  const { data: event } = await admin.from('events').select('id').eq('id', id).eq('organization_id', orgId).maybeSingle()
+  if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+
   const body = nullifyEmptyStrings(await req.json())
   const { data: shift, error } = await admin
     .from('shifts')
-    .insert({ ...body, event_id: id })
+    .insert({ ...body, event_id: id, organization_id: orgId })
     .select()
     .single()
 

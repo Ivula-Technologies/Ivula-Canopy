@@ -12,8 +12,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .from('profiles')
     .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
     .eq('id', user.id).single()
-  const { permissions } = getPermissionsFromProfile(profile)
+  const { permissions, organizationId: orgId } = getPermissionsFromProfile(profile)
   if (!permissions.manage_events) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
 
@@ -21,11 +22,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .from('shift_signups')
     .select('member_id, shifts(starts_at, ends_at)')
     .eq('event_id', id)
+    .eq('organization_id', orgId)
     .eq('status', 'confirmed')
     .not('member_id', 'is', null)
-
-  const { data: profileForOrg } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single()
-  const orgId = profileForOrg?.organization_id
 
   const records = signups?.map((s) => {
     const shift = s.shifts as { starts_at?: string | null; ends_at?: string | null } | null

@@ -54,12 +54,13 @@ export async function POST(req: NextRequest) {
     .from('profiles')
     .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
     .eq('id', user.id).single()
-  const { permissions } = getPermissionsFromProfile(profile)
+  const { permissions, organizationId: orgId } = getPermissionsFromProfile(profile)
   if (!permissions.manage_members) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = nullifyEmptyStrings(await req.json())
-  const { data: donor, error } = await admin.from('donors').insert(body).select().single()
+  const { data: donor, error } = await admin.from('donors').insert({ ...body, organization_id: orgId }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ donor }, { status: 201 })
 }

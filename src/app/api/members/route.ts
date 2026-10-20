@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_members) return NextResponse.json({ error: 'You do not have permission to add members' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = nullifyEmptyStrings(await req.json())
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (overLimit) return overLimit
   const { data: member, error } = await admin
     .from('members')
-    .insert(body)
+    .insert({ ...body, organization_id: orgId })
     .select()
     .single()
 
