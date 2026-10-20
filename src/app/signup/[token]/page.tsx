@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { SignupClient } from './signup-client'
+import { orgTimeZone } from '@/lib/timezone'
 
 export default async function PublicSignupPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
@@ -8,7 +9,7 @@ export default async function PublicSignupPage({ params }: { params: Promise<{ t
 
   const { data: event } = await admin
     .from('events')
-    .select('id, title, description, location, starts_at, ends_at, organization_id, organizations(name)')
+    .select('id, title, description, location, starts_at, ends_at, organization_id, organizations(*)')
     .eq('checkin_token', token)
     .single()
 
@@ -38,7 +39,8 @@ export default async function PublicSignupPage({ params }: { params: Promise<{ t
     spots_left: s.capacity - (countMap[s.id] || 0),
   }))
 
-  const orgName = (event.organizations as unknown as { name: string } | null)?.name || ''
+  const org = event.organizations as unknown as { name: string; timezone?: string | null } | null
+  const orgName = org?.name || ''
   const { organizations: _orgs, ...eventInfo } = event as typeof event & { organizations?: unknown }
 
   return (
@@ -47,6 +49,7 @@ export default async function PublicSignupPage({ params }: { params: Promise<{ t
       event={eventInfo}
       shifts={shiftsWithSpots}
       orgName={orgName}
+      timeZone={orgTimeZone(org)}
     />
   )
 }

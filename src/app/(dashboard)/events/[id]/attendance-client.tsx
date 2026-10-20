@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download } from 'lucide-react'
+import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { getInitials, formatDateTime } from '@/lib/utils'
+import { getInitials } from '@/lib/utils'
+import { formatDateTimeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
 import type { Event, Attendance, Member, Shift } from '@/types'
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
   orgId: string
   canEdit: boolean
   appUrl: string
+  timeZone: string
+  initialTab: 'attendance' | 'shifts'
 }
 
 type ShiftWithSignups = Shift & {
@@ -26,13 +29,13 @@ type ShiftWithSignups = Shift & {
 
 const emptyShiftForm = { title: '', description: '', starts_at: '', ends_at: '', capacity: '10' }
 
-function toLocalInput(iso?: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toISOString().slice(0, 16)
+// Quote every CSV cell so names with commas or quotes stay in their column.
+function csvRow(cells: (string | number | null | undefined)[]) {
+  return cells.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
 }
 
-export function AttendanceClient({ event, members, initialAttendance, orgId, canEdit, appUrl }: Props) {
-  const [tab, setTab] = useState<'attendance' | 'shifts'>('attendance')
+export function AttendanceClient({ event, members, initialAttendance, orgId, canEdit, appUrl, timeZone, initialTab }: Props) {
+  const [tab, setTab] = useState<'attendance' | 'shifts'>(initialTab)
   const [attendance, setAttendance] = useState(initialAttendance)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
@@ -69,6 +72,22 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
     await loadShifts()
   }
 
+  useEffect(() => {
+    if (initialTab === 'shifts') loadShifts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // New shifts start with the event's own times, which most shifts share.
+  function openNewShift() {
+    setShiftForm({
+      ...emptyShiftForm,
+      starts_at: toZonedInput(event.starts_at, timeZone),
+      ends_at: toZonedInput(event.ends_at, timeZone),
+    })
+    setShiftError('')
+    setShiftOpen(true)
+  }
+
   async function createShift() {
     setShiftSaving(true)
     setShiftError('')
@@ -79,8 +98,8 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         ...shiftForm,
         capacity: parseInt(shiftForm.capacity) || 10,
         organization_id: orgId,
-        starts_at: shiftForm.starts_at || null,
-        ends_at: shiftForm.ends_at || null,
+        starts_at: fromZonedInput(shiftForm.starts_at, timeZone),
+        ends_at: fromZonedInput(shiftForm.ends_at, timeZone),
       }),
     })
     const data = await res.json().catch(() => ({}))
@@ -152,10 +171,10 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
 
   function exportSignups() {
     const rows = [
-      ['Shift', 'First Name', 'Last Name', 'Email', 'Phone', 'Signed Up At'].join(','),
+      csvRow(['Shift', 'First Name', 'Last Name', 'Email', 'Phone', 'Signed Up At']),
       ...shifts.flatMap((s) =>
         s.signups.filter((r) => r.status === 'confirmed').map((r) =>
-          [s.title, r.first_name, r.last_name, r.email, r.phone || '', new Date(r.signed_up_at).toLocaleString()].join(',')
+          csvRow([s.title, r.first_name, r.last_name, r.email, r.phone, formatDateTimeIn(r.signed_up_at, timeZone)])
         )
       ),
     ].join('\n')
@@ -176,7 +195,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
             <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatDateTime(event.starts_at)}</span>
+              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatDateTimeIn(event.starts_at, timeZone)}</span>
               {event.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location}</span>}
               {event.team && <Badge variant="secondary">{event.team.name}</Badge>}
             </div>
@@ -203,16 +222,16 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
-          onClick={() => setTab('attendance')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'attendance' ? 'bg-canopy-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-        >
-          Attendance
-        </button>
-        <button
           onClick={switchToShifts}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'shifts' ? 'bg-canopy-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
         >
           Volunteer Sign-ups
+        </button>
+        <button
+          onClick={() => setTab('attendance')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'attendance' ? 'bg-canopy-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+        >
+          Attendance
         </button>
       </div>
 
@@ -235,7 +254,17 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
               </Button>
             )}
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+          {members.length === 0 && (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center">
+              <UserPlus className="mx-auto mb-3 h-8 w-8 text-canopy-600" />
+              <p className="font-medium text-gray-900">No people to mark yet</p>
+              <p className="mt-1 text-sm text-gray-500">Add your people (or import a spreadsheet) and they&apos;ll show up here to check in.</p>
+              <Link href="/members" className="mt-4 inline-block">
+                <Button size="sm" variant="outline">Go to Members</Button>
+              </Link>
+            </div>
+          )}
+          <div className={`bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 ${members.length === 0 ? 'hidden' : ''}`}>
             {filtered.map((member) => {
               const checked = attendedIds.has(member.id)
               const isSaving = saving === member.id
@@ -290,9 +319,13 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         <div className="space-y-4">
           {/* Signup link card */}
           <div className="bg-canopy-50 border border-canopy-200 rounded-xl p-4">
-            <p className="text-sm font-medium text-canopy-800 mb-2">Public volunteer sign-up link</p>
+            <p className="text-sm font-medium text-canopy-800 mb-1">Public volunteer sign-up link</p>
+            <p className="text-xs text-canopy-700 mb-2">
+              Send this link by email, text or your church app. Volunteers pick a shift without an account, get a
+              confirmation and a reminder the day before, and can cancel from their email.
+            </p>
             <p className="text-xs text-canopy-600 break-all mb-3">{signupUrl}</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={copyLink}>
                 <Copy className="h-4 w-4" /> {copiedLink ? 'Copied!' : 'Copy link'}
               </Button>
@@ -307,7 +340,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
             <h2 className="text-sm font-semibold text-gray-700">
               Shifts ({shifts.length}) · {shifts.reduce((s, sh) => s + sh.signup_count, 0)} volunteer{shifts.reduce((s, sh) => s + sh.signup_count, 0) !== 1 ? 's' : ''} signed up
             </h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {shifts.some((s) => s.signups.length > 0) && (
                 <Button size="sm" variant="outline" onClick={exportSignups}>Export CSV</Button>
               )}
@@ -317,7 +350,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                 </Button>
               )}
               {canEdit && (
-                <Button size="sm" onClick={() => { setShiftForm(emptyShiftForm); setShiftError(''); setShiftOpen(true) }}>
+                <Button size="sm" onClick={openNewShift}>
                   <Plus className="h-4 w-4" /> Add Shift
                 </Button>
               )}
@@ -327,9 +360,17 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           {importMsg && <p className="text-xs text-gray-500">{importMsg}</p>}
 
           {shifts.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 py-12 text-center text-gray-400">
-              <p>No shifts yet.</p>
-              {canEdit && <p className="text-xs mt-1">Add a shift so volunteers can sign up.</p>}
+            <div className="bg-white rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center">
+              <p className="font-medium text-gray-900">No shifts yet</p>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-gray-500">
+                Add one shift per role, like greeters, nursery or parking, with how many people you need. Then share
+                the link above.
+              </p>
+              {canEdit && (
+                <Button size="sm" className="mt-4" onClick={openNewShift}>
+                  <Plus className="h-4 w-4" /> Add your first shift
+                </Button>
+              )}
             </div>
           ) : (
             shifts.map((shift) => {
@@ -343,8 +384,8 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                       {shift.description && <p className="text-xs text-gray-500 mt-0.5">{shift.description}</p>}
                       {(shift.starts_at || shift.ends_at) && (
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {shift.starts_at ? new Date(shift.starts_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
-                          {shift.ends_at ? ` – ${new Date(shift.ends_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : ''}
+                          {shift.starts_at ? formatTimeIn(shift.starts_at, timeZone) : ''}
+                          {shift.ends_at ? ` – ${formatTimeIn(shift.ends_at, timeZone)}` : ''}
                         </p>
                       )}
                     </div>
@@ -370,7 +411,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                             <p className="text-sm font-medium text-gray-900">{r.first_name} {r.last_name}</p>
                             <p className="text-xs text-gray-500">{r.email}{r.phone ? ` · ${r.phone}` : ''}</p>
                           </div>
-                          <span className="text-xs text-gray-400">{new Date(r.signed_up_at).toLocaleDateString()}</span>
+                          <span className="text-xs text-gray-400">{formatDateTimeIn(r.signed_up_at, timeZone)}</span>
                         </div>
                       ))}
                     </div>
@@ -387,9 +428,9 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Add Shift</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input label="Shift name *" placeholder="e.g. Morning — Garden" value={shiftForm.title} onChange={(e) => setShiftForm({ ...shiftForm, title: e.target.value })} />
+            <Input label="Shift name *" placeholder="e.g. Greeters, Nursery, Parking" value={shiftForm.title} onChange={(e) => setShiftForm({ ...shiftForm, title: e.target.value })} />
             <Input label="Description" placeholder="Optional details for volunteers" value={shiftForm.description} onChange={(e) => setShiftForm({ ...shiftForm, description: e.target.value })} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Input label="Start time" type="datetime-local" value={shiftForm.starts_at} onChange={(e) => setShiftForm({ ...shiftForm, starts_at: e.target.value })} />
               <Input label="End time" type="datetime-local" value={shiftForm.ends_at} onChange={(e) => setShiftForm({ ...shiftForm, ends_at: e.target.value })} />
             </div>

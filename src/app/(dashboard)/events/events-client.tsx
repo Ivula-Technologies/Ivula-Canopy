@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Search, QrCode, Users, MapPin, Clock, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, QrCode, Users, MapPin, Clock, Pencil, Trash2, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Event } from '@/types'
+import { addHoursToInput, dateBadgeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
 
 interface Props {
   initialEvents: Event[]
@@ -19,6 +20,7 @@ interface Props {
   orgId: string
   canEdit: boolean
   appUrl: string
+  timeZone: string
 }
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'warning'> = {
@@ -46,16 +48,7 @@ const emptyForm = {
   location: '', starts_at: '', ends_at: '', team_id: '', budget: '',
 }
 
-// Convert an ISO timestamp to the value a datetime-local input expects (YYYY-MM-DDTHH:mm in local time)
-function toLocalInput(iso?: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return ''
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: Props) {
+export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, timeZone }: Props) {
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [search, setSearch] = useState('')
@@ -85,8 +78,8 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
       description: event.description || '',
       event_type: event.event_type || 'general',
       location: event.location || '',
-      starts_at: toLocalInput(event.starts_at),
-      ends_at: toLocalInput(event.ends_at),
+      starts_at: toZonedInput(event.starts_at, timeZone),
+      ends_at: toZonedInput(event.ends_at, timeZone),
       team_id: event.team_id || '',
       budget: event.budget != null ? String(event.budget) : '',
     })
@@ -104,6 +97,9 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          // The inputs hold wall-clock time in the organization's time zone.
+          starts_at: fromZonedInput(form.starts_at, timeZone),
+          ends_at: fromZonedInput(form.ends_at, timeZone),
           budget: form.budget === '' ? null : parseFloat(form.budget),
           organization_id: orgId,
         }),
@@ -114,7 +110,9 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
       if (editingId) {
         setEvents((prev) => prev.map((e) => (e.id === editingId ? { ...e, ...data.event } : e)))
       } else {
-        setEvents((prev) => [data.event, ...prev])
+        // Straight to the new event's volunteer sign-ups, the next step for most events.
+        router.push(`/events/${data.event.id}?tab=shifts`)
+        return
       }
       setOpen(false)
       setForm(emptyForm)
@@ -156,12 +154,22 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
           <DialogHeader><DialogTitle>{editingId ? 'Edit Event' : 'Create Event'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <Input label="Event title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Start date & time *" type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Start date & time *"
+                type="datetime-local"
+                value={form.starts_at}
+                onChange={(e) => setForm({
+                  ...form,
+                  starts_at: e.target.value,
+                  // Suggest a two-hour event; easy to change.
+                  ends_at: form.ends_at || (e.target.value ? addHoursToInput(e.target.value, 2) : ''),
+                })}
+              />
               <Input label="End date & time" type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
             </div>
             <Input label="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Address or 'Online'" />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}>
                 <SelectTrigger label="Event type">
                   <SelectValue />
@@ -210,33 +218,46 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <Clock className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p>No events yet. Create your first event!</p>
-          </div>
+          search ? (
+            <div className="text-center py-16 text-gray-400">
+              <p>No events match &ldquo;{search}&rdquo;.</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
+              <CalendarDays className="mx-auto mb-3 h-10 w-10 text-canopy-600" />
+              <h2 className="text-lg font-semibold text-gray-900">Schedule your first event</h2>
+              <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">
+                Add Sunday service, a food drive or a youth night. Then add volunteer shifts and share one link so
+                people can sign themselves up.
+              </p>
+              {canEdit && (
+                <Button className="mt-5" onClick={openCreate}>
+                  <Plus className="h-4 w-4" /> New Event
+                </Button>
+              )}
+            </div>
+          )
         ) : (
-          filtered.map((event) => (
-            <div key={event.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:shadow-sm transition-shadow">
+          filtered.map((event) => {
+            const badge = dateBadgeIn(event.starts_at, timeZone)
+            return (
+            <div key={event.id} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-3 hover:shadow-sm transition-shadow">
               <div className="flex flex-col items-center text-center min-w-[50px] border-r border-gray-100 pr-4">
-                <span className="text-xs text-gray-400 uppercase font-medium">
-                  {new Date(event.starts_at).toLocaleDateString('en', { month: 'short' })}
-                </span>
-                <span className="text-2xl font-bold text-gray-900 leading-none">
-                  {new Date(event.starts_at).getDate()}
-                </span>
+                <span className="text-xs text-gray-400 uppercase font-medium">{badge.month}</span>
+                <span className="text-2xl font-bold text-gray-900 leading-none">{badge.day}</span>
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
                   <Link href={`/events/${event.id}`} className="font-semibold text-gray-900 hover:text-canopy-600 transition-colors">
                     {event.title}
                   </Link>
                   <Badge variant={statusVariant[getEffectiveStatus(event)] || 'secondary'}>{getEffectiveStatus(event)}</Badge>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {new Date(event.starts_at).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}
+                    {formatTimeIn(event.starts_at, timeZone)}
                   </span>
                   {event.location && (
                     <span className="flex items-center gap-1">
@@ -247,10 +268,10 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:gap-2">
                 <Link href={`/events/${event.id}`}>
                   <Button variant="outline" size="sm">
-                    <Users className="h-4 w-4" /> Attendance
+                    <Users className="h-4 w-4" /> Volunteers &amp; attendance
                   </Button>
                 </Link>
                 <Button
@@ -284,7 +305,8 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl }: P
                 )}
               </div>
             </div>
-          ))
+            )
+          })
         )}
       </div>
 

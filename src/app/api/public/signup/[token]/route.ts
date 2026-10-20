@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { escapeHtml } from '@/lib/email'
+import { formatForEmail, orgTimeZone } from '@/lib/timezone'
 
 // GET — public: fetch event + shifts for the signup page (no auth)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   const { data: event } = await admin
     .from('events')
-    .select('id, title, organization_id, organizations(name)')
+    .select('id, title, location, organization_id, organizations(*)')
     .eq('checkin_token', token)
     .single()
 
@@ -123,8 +125,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Send confirmation email (non-blocking)
-  const orgName = (event.organizations as unknown as { name: string } | null)?.name || 'The organization'
-  sendConfirmationEmail(signup, shift, event.title, orgName).catch(console.error)
+  const org = event.organizations as unknown as { name: string; timezone?: string | null } | null
+  sendConfirmationEmail(signup, shift, event.title, event.location, org?.name || 'The organization', orgTimeZone(org)).catch(console.error)
 
   return NextResponse.json({ signup }, { status: 201 })
 }
@@ -133,26 +135,30 @@ async function sendConfirmationEmail(
   signup: { first_name: string; email: string; cancel_token: string },
   shift: { title: string; starts_at?: string | null; ends_at?: string | null },
   eventTitle: string,
-  orgName: string
+  location: string | null,
+  orgName: string,
+  timeZone: string
 ) {
   const { getResend } = await import('@/lib/email')
   const resend = getResend()
   if (!resend) return
 
-  const shiftTime = shift.starts_at
-    ? new Date(shift.starts_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-    : ''
+  const shiftTime = shift.starts_at ? formatForEmail(shift.starts_at, timeZone) : ''
+  const e = escapeHtml
 
   await resend.emails.send({
-    from: `${orgName} <no-reply@ivulatechnologies.com>`,
+    // Display names can't contain some characters; keep it to letters and spaces.
+    from: `${orgName.replace(/[^\p{L}\p{N} &'.-]/gu, '').trim() || 'Canopy'} <no-reply@ivulatechnologies.com>`,
     to: signup.email,
-    subject: `You're signed up — ${eventTitle}`,
+    subject: `You're signed up: ${shift.title}, ${eventTitle}`,
     html: `
-      <p>Hi ${signup.first_name},</p>
-      <p>You're confirmed for <strong>${shift.title}</strong>${shiftTime ? ` on ${shiftTime}` : ''} at <strong>${eventTitle}</strong> with ${orgName}.</p>
-      <p>We'll see you there!</p>
+      <p>Hi ${e(signup.first_name)},</p>
+      <p>You're confirmed for <strong>${e(shift.title)}</strong> at <strong>${e(eventTitle)}</strong> with ${e(orgName)}.</p>
+      ${shiftTime ? `<p><strong>When:</strong> ${shiftTime}</p>` : ''}
+      ${location ? `<p><strong>Where:</strong> ${e(location)}</p>` : ''}
+      <p>We'll email you a reminder the day before. Thank you for serving!</p>
       <p style="margin-top:24px;font-size:12px;color:#999;">
-        Need to cancel? <a href="${process.env.NEXT_PUBLIC_APP_URL}/signup/cancel/${signup.cancel_token}">Click here to cancel your spot</a>.
+        Can't make it anymore? <a href="${process.env.NEXT_PUBLIC_APP_URL}/signup/cancel/${signup.cancel_token}">Cancel your spot</a> so someone else can take it.
       </p>
     `,
   })

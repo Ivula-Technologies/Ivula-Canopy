@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { MapPin, Clock, Users, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { formatDateTimeIn, formatTimeIn } from '@/lib/timezone'
 
 type ShiftWithSpots = {
   id: string
@@ -31,19 +32,13 @@ interface Props {
   event: EventInfo
   shifts: ShiftWithSpots[]
   orgName: string
+  timeZone: string
 }
 
-function fmt(iso?: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-}
+export function SignupClient({ token, event, shifts, orgName, timeZone }: Props) {
+  const fmt = (iso?: string | null) => (iso ? formatDateTimeIn(iso, timeZone) : '')
+  const fmtTime = (iso?: string | null) => (iso ? formatTimeIn(iso, timeZone) : '')
 
-function fmtTime(iso?: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-}
-
-export function SignupClient({ token, event, shifts, orgName }: Props) {
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null)
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', notes: '' })
   const [saving, setSaving] = useState(false)

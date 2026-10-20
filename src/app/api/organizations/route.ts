@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email'
 import { slugify } from '@/lib/utils'
+import { isValidTimeZone } from '@/lib/timezone'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, adminId, adminEmail, adminName } = await req.json()
+    const { name, adminId, adminEmail, adminName, timezone } = await req.json()
 
     if (!name || !adminId || !adminEmail) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -49,6 +50,13 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (orgError) throw orgError
+
+    // Saved separately so sign-up still works on a database that hasn't run
+    // migration 011 yet; the app falls back to Eastern Time until then.
+    if (isValidTimeZone(timezone)) {
+      const { error: tzError } = await supabase.from('organizations').update({ timezone }).eq('id', org.id)
+      if (tzError) console.warn('Could not save organization time zone (run migration 011):', tzError.message)
+    }
 
     // Seed the org's default roles and capture the Administrator role for the creator
     const { data: seededRoles, error: rolesError } = await supabase

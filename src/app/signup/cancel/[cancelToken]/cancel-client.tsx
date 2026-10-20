@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { CheckCircle, XCircle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { formatDateTimeIn, formatTimeIn } from '@/lib/timezone'
 
 interface Props {
   signup: {
@@ -15,14 +16,10 @@ interface Props {
     events: { title: string } | null
   } | null
   cancelToken: string
+  timeZone: string
 }
 
-function formatTime(iso?: string | null) {
-  if (!iso) return null
-  return new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-export default function CancelClient({ signup, cancelToken }: Props) {
+export default function CancelClient({ signup, cancelToken, timeZone }: Props) {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -86,8 +83,8 @@ export default function CancelClient({ signup, cancelToken }: Props) {
                   <div className="flex items-center gap-1 text-sm text-gray-500 pt-1">
                     <Clock className="h-3.5 w-3.5" />
                     <span>
-                      {formatTime(signup.shifts?.starts_at)}
-                      {signup.shifts?.ends_at ? ` – ${formatTime(signup.shifts.ends_at)}` : ''}
+                      {signup.shifts?.starts_at ? formatDateTimeIn(signup.shifts.starts_at, timeZone) : ''}
+                      {signup.shifts?.ends_at ? ` – ${formatTimeIn(signup.shifts.ends_at, timeZone)}` : ''}
                     </span>
                   </div>
                 )}
