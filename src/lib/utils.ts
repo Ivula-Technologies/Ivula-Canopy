@@ -48,8 +48,11 @@ export function parseDate(date: string | Date): Date {
   return new Date(date)
 }
 
-export function formatDate(date: string | Date): string {
-  return format(parseDate(date), 'MMM d, yyyy')
+// A missing or malformed date shows as blank rather than crashing the page.
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return ''
+  const parsed = parseDate(date)
+  return isNaN(parsed.getTime()) ? '' : format(parsed, 'MMM d, yyyy')
 }
 
 // Today's date as YYYY-MM-DD on the viewer's own calendar (toISOString()
