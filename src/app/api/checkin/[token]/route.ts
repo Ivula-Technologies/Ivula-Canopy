@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 // Public: the QR code at the door opens this. It returns the event, plus
 // people matching what was typed (names only, a few at a time), so anyone
 // holding the link can't download the church's whole directory.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  // Name search runs as people type, often on one shared tablet at the door,
+  // so the limit only stops automated scraping of the directory.
+  const limited = rateLimit(`checkin:${clientIp(req)}`, 600, 60_000)
+  if (limited) return limited
   const { token } = await params
   const supabase = await createServiceClient()
 

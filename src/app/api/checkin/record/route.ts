@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(`checkin-record:${clientIp(req)}`, 300, 10 * 60_000)
+  if (limited) return limited
   const supabase = await createServiceClient()
   const { token, member_id } = await req.json()
 
