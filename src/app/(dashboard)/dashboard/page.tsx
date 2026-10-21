@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { dateBadgeIn, formatTimeIn, orgTimeZone } from '@/lib/timezone'
-import { getPermissionsFromProfile } from '@/lib/permissions'
+import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { hasSubscription } from '@/lib/subscription'
 
 export default async function DashboardPage() {
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .select(PROFILE_WITH_ROLE)
     .eq('id', user.id)
     .single()
   if (!profile?.organization_id) redirect('/onboarding')

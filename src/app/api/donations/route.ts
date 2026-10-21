@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { getPermissionsFromProfile } from '@/lib/permissions'
+import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { enforceSubscription } from '@/lib/subscription-guard'
 import { nullifyEmptyStrings } from '@/lib/utils'
 
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .select(PROFILE_WITH_ROLE)
     .eq('id', user.id).single()
   const { permissions, organizationId: orgId } = getPermissionsFromProfile(profile)
   if (!permissions.manage_members) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

@@ -26,6 +26,11 @@ export const PERMISSION_META: { key: PermissionKey; label: string; description: 
   { key: 'manage_staff', label: 'Manage staff & roles', description: 'Invite logins and define roles' },
 ]
 
+// Select for a profile row with its role's permission flags embedded, as
+// getPermissionsFromProfile expects. Add new permission columns here once.
+export const PROFILE_WITH_ROLE =
+  '*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)' as const
+
 export const NO_PERMISSIONS: Permissions = {
   manage_members: false,
   delete_members: false,
