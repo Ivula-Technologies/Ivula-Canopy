@@ -9,6 +9,29 @@ import { formatForEmail, orgTimeZone } from '@/lib/timezone'
 // it starts.
 const HOUR = 3_600_000
 
+type Admin = Awaited<ReturnType<typeof createServiceClient>>
+type Signup = { id: string; first_name: string; email: string; cancel_token: string }
+
+// Confirmed sign-ups that haven't had a reminder yet, so running the job twice
+// (a retried cron, a manual run) never emails anyone twice. Until migration
+// 012 adds reminder_sent_at, every confirmed sign-up is returned.
+async function unremindedSignups(admin: Admin, shiftId: string, tracking: { on: boolean }): Promise<Signup[]> {
+  const base = () => admin
+    .from('shift_signups')
+    .select('id, first_name, email, cancel_token')
+    .eq('shift_id', shiftId)
+    .eq('status', 'confirmed')
+  if (tracking.on) {
+    const { data, error } = await base().is('reminder_sent_at', null)
+    if (!error) return data || []
+    const missingColumn = error.code === '42703' || error.message?.includes('reminder_sent_at')
+    if (!missingColumn) return []
+    tracking.on = false
+  }
+  const { data } = await base()
+  return data || []
+}
+
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
   const auth = req.headers.get('authorization')
@@ -33,20 +56,18 @@ export async function GET(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://canopy.ivulatechnologies.com'
   const e = escapeHtml
   let emailCount = 0
+  // Switched off for the rest of the run if migration 012 hasn't been applied.
+  const tracking = { on: true }
 
   for (const shift of shifts) {
     const event = (Array.isArray(shift.events) ? shift.events[0] : shift.events) as { title: string; location?: string | null } | null
     const org = (Array.isArray(shift.organizations) ? shift.organizations[0] : shift.organizations) as { name?: string; timezone?: string | null } | null
-    const { data: signups } = await admin
-      .from('shift_signups')
-      .select('first_name, email, cancel_token')
-      .eq('shift_id', shift.id)
-      .eq('status', 'confirmed')
+    const signups = await unremindedSignups(admin, shift.id, tracking)
 
     const shiftTime = shift.starts_at ? formatForEmail(shift.starts_at, orgTimeZone(org)) : ''
 
     const results = await Promise.allSettled(
-      (signups || []).map((s) =>
+      signups.map((s) =>
         resend.emails.send({
           from: 'Ivula Canopy <no-reply@ivulatechnologies.com>',
           to: s.email,
@@ -64,7 +85,14 @@ export async function GET(req: NextRequest) {
         })
       )
     )
-    emailCount += results.filter((r) => r.status === 'fulfilled' && !r.value.error).length
+    const sentIds = signups.filter((_, i) => {
+      const r = results[i]
+      return r.status === 'fulfilled' && !r.value.error
+    }).map((s) => s.id)
+    emailCount += sentIds.length
+    if (sentIds.length && tracking.on) {
+      await admin.from('shift_signups').update({ reminder_sent_at: new Date().toISOString() }).in('id', sentIds)
+    }
   }
 
   return NextResponse.json({ shifts: shifts.length, emails: emailCount })
