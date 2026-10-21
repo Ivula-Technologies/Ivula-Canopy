@@ -11,6 +11,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_teams) return NextResponse.json({ error: 'You do not have permission to manage teams' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['name', 'description', 'team_type', 'leader_id', 'parent_team_id', 'color', 'is_active'])
@@ -18,6 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from('teams')
     .update(body)
     .eq('id', id)
+    .eq('organization_id', orgId)
     .select()
     .single()
 
@@ -36,9 +39,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_teams) return NextResponse.json({ error: 'You do not have permission to manage teams' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const { error } = await admin.from('teams').delete().eq('id', id)
+  const { error } = await admin.from('teams').delete().eq('id', id).eq('organization_id', orgId)
 
   if (error) {
     console.error('DELETE /api/teams:', error.message)

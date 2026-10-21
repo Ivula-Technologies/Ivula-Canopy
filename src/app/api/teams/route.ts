@@ -14,12 +14,14 @@ export async function POST(req: NextRequest) {
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_teams) return NextResponse.json({ error: 'You do not have permission to manage teams' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = nullifyEmptyStrings(await req.json())
   const { data: team, error } = await admin
     .from('teams')
-    .insert(body)
+    .insert({ ...body, organization_id: orgId })
     .select()
     .single()
 

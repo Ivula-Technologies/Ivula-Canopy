@@ -45,11 +45,17 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Public routes (no auth required)
-  const publicRoutes = ['/', '/login', '/signup', '/callback', '/checkin']
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith('/checkin/')
-  )
+  // Public routes (no auth required). Volunteers open sign-up, cancel and
+  // check-in links without an account, so everything under /signup/ and
+  // /checkin/ must stay reachable.
+  const publicRoutes = [
+    '/', '/login', '/signup', '/callback', '/forgot-password', '/reset-password',
+    '/terms', '/privacy', '/robots.txt', '/sitemap.xml',
+  ]
+  const isPublicRoute =
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith('/signup/') ||
+    pathname.startsWith('/checkin/')
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()

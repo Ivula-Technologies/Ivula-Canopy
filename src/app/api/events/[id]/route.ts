@@ -11,6 +11,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to manage events' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'title', 'description', 'event_type', 'location', 'starts_at', 'ends_at', 'is_recurring', 'recurrence_rule', 'checkin_enabled', 'status'])
@@ -18,6 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from('events')
     .update(body)
     .eq('id', id)
+    .eq('organization_id', orgId)
     .select()
     .single()
 
@@ -36,9 +39,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to manage events' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const { error } = await admin.from('events').delete().eq('id', id)
+  const { error } = await admin.from('events').delete().eq('id', id).eq('organization_id', orgId)
 
   if (error) {
     console.error('DELETE /api/events:', error.message)

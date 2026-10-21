@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { browserTimeZone } from '@/lib/timezone'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,6 +63,7 @@ export default function SignupPage() {
         adminId: authData.user.id,
         adminEmail: email,
         adminName: fullName,
+        timezone: browserTimeZone(),
       }),
     })
 
@@ -79,7 +81,7 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/onboarding')
+    router.push('/dashboard')
   }
 
   if (confirmEmail) {
@@ -224,7 +226,9 @@ export default function SignupPage() {
         </p>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          By signing up, you agree to our Terms of Service and Privacy Policy.
+          By signing up, you agree to our{' '}
+          <Link href="/terms" className="underline hover:text-gray-600">Terms of Service</Link> and{' '}
+          <Link href="/privacy" className="underline hover:text-gray-600">Privacy Policy</Link>.
         </p>
       </div>
     </div>

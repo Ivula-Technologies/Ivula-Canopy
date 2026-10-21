@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Donor, Donation } from '@/types'
+import { formatDate, todayISODate } from '@/lib/utils'
 
 type DonorRow = Donor & { total_donated: number; donation_count: number }
 type MemberOption = { id: string; first_name: string; last_name: string }
@@ -30,7 +31,7 @@ const emptyDonorForm = {
   first_name: '', last_name: '', email: '', phone: '', address: '', notes: '', member_id: '', is_anonymous: false,
 }
 const emptyDonationForm = {
-  amount: '', donated_at: new Date().toISOString().split('T')[0], method: 'cash', campaign: '', notes: '', receipt_number: '',
+  amount: '', donated_at: todayISODate(), method: 'cash', campaign: '', notes: '', receipt_number: '',
 }
 
 function formatCurrency(n: number) {
@@ -122,7 +123,7 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
 
   function openAddDonation(donor: DonorRow) {
     setActiveDonor(donor)
-    setDonationForm({ ...emptyDonationForm, donated_at: new Date().toISOString().split('T')[0] })
+    setDonationForm({ ...emptyDonationForm, donated_at: todayISODate() })
     setSaveError('')
     setDonationOpen(true)
   }
@@ -284,7 +285,7 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
                             <span className="text-gray-400 ml-2 capitalize">via {don.method?.replace('_', ' ')}</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-400 text-xs">{new Date(don.donated_at).toLocaleDateString()}</span>
+                            <span className="text-gray-400 text-xs">{formatDate(don.donated_at)}</span>
                             <Link
                               href={`/donors/receipt/${don.id}`}
                               target="_blank"

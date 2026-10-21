@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { getPermissionsFromProfile } from '@/lib/permissions'
+import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,12 +11,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .select(PROFILE_WITH_ROLE)
     .eq('id', user.id).single()
-  const { permissions } = getPermissionsFromProfile(profile)
+  const { permissions, organizationId: orgId } = getPermissionsFromProfile(profile)
   if (!permissions.manage_members && !permissions.manage_events) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'assigned_to_member_id', 'title', 'description', 'status', 'priority', 'due_date', 'completed_at'])
@@ -29,6 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from('tasks')
     .update(body)
     .eq('id', id)
+    .eq('organization_id', orgId)
     .select('*, team:teams(name), assigned_to:members(first_name, last_name)')
     .single()
 
@@ -44,15 +46,16 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .select(PROFILE_WITH_ROLE)
     .eq('id', user.id).single()
-  const { permissions } = getPermissionsFromProfile(profile)
+  const { permissions, organizationId: orgId } = getPermissionsFromProfile(profile)
   if (!permissions.manage_members && !permissions.manage_events) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const { error } = await admin.from('tasks').delete().eq('id', id)
+  const { error } = await admin.from('tasks').delete().eq('id', id).eq('organization_id', orgId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
