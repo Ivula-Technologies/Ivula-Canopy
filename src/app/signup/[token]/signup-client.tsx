@@ -77,7 +77,7 @@ export function SignupClient({ token, event, shifts, orgName, timeZone }: Props)
         <div className="w-full max-w-md text-center">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">You're signed up!</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re signed up!</h1>
             <p className="text-gray-500 text-sm mb-1">
               <strong>{confirmedShift?.title}</strong>
               {confirmedShift?.starts_at && ` · ${fmtTime(confirmedShift.starts_at)}${confirmedShift.ends_at ? ` – ${fmtTime(confirmedShift.ends_at)}` : ''}`}

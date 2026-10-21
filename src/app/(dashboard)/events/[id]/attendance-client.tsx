@@ -39,7 +39,6 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   const [attendance, setAttendance] = useState(initialAttendance)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
-  const [hoursInput, setHoursInput] = useState<Record<string, string>>({})
 
   // Shifts state
   const [shifts, setShifts] = useState<ShiftWithSignups[]>([])
@@ -125,11 +124,10 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       await fetch(`/api/attendance?event_id=${event.id}&member_id=${memberId}`, { method: 'DELETE' })
       setAttendance((prev) => prev.filter((a) => a.member_id !== memberId))
     } else {
-      const hours = parseFloat(hoursInput[memberId] || '') || null
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: event.id, member_id: memberId, organization_id: orgId, method: 'admin', hours }),
+        body: JSON.stringify({ event_id: event.id, member_id: memberId, organization_id: orgId, method: 'admin' }),
       })
       if (res.ok) { const { record } = await res.json(); setAttendance((prev) => [...prev, record]) }
     }

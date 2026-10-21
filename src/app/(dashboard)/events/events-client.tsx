@@ -321,7 +321,8 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
               Members scan this QR code to self-check-in at the event.
             </p>
             <div className="flex justify-center">
-              {/* QR code rendered via API route */}
+              {/* QR code rendered via API route; next/image adds nothing for a generated PNG */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/api/events/${qrEvent.id}/qr`}
                 alt="QR Code"

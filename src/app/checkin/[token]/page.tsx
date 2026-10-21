@@ -4,7 +4,6 @@ import { useState, useEffect, use } from 'react'
 import { CheckCircle, XCircle, Search } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { formatDateTimeIn, orgTimeZone } from '@/lib/timezone'
 
 interface EventData {

@@ -57,7 +57,7 @@ export default function CancelClient({ signup, cancelToken, timeZone }: Props) {
             <div className="text-center">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
               <h1 className="text-xl font-semibold text-gray-900 mb-2">Spot cancelled</h1>
-              <p className="text-gray-500 text-sm">Your spot has been cancelled. We've let the organizer know.</p>
+              <p className="text-gray-500 text-sm">Your spot has been cancelled. We&apos;ve let the organizer know.</p>
             </div>
           ) : invalid ? (
             <div className="text-center">
@@ -71,7 +71,7 @@ export default function CancelClient({ signup, cancelToken, timeZone }: Props) {
             <div>
               <h1 className="text-xl font-semibold text-gray-900 mb-1">Cancel your spot?</h1>
               <p className="text-gray-500 text-sm mb-6">
-                Hi {signup.first_name}, you're about to cancel your sign-up for the following shift.
+                Hi {signup.first_name}, you&apos;re about to cancel your sign-up for the following shift.
               </p>
 
               <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-6 space-y-1">
