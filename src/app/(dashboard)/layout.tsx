@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileTabBar } from '@/components/layout/mobile-tab-bar'
+import { ServiceWorker } from '@/components/pwa/service-worker'
 import { TrialBanner } from '@/components/billing/trial-banner'
 import { getAccessState, hasSubscription } from '@/lib/subscription'
 import { getPermissionsFromProfile } from '@/lib/permissions'
@@ -63,12 +65,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex h-dvh min-w-0 overflow-hidden">
       <Sidebar org={org} profile={profile} />
       {/* On mobile the sidebar is a drawer (no left margin) but a 14h top bar
-          covers the content, so pad the top. On lg the sidebar is static so
-          we offset by its width and drop the top padding. */}
-      <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain pt-14 lg:ml-64 lg:pt-0">
+          and a 16h tab bar cover the content, so pad the top and bottom. On
+          lg the sidebar is static so we offset by its width instead. */}
+      <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain pt-14 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:ml-64 lg:pt-0 lg:pb-0">
         <TrialBanner access={access} canManageBilling={permissions.manage_billing} subscribed={hasSubscription(org)} />
         <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
+      <MobileTabBar />
+      <ServiceWorker />
     </div>
   )
 }

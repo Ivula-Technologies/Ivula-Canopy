@@ -43,6 +43,12 @@ export const metadata: Metadata = {
     ],
     apple: '/apple-touch-icon.png',
   },
+  // iPhone "Add to Home Screen" opens Canopy full screen with its own name.
+  appleWebApp: {
+    capable: true,
+    title: 'Canopy',
+    statusBarStyle: 'default',
+  },
 }
 
 export const viewport: Viewport = {

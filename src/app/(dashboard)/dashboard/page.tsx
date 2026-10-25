@@ -4,6 +4,7 @@ import { Users, CalendarDays, UsersRound, TrendingUp, UserCheck, AlertTriangle, 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/layout/page-header'
+import { InstallAppCard } from '@/components/pwa/install-app-card'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -105,6 +106,8 @@ export default async function DashboardPage() {
         title="Dashboard"
         description="Your organization at a glance"
       />
+
+      <InstallAppCard />
 
       {showSetup && (
         <Card className="mb-8 border-canopy-200">
