@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Lora } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
+import { APP_PLATFORM_SCRIPT } from '@/lib/app-platform'
 
 const geist = Geist({ subsets: ['latin'] })
 const lora = Lora({ subsets: ['latin'], weight: ['600', '700'], variable: '--font-lora' })
@@ -57,7 +58,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={lora.variable}>
+    // The script marks the Google Play app before the first paint, so the
+    // attribute it adds to <html> is expected to differ from the server's.
+    <html lang="en" className={lora.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: APP_PLATFORM_SCRIPT }} />
+      </head>
       <body className={`${geist.className} antialiased bg-gray-50 text-gray-900`}>
         {children}
         <SpeedInsights />

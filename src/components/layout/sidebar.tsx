@@ -115,7 +115,7 @@ export function Sidebar({ org, profile }: SidebarProps) {
         {isTrialWarning && (
           <div className="mx-3 mt-3 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
             <p className="text-xs text-amber-400 font-medium">{subLabel}</p>
-            <Link href="/settings?tab=billing" className="text-xs text-amber-300 hover:underline">
+            <Link href="/settings?tab=billing" data-hide-in-app className="text-xs text-amber-300 hover:underline">
               Upgrade now →
             </Link>
           </div>
