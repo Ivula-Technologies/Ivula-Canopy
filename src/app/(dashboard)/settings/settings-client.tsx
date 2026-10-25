@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserPlus, Pencil, Trash2, Mail, Plus, ShieldCheck } from 'lucide-react'
-import { US_TIME_ZONES, orgTimeZone } from '@/lib/timezone'
+import { US_TIME_ZONES, formatDateIn, orgTimeZone } from '@/lib/timezone'
 import { hasSubscription } from '@/lib/subscription'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageHeader } from '@/components/layout/page-header'
-import { getSubscriptionLabel, formatDate, getInitials } from '@/lib/utils'
+import { getSubscriptionLabel, getInitials } from '@/lib/utils'
 import { PERMISSION_META, PERMISSION_KEYS, type PermissionKey } from '@/lib/permissions'
 import type { Organization, Profile } from '@/types'
 import { PLANS, getPlan, formatPeopleLimit, type PlanId } from '@/lib/plans'
@@ -361,11 +361,11 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
                     {subscribed && org.subscription_status === 'past_due'
                       ? 'Your last payment didn’t go through. Update your card to keep access.'
                       : subscribed && org.subscription_status === 'trialing' && org.trial_ends_at
-                      ? `First payment on ${formatDate(org.trial_ends_at)}, when your trial ends`
+                      ? `First payment on ${formatDateIn(org.trial_ends_at, savedTimeZone)}, when your trial ends`
                       : subscribed
-                      ? `Renews ${org.current_period_end ? formatDate(org.current_period_end) : 'monthly'}`
+                      ? `Renews ${org.current_period_end ? formatDateIn(org.current_period_end, savedTimeZone) : 'monthly'}`
                       : org.trial_ends_at
-                      ? `Trial ends ${formatDate(org.trial_ends_at)}. Choose a plan to keep everything running.`
+                      ? `Trial ends ${formatDateIn(org.trial_ends_at, savedTimeZone)}. Choose a plan to keep everything running.`
                       : 'No active subscription'}
                   </p>
                 </div>
@@ -609,7 +609,7 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Member since</span>
-                <span className="text-gray-900">{formatDate(profile.created_at)}</span>
+                <span className="text-gray-900">{formatDateIn(profile.created_at, savedTimeZone)}</span>
               </div>
             </div>
           </CardContent>

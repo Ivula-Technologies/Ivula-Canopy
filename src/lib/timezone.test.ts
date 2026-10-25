@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addHoursToInput, fromZonedInput, isValidTimeZone, orgTimeZone, toZonedInput } from './timezone'
+import { addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, orgTimeZone, toZonedInput } from './timezone'
 
 describe('fromZonedInput', () => {
   it('reads the typed time as wall-clock time in the zone', () => {
@@ -54,5 +54,13 @@ describe('orgTimeZone', () => {
     expect(orgTimeZone({ timezone: 'Not/AZone' })).toBe('America/New_York')
     expect(orgTimeZone(null)).toBe('America/New_York')
     expect(isValidTimeZone('')).toBe(false)
+  })
+})
+
+describe('formatDateIn', () => {
+  it('gives the calendar day in the church time zone, not the server one', () => {
+    // 3:30 AM UTC on Nov 3 is still the evening of Nov 2 in Chicago.
+    expect(formatDateIn('2026-11-03T03:30:00Z', 'America/Chicago')).toBe('Nov 2, 2026')
+    expect(formatDateIn('2026-11-03T03:30:00Z', 'UTC')).toBe('Nov 3, 2026')
   })
 })

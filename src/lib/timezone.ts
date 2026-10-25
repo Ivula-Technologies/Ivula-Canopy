@@ -60,6 +60,11 @@ export function formatTimeIn(iso: string | Date, timeZone: string) {
   return fmt(iso, timeZone, { hour: 'numeric', minute: '2-digit' })
 }
 
+/** "Oct 25, 2026", the calendar day in that zone (same shape as formatDate) */
+export function formatDateIn(iso: string | Date, timeZone: string) {
+  return fmt(iso, timeZone, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 /** "Sun, Oct 25" */
 export function formatDayIn(iso: string | Date, timeZone: string) {
   return fmt(iso, timeZone, { weekday: 'short', month: 'short', day: 'numeric' })
