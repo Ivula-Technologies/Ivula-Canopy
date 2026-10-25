@@ -1,12 +1,16 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Users, CalendarDays, UsersRound, TrendingUp, UserCheck, AlertTriangle, UserPlus, Heart, CheckSquare } from 'lucide-react'
+import { Users, CalendarDays, UsersRound, TrendingUp, UserCheck, AlertTriangle, UserPlus, Heart, CheckSquare, Check, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/layout/page-header'
-import { formatDate, formatDateTime } from '@/lib/utils'
+import { InstallAppCard } from '@/components/pwa/install-app-card'
+import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { dateBadgeIn, formatTimeIn, orgTimeZone } from '@/lib/timezone'
+import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
+import { hasSubscription } from '@/lib/subscription'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,8 +19,12 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
-    .from('profiles').select('*').eq('id', user.id).single()
+    .from('profiles')
+    .select(PROFILE_WITH_ROLE)
+    .eq('id', user.id)
+    .single()
   if (!profile?.organization_id) redirect('/onboarding')
+  const { permissions } = getPermissionsFromProfile(profile)
 
   const orgId = profile.organization_id
   const now = new Date()
@@ -31,10 +39,14 @@ export default async function DashboardPage() {
     { count: attendanceThisMonth },
     { count: newMembersThisMonth },
     { data: recentAnnouncements },
-    { data: atRiskMembers },
     { count: totalSignups },
     { data: donationRows },
     { count: openTasks },
+    { data: org },
+    { count: totalEvents },
+    { count: totalShifts },
+    { count: staffCount },
+    { data: nextEvent },
   ] = await Promise.all([
     supabase.from('members').select('*', { count: 'exact', head: true }).eq('organization_id', orgId),
     supabase.from('members').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'active'),
@@ -43,12 +55,32 @@ export default async function DashboardPage() {
     supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).gte('checked_in_at', monthStart),
     supabase.from('members').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).gte('created_at', monthStart),
     supabase.from('announcements').select('id, title, published_at, is_pinned').eq('organization_id', orgId).order('published_at', { ascending: false }).limit(3),
-    // Members with no attendance in last 60 days
-    supabase.from('members').select('id, first_name, last_name, email').eq('organization_id', orgId).eq('status', 'active').limit(5),
     supabase.from('shift_signups').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'confirmed'),
     supabase.from('donations').select('amount').eq('organization_id', orgId),
     supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).neq('status', 'done'),
+    supabase.from('organizations').select('*').eq('id', orgId).single(),
+    supabase.from('events').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+    supabase.from('shifts').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+    // The event the setup steps point at: the next one, or else the newest.
+    supabase.from('events').select('id').eq('organization_id', orgId).order('starts_at', { ascending: false }).limit(1).maybeSingle(),
   ])
+
+  const timeZone = orgTimeZone(org)
+  const eventLink = (upcomingEvents?.[0]?.id ?? nextEvent?.id) ? `/events/${upcomingEvents?.[0]?.id ?? nextEvent?.id}?tab=shifts` : '/events'
+
+  // First-week checklist: the path from an empty account to volunteers
+  // signing themselves up, then the plan. It disappears once every step is done.
+  const setupSteps = [
+    { done: (totalMembers || 0) > 1, title: 'Add your people', detail: 'Import your member spreadsheet or add people one by one.', href: '/members', show: permissions.manage_members },
+    { done: (totalEvents || 0) > 0, title: 'Create an event', detail: 'Sunday service, a food drive, youth night: anything that needs people.', href: '/events', show: permissions.manage_events },
+    { done: (totalShifts || 0) > 0, title: 'Add volunteer shifts', detail: 'One shift per role, like greeters, nursery or parking, with how many you need.', href: eventLink, show: permissions.manage_events },
+    { done: (totalSignups || 0) > 0, title: 'Share your sign-up link', detail: 'Volunteers pick a shift without an account and get a reminder the day before.', href: eventLink, show: permissions.manage_events },
+    { done: (staffCount || 0) > 1, title: 'Invite a teammate', detail: 'Give your pastor or coordinator their own login.', href: '/settings', show: permissions.manage_staff },
+    { done: !!org && hasSubscription(org), title: 'Choose a plan', detail: 'Plans start at $29 a month. Your trial keeps going until it ends.', href: '/settings#billing', show: permissions.manage_billing },
+  ].filter((step) => step.show)
+  const stepsDone = setupSteps.filter((step) => step.done).length
+  const showSetup = setupSteps.length > 0 && stepsDone < setupSteps.length
 
   const totalRaised = donationRows?.reduce((sum, d) => sum + (d.amount || 0), 0) || 0
 
@@ -75,14 +107,54 @@ export default async function DashboardPage() {
         description="Your organization at a glance"
       />
 
+      <InstallAppCard />
+
+      {showSetup && (
+        <Card className="mb-8 border-canopy-200">
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle>Get {org?.name || 'your organization'} ready</CardTitle>
+              <span className="text-sm text-gray-500">{stepsDone} of {setupSteps.length} done</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+              <div className="h-full rounded-full bg-canopy-600" style={{ width: `${(stepsDone / setupSteps.length) * 100}%` }} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ol className="divide-y divide-gray-100">
+              {setupSteps.map((step, i) => (
+                <li key={step.title}>
+                  <Link href={step.href} className="flex items-center gap-3 py-3 group">
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                        step.done ? 'bg-canopy-600 text-white' : 'border-2 border-gray-300 text-gray-500'
+                      }`}
+                    >
+                      {step.done ? <Check className="h-4 w-4" /> : i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-sm font-medium ${step.done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        {step.title}
+                      </span>
+                      {!step.done && <span className="block text-xs text-gray-500">{step.detail}</span>}
+                    </span>
+                    {!step.done && <ArrowRight className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-canopy-600" />}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-8">
         {stats.map(({ label, value, icon: Icon, color, bg, href }) => (
           <Link key={label} href={href}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bg}`}>
+            <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className={`hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${bg}`}>
                     <Icon className={`h-5 w-5 ${color}`} />
                   </div>
                   <div>
@@ -123,16 +195,16 @@ export default async function DashboardPage() {
                     <div className="flex items-start gap-3 rounded-lg p-3 hover:bg-gray-50 transition-colors">
                       <div className="flex flex-col items-center text-center min-w-[40px]">
                         <span className="text-xs text-gray-400 uppercase">
-                          {new Date(event.starts_at).toLocaleDateString('en', { month: 'short' })}
+                          {dateBadgeIn(event.starts_at, timeZone).month}
                         </span>
                         <span className="text-xl font-bold text-gray-900 leading-none">
-                          {new Date(event.starts_at).getDate()}
+                          {dateBadgeIn(event.starts_at, timeZone).day}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{event.title}</p>
                         <p className="text-xs text-gray-500">
-                          {new Date(event.starts_at).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}
+                          {formatTimeIn(event.starts_at, timeZone)}
                           {event.location && ` · ${event.location}`}
                         </p>
                       </div>

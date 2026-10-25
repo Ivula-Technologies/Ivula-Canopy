@@ -15,14 +15,21 @@ export async function POST(req: NextRequest) {
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_announcements) return NextResponse.json({ error: 'You do not have permission to post announcements' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   // send_email is a UI-only flag — strip it before inserting into the table
   const { send_email, ...rest } = await req.json()
   const body = nullifyEmptyStrings(rest)
+  // A team from another organization would email that organization's members.
+  if (body.team_id) {
+    const { data: team } = await admin.from('teams').select('id').eq('id', body.team_id).eq('organization_id', orgId).maybeSingle()
+    if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+  }
   const { data: announcement, error } = await admin
     .from('announcements')
-    .insert({ ...body, created_by: user.id })
+    .insert({ ...body, organization_id: orgId, created_by: user.id })
     .select()
     .single()
 

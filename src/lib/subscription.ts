@@ -55,6 +55,15 @@ export function getAccessState(org: BillingInfo, now: Date = new Date()): Access
   }
 }
 
+// True once the org has given Stripe a card, including the free days left
+// over from the app trial (Stripe reports those as "trialing"). Such an org
+// has nothing left to upgrade; it changes plans in the billing portal.
+export function hasSubscription(
+  org: Pick<Organization, 'subscription_status' | 'stripe_subscription_id'>
+): boolean {
+  return !!org.stripe_subscription_id && ['active', 'trialing', 'past_due'].includes(org.subscription_status)
+}
+
 export function isLocked(org: BillingInfo, now?: Date): boolean {
   return getAccessState(org, now).locked
 }

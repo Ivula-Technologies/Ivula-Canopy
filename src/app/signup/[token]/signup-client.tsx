@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { MapPin, Clock, Users, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { formatDateTimeIn, formatTimeIn } from '@/lib/timezone'
 
 type ShiftWithSpots = {
   id: string
@@ -31,19 +32,13 @@ interface Props {
   event: EventInfo
   shifts: ShiftWithSpots[]
   orgName: string
+  timeZone: string
 }
 
-function fmt(iso?: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-}
+export function SignupClient({ token, event, shifts, orgName, timeZone }: Props) {
+  const fmt = (iso?: string | null) => (iso ? formatDateTimeIn(iso, timeZone) : '')
+  const fmtTime = (iso?: string | null) => (iso ? formatTimeIn(iso, timeZone) : '')
 
-function fmtTime(iso?: string | null) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-}
-
-export function SignupClient({ token, event, shifts, orgName }: Props) {
   const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null)
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', notes: '' })
   const [saving, setSaving] = useState(false)
@@ -82,7 +77,7 @@ export function SignupClient({ token, event, shifts, orgName }: Props) {
         <div className="w-full max-w-md text-center">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">You're signed up!</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re signed up!</h1>
             <p className="text-gray-500 text-sm mb-1">
               <strong>{confirmedShift?.title}</strong>
               {confirmedShift?.starts_at && ` · ${fmtTime(confirmedShift.starts_at)}${confirmedShift.ends_at ? ` – ${fmtTime(confirmedShift.ends_at)}` : ''}`}

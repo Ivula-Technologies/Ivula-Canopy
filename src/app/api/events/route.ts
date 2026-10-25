@@ -14,12 +14,14 @@ export async function POST(req: NextRequest) {
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to manage events' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = nullifyEmptyStrings(await req.json())
   const { data: event, error } = await admin
     .from('events')
-    .insert({ ...body, created_by: user.id, status: 'upcoming' })
+    .insert({ ...body, organization_id: orgId, created_by: user.id, status: 'upcoming' })
     .select()
     .single()
 

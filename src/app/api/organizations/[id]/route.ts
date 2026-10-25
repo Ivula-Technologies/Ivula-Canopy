@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { isValidTimeZone } from '@/lib/timezone'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,6 +14,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const updates: Record<string, string | null> = {}
   for (const key of ['name', 'description', 'logo_url', 'website', 'phone', 'address'] as const) {
     if (typeof body?.[key] === 'string') updates[key] = body[key].trim() || null
+  }
+  if (body?.timezone !== undefined) {
+    if (!isValidTimeZone(body.timezone)) return NextResponse.json({ error: 'Unknown time zone' }, { status: 400 })
+    updates.timezone = body.timezone
   }
   if ('name' in updates && !updates.name) {
     return NextResponse.json({ error: 'Organization name is required' }, { status: 400 })
