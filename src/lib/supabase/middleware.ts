@@ -50,7 +50,8 @@ export async function updateSession(request: NextRequest) {
   // /checkin/ must stay reachable.
   const publicRoutes = [
     '/', '/login', '/signup', '/callback', '/forgot-password', '/reset-password',
-    '/terms', '/privacy', '/robots.txt', '/sitemap.xml',
+    '/terms', '/privacy', '/delete-account', '/robots.txt', '/sitemap.xml',
+    '/.well-known/assetlinks.json',
   ]
   const isPublicRoute =
     publicRoutes.includes(pathname) ||

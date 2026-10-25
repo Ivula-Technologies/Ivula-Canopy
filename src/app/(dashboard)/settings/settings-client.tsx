@@ -334,9 +334,10 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
           </CardContent>
         </Card>
 
-        {/* Billing — only if the role allows it */}
+        {/* Billing: only if the role allows it, and never inside the Google Play
+            app, where plans can't be bought (src/lib/app-platform.ts). */}
         {canManageBilling && (
-          <Card id="billing" className="scroll-mt-20">
+          <Card id="billing" data-hide-in-app className="scroll-mt-20">
             <CardHeader>
               <CardTitle>Billing & Subscription</CardTitle>
               <CardDescription>Manage your plan and payment method</CardDescription>
@@ -612,6 +613,9 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
                 <span className="text-gray-900">{formatDateIn(profile.created_at, savedTimeZone)}</span>
               </div>
             </div>
+            <a href="/delete-account" className="mt-4 inline-block text-sm text-red-600 hover:underline">
+              Delete my account
+            </a>
           </CardContent>
         </Card>
       </div>

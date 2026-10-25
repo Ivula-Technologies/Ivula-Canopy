@@ -1,0 +1,58 @@
+{
+  "publicDir": "../public",
+  "packageId": "com.ivulatechnologies.canopy",
+  "host": "canopy.ivulatechnologies.com",
+  "name": "Ivula Canopy",
+  "launcherName": "Canopy",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#1b3d33",
+  "themeColorDark": "#1b3d33",
+  "navigationColor": "#1b3d33",
+  "navigationColorDark": "#1b3d33",
+  "navigationDividerColor": "#1b3d33",
+  "navigationDividerColorDark": "#1b3d33",
+  "backgroundColor": "#f9fafb",
+  "enableNotifications": false,
+  "startUrl": "/dashboard?app=android",
+  "iconUrl": "https://canopy.ivulatechnologies.com/icon-512.png",
+  "maskableIconUrl": "https://canopy.ivulatechnologies.com/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "upload.jks",
+    "alias": "upload"
+  },
+  "appVersionCode": 1,
+  "appVersion": "1.0.0",
+  "shortcuts": [
+    {
+      "name": "Events",
+      "shortName": "Events",
+      "url": "https://canopy.ivulatechnologies.com/events",
+      "chosenIconUrl": "https://canopy.ivulatechnologies.com/icon-512.png"
+    },
+    {
+      "name": "Members",
+      "shortName": "Members",
+      "url": "https://canopy.ivulatechnologies.com/members",
+      "chosenIconUrl": "https://canopy.ivulatechnologies.com/icon-512.png"
+    },
+    {
+      "name": "Tasks",
+      "shortName": "Tasks",
+      "url": "https://canopy.ivulatechnologies.com/tasks",
+      "chosenIconUrl": "https://canopy.ivulatechnologies.com/icon-512.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://canopy.ivulatechnologies.com/",
+  "minSdkVersion": 24
+}

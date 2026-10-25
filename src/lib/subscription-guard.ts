@@ -34,10 +34,13 @@ export async function enforceSubscription(
   const access = getAccessState(org)
   if (!access.locked) return null
 
+  // Plain facts, no "upgrade" prompt: this text also shows inside the Google
+  // Play app, which may not point people to payment (src/lib/app-platform.ts).
+  // The banner on the website carries the plan buttons.
   const message =
     access.reason === 'trial_expired'
-      ? 'Your free trial has ended. Upgrade to continue using this feature.'
-      : 'Your subscription is inactive. Please update billing to continue.'
+      ? 'Your free trial has ended, so adding and editing are paused. Everything is saved.'
+      : 'Your subscription is inactive, so adding and editing are paused. Everything is saved.'
 
   return NextResponse.json(
     { error: message, code: 'subscription_required', reason: access.reason },
