@@ -2,6 +2,7 @@ import type { createServiceClient } from '@/lib/supabase/server'
 import { escapeHtml, getResend } from './email'
 import { formatForEmail } from './timezone'
 import { MAX_SHIFTS_PER_SIGNUP } from './volunteer-link'
+import { senderName } from './volunteer-message'
 
 // Public volunteer sign-ups, shared by the one-event link (/signup/[token])
 // and the church-wide link (/serve/[token]).
@@ -144,8 +145,7 @@ export async function sendSignupConfirmation({
     `
 
   await getResend().emails.send({
-    // Display names can't contain some characters; keep it to letters and spaces.
-    from: `${orgName.replace(/[^\p{L}\p{N} &'.-]/gu, '').trim() || 'Canopy'} <no-reply@ivulatechnologies.com>`,
+    from: `${senderName(orgName)} <no-reply@ivulatechnologies.com>`,
     to,
     subject: shifts.length === 1
       ? `You're signed up: ${first.shiftTitle}, ${first.eventTitle}`
