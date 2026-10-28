@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download, UserPlus } from 'lucide-react'
+import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download, UserPlus, Repeat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { RepeatEventDialog } from '@/components/events/repeat-event-dialog'
 import { getInitials } from '@/lib/utils'
 import { formatDateTimeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
 import type { Event, Attendance, Member, Shift } from '@/types'
@@ -18,6 +19,7 @@ interface Props {
   orgId: string
   canEdit: boolean
   appUrl: string
+  volunteerUrl: string | null
   timeZone: string
   initialTab: 'attendance' | 'shifts'
 }
@@ -34,7 +36,7 @@ function csvRow(cells: (string | number | null | undefined)[]) {
   return cells.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
 }
 
-export function AttendanceClient({ event, members, initialAttendance, orgId, canEdit, appUrl, timeZone, initialTab }: Props) {
+export function AttendanceClient({ event, members, initialAttendance, orgId, canEdit, appUrl, volunteerUrl, timeZone, initialTab }: Props) {
   const [tab, setTab] = useState<'attendance' | 'shifts'>(initialTab)
   const [attendance, setAttendance] = useState(initialAttendance)
   const [search, setSearch] = useState('')
@@ -50,6 +52,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   const [copiedLink, setCopiedLink] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [repeatOpen, setRepeatOpen] = useState(false)
 
   const signupUrl = `${appUrl}/signup/${event.checkin_token}`
 
@@ -197,6 +200,11 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
               {event.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location}</span>}
               {event.team && <Badge variant="secondary">{event.team.name}</Badge>}
             </div>
+            {canEdit && (
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => setRepeatOpen(true)}>
+                <Repeat className="h-4 w-4" /> Repeat this event
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-6">
             <div className="text-center">
@@ -331,6 +339,13 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                 <ExternalLink className="h-4 w-4" /> Preview
               </Button>
             </div>
+            {volunteerUrl && (
+              <p className="mt-3 border-t border-canopy-200 pt-3 text-xs text-canopy-700">
+                Recruiting for several services at once? Share your{' '}
+                <a href={volunteerUrl} target="_blank" rel="noreferrer" className="font-medium underline">church-wide sign-up link</a>
+                {' '}instead. It lists every upcoming shift, so volunteers can pick more than one.
+              </p>
+            )}
           </div>
 
           {/* Controls */}
@@ -441,6 +456,10 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           </div>
         </DialogContent>
       </Dialog>
+
+      {canEdit && (
+        <RepeatEventDialog open={repeatOpen} onOpenChange={setRepeatOpen} event={event} timeZone={timeZone} />
+      )}
     </div>
   )
 }

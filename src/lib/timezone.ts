@@ -122,6 +122,21 @@ export function fromZonedInput(value: string | null | undefined, timeZone: strin
   return new Date(ts).toISOString()
 }
 
+/**
+ * Moves a timestamp by whole days on the zone's calendar and keeps its
+ * wall-clock time, so a 9 AM service repeated weekly stays at 9 AM after
+ * daylight saving starts or ends.
+ */
+export function addDaysInZone(iso: string, days: number, timeZone: string): string | null {
+  const wall = toZonedInput(iso, timeZone)
+  if (!wall) return null
+  const [date, time] = wall.split('T')
+  const [y, mo, d] = date.split('-').map(Number)
+  const t = new Date(Date.UTC(y, mo - 1, d + days))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return fromZonedInput(`${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}T${time}`, timeZone)
+}
+
 /** Adds hours to a datetime-local value, used to suggest an end time. */
 export function addHoursToInput(value: string, hours: number): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value)
