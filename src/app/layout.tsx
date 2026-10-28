@@ -60,8 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={lora.variable}>
       <body className={`${geist.className} antialiased bg-gray-50 text-gray-900`}>
         {children}
-        {/* Its script is served by Vercel only; on cPanel the request falls through to the login page. */}
-        {process.env.VERCEL && <SpeedInsights />}
+        <SpeedInsights />
       </body>
     </html>
   )
