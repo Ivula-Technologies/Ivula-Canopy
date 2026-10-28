@@ -33,9 +33,11 @@ interface Props {
   shifts: ShiftWithSpots[]
   orgName: string
   timeZone: string
+  /** The church-wide sign-up page, when the church has one. */
+  moreShiftsPath?: string | null
 }
 
-export function SignupClient({ token, event, shifts, orgName, timeZone }: Props) {
+export function SignupClient({ token, event, shifts, orgName, timeZone, moreShiftsPath }: Props) {
   const fmt = (iso?: string | null) => (iso ? formatDateTimeIn(iso, timeZone) : '')
   const fmtTime = (iso?: string | null) => (iso ? formatTimeIn(iso, timeZone) : '')
 
@@ -84,6 +86,11 @@ export function SignupClient({ token, event, shifts, orgName, timeZone }: Props)
             </p>
             <p className="text-gray-500 text-sm mb-4">{event.title} · {orgName}</p>
             <p className="text-xs text-gray-400">A confirmation email has been sent to <strong>{form.email}</strong>.</p>
+            {moreShiftsPath && (
+              <a href={moreShiftsPath} className="mt-5 inline-block text-sm font-medium text-canopy-700 underline">
+                See other ways to serve with {orgName}
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -198,6 +205,12 @@ export function SignupClient({ token, event, shifts, orgName, timeZone }: Props)
               Your details will only be shared with {orgName}.
             </p>
           </form>
+        )}
+
+        {moreShiftsPath && (
+          <p className="mt-6 text-center text-sm">
+            <a href={moreShiftsPath} className="font-medium text-canopy-700 underline">See every upcoming shift at {orgName}</a>
+          </p>
         )}
       </div>
     </div>

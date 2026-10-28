@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { SignupClient } from './signup-client'
 import { orgTimeZone } from '@/lib/timezone'
+import { isVolunteerToken } from '@/lib/volunteer-link'
 
 export default async function PublicSignupPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
@@ -39,7 +40,7 @@ export default async function PublicSignupPage({ params }: { params: Promise<{ t
     spots_left: s.capacity - (countMap[s.id] || 0),
   }))
 
-  const org = event.organizations as unknown as { name: string; timezone?: string | null } | null
+  const org = event.organizations as unknown as { name: string; timezone?: string | null; volunteer_token?: string | null } | null
   const orgName = org?.name || ''
   const { organizations: _orgs, ...eventInfo } = event as typeof event & { organizations?: unknown }
 
@@ -50,6 +51,7 @@ export default async function PublicSignupPage({ params }: { params: Promise<{ t
       shifts={shiftsWithSpots}
       orgName={orgName}
       timeZone={orgTimeZone(org)}
+      moreShiftsPath={isVolunteerToken(org?.volunteer_token) ? `/serve/${org.volunteer_token}` : null}
     />
   )
 }
