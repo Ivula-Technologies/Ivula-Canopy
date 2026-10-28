@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { AttendanceClient } from './attendance-client'
 import { orgTimeZone } from '@/lib/timezone'
+import { volunteerLinkFor } from '@/lib/volunteer-link'
 
 export default async function EventDetailPage({
   params,
@@ -34,6 +35,7 @@ export default async function EventDetailPage({
   if (!event) notFound()
 
   const { permissions } = getPermissionsFromProfile(profile)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || ''
 
   return (
     <AttendanceClient
@@ -42,7 +44,8 @@ export default async function EventDetailPage({
       initialAttendance={attended || []}
       orgId={profile.organization_id}
       canEdit={permissions.manage_events}
-      appUrl={process.env.NEXT_PUBLIC_APP_URL || ''}
+      appUrl={appUrl}
+      volunteerUrl={volunteerLinkFor(org, appUrl)}
       timeZone={orgTimeZone(org)}
       // Upcoming events open on volunteer sign-ups; past ones on attendance.
       initialTab={

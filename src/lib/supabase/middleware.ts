@@ -46,8 +46,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Public routes (no auth required). Volunteers open sign-up, cancel and
-  // check-in links without an account, so everything under /signup/ and
-  // /checkin/ must stay reachable.
+  // check-in links without an account, so everything under /signup/,
+  // /serve/ and /checkin/ must stay reachable.
   const publicRoutes = [
     '/', '/login', '/signup', '/callback', '/forgot-password', '/reset-password',
     '/terms', '/privacy', '/robots.txt', '/sitemap.xml',
@@ -55,6 +55,7 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute =
     publicRoutes.includes(pathname) ||
     pathname.startsWith('/signup/') ||
+    pathname.startsWith('/serve/') ||
     pathname.startsWith('/checkin/')
 
   if (!user && !isPublicRoute) {

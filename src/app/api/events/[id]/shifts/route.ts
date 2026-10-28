@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
-import { nullifyEmptyStrings } from '@/lib/utils'
+import { nullifyEmptyStrings, pickAllowedFields } from '@/lib/utils'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { data: event } = await admin.from('events').select('id').eq('id', id).eq('organization_id', orgId).maybeSingle()
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
 
-  const body = nullifyEmptyStrings(await req.json())
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['title', 'description', 'starts_at', 'ends_at', 'capacity'])
   const { data: shift, error } = await admin
     .from('shifts')
     .insert({ ...body, event_id: id, organization_id: orgId })
