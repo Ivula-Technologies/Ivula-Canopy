@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, orgTimeZone, toZonedInput } from './timezone'
+import { addDaysInZone, addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, orgTimeZone, toZonedInput } from './timezone'
 
 describe('fromZonedInput', () => {
   it('reads the typed time as wall-clock time in the zone', () => {
@@ -62,5 +62,24 @@ describe('formatDateIn', () => {
     // 3:30 AM UTC on Nov 3 is still the evening of Nov 2 in Chicago.
     expect(formatDateIn('2026-11-03T03:30:00Z', 'America/Chicago')).toBe('Nov 2, 2026')
     expect(formatDateIn('2026-11-03T03:30:00Z', 'UTC')).toBe('Nov 3, 2026')
+  })
+})
+
+describe('addDaysInZone', () => {
+  it('keeps the local time when daylight saving ends between the dates', () => {
+    // Sunday 9 AM Central on Oct 25 (UTC-5), a week later is still 9 AM (now UTC-6).
+    expect(addDaysInZone('2026-10-25T14:00:00.000Z', 7, 'America/Chicago')).toBe('2026-11-01T15:00:00.000Z')
+  })
+
+  it('keeps the local time when daylight saving starts between the dates', () => {
+    expect(addDaysInZone('2026-03-01T15:00:00.000Z', 14, 'America/Chicago')).toBe('2026-03-15T14:00:00.000Z')
+  })
+
+  it('crosses month and year ends', () => {
+    expect(addDaysInZone('2026-12-27T15:00:00.000Z', 7, 'America/Chicago')).toBe('2027-01-03T15:00:00.000Z')
+  })
+
+  it('returns null for an unreadable date', () => {
+    expect(addDaysInZone('not a date', 7, 'America/Chicago')).toBeNull()
   })
 })
