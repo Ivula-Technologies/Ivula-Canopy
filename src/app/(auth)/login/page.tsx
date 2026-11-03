@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [notice, setNotice] = useState('')
+
+  // Set by /callback when an email link can't sign someone in directly.
+  useEffect(() => {
+    const link = new URLSearchParams(window.location.search).get('link')
+    if (link === 'used') setNotice('Your email is confirmed. Sign in with your email and password to continue.')
+    if (link === 'expired') setNotice('That link has expired. Sign in below, or reset your password if you need to.')
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -22,7 +30,11 @@ export default function LoginPage() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      setError(error.message)
+      setError(
+        error.message === 'Invalid login credentials'
+          ? 'That email and password don’t match. Check them, or reset your password.'
+          : error.message
+      )
       setLoading(false)
     } else {
       router.push('/dashboard')
@@ -43,6 +55,11 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
           <form onSubmit={handleLogin} className="space-y-4">
+            {notice && (
+              <div className="rounded-lg bg-canopy-50 border border-canopy-200 px-4 py-3 text-sm text-canopy-800">
+                {notice}
+              </div>
+            )}
             <Input
               label="Email address"
               type="email"
@@ -59,6 +76,11 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <div className="-mt-2 text-right">
+              <Link href="/forgot-password" className="text-sm text-canopy-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             {error && (
               <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                 {error}

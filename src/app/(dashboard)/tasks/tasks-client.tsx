@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Task, TaskStatus, TaskPriority } from '@/types'
+import { parseDate, todayISODate } from '@/lib/utils'
 
 type TaskRow = Task & {
   team?: { name: string } | null
@@ -46,7 +47,7 @@ const emptyForm = {
 }
 
 function isOverdue(task: TaskRow) {
-  return task.due_date && task.status !== 'done' && new Date(task.due_date) < new Date()
+  return task.due_date && task.status !== 'done' && parseDate(task.due_date) < parseDate(todayISODate())
 }
 
 export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Props) {
@@ -175,7 +176,7 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
               {task.due_date && (
                 <span className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
                   {overdue && <AlertTriangle className="h-3 w-3" />}
-                  {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {parseDate(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               )}
             </div>

@@ -8,6 +8,7 @@ import { LandingFaq } from '@/components/landing/faq'
 import { LandingCta } from '@/components/landing/cta'
 import { LandingPricing } from '@/components/landing/pricing'
 import { LandingMotion } from '@/components/landing/motion'
+import { AuthLinkForwarder } from '@/components/auth/auth-link-forwarder'
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -63,6 +64,7 @@ export default function LandingPage() {
     <LandingMotion>
     <div className="min-h-screen bg-white">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <AuthLinkForwarder />
       <LandingNav />
       <LandingHero />
       <LandingFeatures />

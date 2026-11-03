@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 
 export async function POST(req: NextRequest) {
-  const { signup_id, shift_id, email, hours } = await req.json()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const access = await getUserAccess(supabase, user.id)
+  if (!access.permissions.manage_events || !access.organizationId) {
+    return NextResponse.json({ error: 'You do not have permission to log hours' }, { status: 403 })
+  }
+
+  const { signup_id, email, hours } = await req.json()
   if (!signup_id || !email || !hours) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
   const admin = await createServiceClient()
@@ -12,6 +21,7 @@ export async function POST(req: NextRequest) {
     .from('shift_signups')
     .select('id, event_id, organization_id, member_id, status')
     .eq('id', signup_id)
+    .eq('organization_id', access.organizationId)
     .eq('email', email.toLowerCase().trim())
     .eq('status', 'confirmed')
     .single()

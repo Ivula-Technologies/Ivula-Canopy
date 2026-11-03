@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${appUrl}/callback`,
+    // Invite links carry the session in the URL hash; /reset-password picks it
+    // up and asks the new teammate to choose a password.
+    redirectTo: `${appUrl}/reset-password`,
     data: { role_id, organization_id: profile.organization_id },
   })
 

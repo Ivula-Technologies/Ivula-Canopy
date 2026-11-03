@@ -1,6 +1,7 @@
 -- ================================================================
--- RESET SCRIPT — Drop everything before applying fresh schema
--- Run this FIRST in Supabase SQL Editor, then run 001_initial_schema.sql
+-- DANGER: DELETES EVERY CHURCH'S DATA. Never run this on the live database.
+-- Only for wiping a fresh test project before re-running the migrations
+-- in supabase/migrations from 001.
 -- ================================================================
 
 -- Drop views

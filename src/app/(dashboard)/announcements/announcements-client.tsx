@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
-import { formatDate } from '@/lib/utils'
+import { formatDateIn } from '@/lib/timezone'
 import type { Announcement } from '@/types'
 
 type AnnouncementCard = Announcement & { team?: { name: string } | null }
@@ -20,12 +20,13 @@ interface Props {
   teams: { id: string; name: string }[]
   orgId: string
   orgName: string
+  timeZone: string
   canEdit: boolean
 }
 
 const emptyForm = { title: '', body: '', team_id: '', is_pinned: false, send_email: true }
 
-export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgName, canEdit }: Props) {
+export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgName, timeZone, canEdit }: Props) {
   const router = useRouter()
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
   const [open, setOpen] = useState(false)
@@ -197,7 +198,7 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
                     {a.is_pinned && <Badge variant="warning" className="text-xs">Pinned</Badge>}
                   </div>
                   <p className="text-sm text-gray-600 whitespace-pre-line">{a.body}</p>
-                  <p className="text-xs text-gray-400 mt-2">{formatDate(a.published_at)}</p>
+                  <p className="text-xs text-gray-400 mt-2">{formatDateIn(a.published_at, timeZone)}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button

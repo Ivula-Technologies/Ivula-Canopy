@@ -17,6 +17,11 @@ const questions = [
       'No. Canopy is designed for lean teams, part-time administrators, and volunteer coordinators. You can begin with your organization and people, then add programs as you go.',
   },
   {
+    question: 'Is there a phone app?',
+    answer:
+      'Yes. Open Canopy on your phone and add it to your home screen. It opens full screen like any other app on iPhone and Android, with nothing to download from an app store.',
+  },
+  {
     question: 'Can we try Canopy before committing?',
     answer: 'Yes. Start with a 14-day free trial. No credit card is required. After that, plans start at $29 a month.',
   },
