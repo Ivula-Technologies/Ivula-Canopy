@@ -77,7 +77,7 @@ export default async function DashboardPage() {
     { done: (totalShifts || 0) > 0, title: 'Add volunteer shifts', detail: 'One shift per role, like greeters, nursery or parking, with how many you need.', href: eventLink, show: permissions.manage_events },
     { done: (totalSignups || 0) > 0, title: 'Share your sign-up link', detail: 'Volunteers pick a shift without an account and get a reminder the day before.', href: eventLink, show: permissions.manage_events },
     { done: (staffCount || 0) > 1, title: 'Invite a teammate', detail: 'Give your pastor or coordinator their own login.', href: '/settings', show: permissions.manage_staff },
-    { done: !!org && hasSubscription(org), title: 'Choose a plan', detail: 'Plans start at $29 a month. Your trial keeps going until it ends.', href: '/settings#billing', show: permissions.manage_billing },
+    { done: !!org && hasSubscription(org), title: 'Choose a plan', detail: 'Plans start at $29 a month. Your trial keeps going until it ends.', href: '/settings#billing', show: permissions.manage_billing, hideInApp: true },
   ].filter((step) => step.show)
   const stepsDone = setupSteps.filter((step) => step.done).length
   const showSetup = setupSteps.length > 0 && stepsDone < setupSteps.length
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
           <CardContent>
             <ol className="divide-y divide-gray-100">
               {setupSteps.map((step, i) => (
-                <li key={step.title}>
+                <li key={step.title} data-hide-in-app={'hideInApp' in step || undefined}>
                   <Link href={step.href} className="flex items-center gap-3 py-3 group">
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${

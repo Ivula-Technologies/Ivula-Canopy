@@ -73,8 +73,9 @@ export default function PrivacyPage() {
         <li>Admins can edit or delete records at any time and export the member list as a spreadsheet.</li>
         <li>Volunteers can cancel a shift from the link in their confirmation email, and can ask the organization (or us) to delete their details.</li>
         <li>
-          If you close your account, email us and we will delete your organization&apos;s data within 30 days, except
-          for billing records we must keep for tax and legal reasons.
+          To close your account, follow the steps on <a href="/delete-account">Delete your account</a> and we will
+          delete your organization&apos;s data within 30 days, except for billing records we must keep for tax and
+          legal reasons.
         </li>
       </ul>
 

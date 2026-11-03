@@ -37,7 +37,8 @@ export async function enforcePeopleLimit(
 
   return NextResponse.json(
     {
-      error: `Your ${plan.name} plan includes up to ${plan.peopleLimit} people. Upgrade your plan in Settings to add more.`,
+      // No "upgrade" prompt: this also shows inside the Google Play app (src/lib/app-platform.ts).
+      error: `Your ${plan.name} plan includes up to ${plan.peopleLimit} people, and that limit is reached.`,
       code: 'plan_limit_reached',
     },
     { status: 402 }

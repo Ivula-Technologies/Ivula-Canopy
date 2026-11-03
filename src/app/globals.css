@@ -84,3 +84,12 @@
 .animate-in {
   animation: fade-in 0.2s ease-out;
 }
+
+/* Inside the Google Play app nothing about prices or payment shows
+   (src/lib/app-platform.ts). Plans are chosen on the website. */
+html[data-app='android'] [data-hide-in-app] {
+  display: none !important;
+}
+html:not([data-app='android']) [data-only-in-app] {
+  display: none !important;
+}
