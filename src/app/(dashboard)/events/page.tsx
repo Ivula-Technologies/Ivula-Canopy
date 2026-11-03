@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { EventsClient } from './events-client'
 import { orgTimeZone } from '@/lib/timezone'
+import { volunteerLinkFor } from '@/lib/volunteer-link'
 
 export default async function EventsPage() {
   const supabase = await createClient()
@@ -23,6 +24,7 @@ export default async function EventsPage() {
   ])
 
   const { permissions } = getPermissionsFromProfile(profile)
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || ''
 
   return (
     <EventsClient
@@ -30,8 +32,9 @@ export default async function EventsPage() {
       teams={teams || []}
       orgId={profile.organization_id}
       canEdit={permissions.manage_events}
-      appUrl={process.env.NEXT_PUBLIC_APP_URL || ''}
+      appUrl={appUrl}
       timeZone={orgTimeZone(org)}
+      volunteerUrl={volunteerLinkFor(org, appUrl)}
     />
   )
 }

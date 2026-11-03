@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Event } from '@/types'
 import { addHoursToInput, dateBadgeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
+import { VolunteerLinkCard } from '@/components/events/volunteer-link-card'
 
 interface Props {
   initialEvents: Event[]
@@ -21,6 +22,7 @@ interface Props {
   canEdit: boolean
   appUrl: string
   timeZone: string
+  volunteerUrl: string | null
 }
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'warning'> = {
@@ -48,7 +50,7 @@ const emptyForm = {
   location: '', starts_at: '', ends_at: '', team_id: '', budget: '',
 }
 
-export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, timeZone }: Props) {
+export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, timeZone, volunteerUrl }: Props) {
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [search, setSearch] = useState('')
@@ -63,6 +65,14 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
   const filtered = events.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase())
   )
+  // Soonest first for what's coming up, most recent first for what's done, so
+  // a season of repeated Sundays doesn't push next week to the bottom.
+  const upcoming = filtered
+    .filter((e) => ['upcoming', 'active'].includes(getEffectiveStatus(e)))
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+  const past = filtered
+    .filter((e) => !['upcoming', 'active'].includes(getEffectiveStatus(e)))
+    .sort((a, b) => b.starts_at.localeCompare(a.starts_at))
 
   function openCreate() {
     setEditingId(null)
@@ -206,6 +216,8 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
         </DialogContent>
       </Dialog>
 
+      {volunteerUrl && events.length > 0 && <VolunteerLinkCard url={volunteerUrl} />}
+
       <div className="relative mb-6 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
@@ -238,75 +250,80 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
             </div>
           )
         ) : (
-          filtered.map((event) => {
-            const badge = dateBadgeIn(event.starts_at, timeZone)
-            return (
-            <div key={event.id} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-3 hover:shadow-sm transition-shadow">
-              <div className="flex flex-col items-center text-center min-w-[50px] border-r border-gray-100 pr-4">
-                <span className="text-xs text-gray-400 uppercase font-medium">{badge.month}</span>
-                <span className="text-2xl font-bold text-gray-900 leading-none">{badge.day}</span>
-              </div>
+          [{ label: 'Upcoming', list: upcoming }, { label: 'Past', list: past }].filter((group) => group.list.length > 0).map((group) => (
+            <section key={group.label} className="space-y-3">
+              <h2 className="pt-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{group.label} ({group.list.length})</h2>
+              {group.list.map((event) => {
+                const badge = dateBadgeIn(event.starts_at, timeZone)
+                return (
+                <div key={event.id} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-3 hover:shadow-sm transition-shadow">
+                  <div className="flex flex-col items-center text-center min-w-[50px] border-r border-gray-100 pr-4">
+                    <span className="text-xs text-gray-400 uppercase font-medium">{badge.month}</span>
+                    <span className="text-2xl font-bold text-gray-900 leading-none">{badge.day}</span>
+                  </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <Link href={`/events/${event.id}`} className="font-semibold text-gray-900 hover:text-canopy-600 transition-colors">
-                    {event.title}
-                  </Link>
-                  <Badge variant={statusVariant[getEffectiveStatus(event)] || 'secondary'}>{getEffectiveStatus(event)}</Badge>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatTimeIn(event.starts_at, timeZone)}
-                  </span>
-                  {event.location && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />{event.location}
-                    </span>
-                  )}
-                  <Badge variant="secondary" className="text-xs">{event.event_type}</Badge>
-                </div>
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <Link href={`/events/${event.id}`} className="font-semibold text-gray-900 hover:text-canopy-600 transition-colors">
+                        {event.title}
+                      </Link>
+                      <Badge variant={statusVariant[getEffectiveStatus(event)] || 'secondary'}>{getEffectiveStatus(event)}</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatTimeIn(event.starts_at, timeZone)}
+                      </span>
+                      {event.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />{event.location}
+                        </span>
+                      )}
+                      <Badge variant="secondary" className="text-xs">{event.event_type}</Badge>
+                    </div>
+                  </div>
 
-              <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:gap-2">
-                <Link href={`/events/${event.id}`}>
-                  <Button variant="outline" size="sm">
-                    <Users className="h-4 w-4" /> Volunteers &amp; attendance
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setQrEvent(event)}
-                  title="QR Check-in"
-                >
-                  <QrCode className="h-4 w-4" />
-                </Button>
-                {canEdit && (
-                  <>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(event)} title="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                  <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:gap-2">
+                    <Link href={`/events/${event.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Users className="h-4 w-4" /> Volunteers &amp; attendance
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
-                      loading={deletingId === event.id}
-                      onClick={() => {
-                        if (confirm(`Delete event "${event.title}"? This also removes its attendance records and cannot be undone.`)) {
-                          handleDelete(event.id)
-                        }
-                      }}
-                      title="Delete"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setQrEvent(event)}
+                      title="QR Check-in"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <QrCode className="h-4 w-4" />
                     </Button>
-                  </>
-                )}
-              </div>
-            </div>
-            )
-          })
+                    {canEdit && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(event)} title="Edit">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          loading={deletingId === event.id}
+                          onClick={() => {
+                            if (confirm(`Delete event "${event.title}"? This also removes its attendance records and cannot be undone.`)) {
+                              handleDelete(event.id)
+                            }
+                          }}
+                          title="Delete"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                )
+              })}
+            </section>
+          ))
         )}
       </div>
 

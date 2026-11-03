@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download, UserPlus } from 'lucide-react'
+import { ArrowLeft, Check, Search, Users, Clock, MapPin, Plus, Trash2, Copy, ExternalLink, Download, UserPlus, Repeat, Mail, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { RepeatEventDialog } from '@/components/events/repeat-event-dialog'
+import { AddVolunteerDialog, type AddedSignup } from '@/components/events/add-volunteer-dialog'
+import { MessageVolunteersDialog } from '@/components/events/message-volunteers-dialog'
 import { getInitials } from '@/lib/utils'
 import { formatDateTimeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
 import type { Event, Attendance, Member, Shift } from '@/types'
@@ -18,11 +21,12 @@ interface Props {
   orgId: string
   canEdit: boolean
   appUrl: string
+  volunteerUrl: string | null
   timeZone: string
   initialTab: 'attendance' | 'shifts'
 }
 
-type ShiftWithSignups = Shift & {
+type ShiftWithSignups = Omit<Shift, 'signups'> & {
   signup_count: number
   signups: { id: string; first_name: string; last_name: string; email: string; phone?: string; status: string; signed_up_at: string }[]
 }
@@ -34,7 +38,7 @@ function csvRow(cells: (string | number | null | undefined)[]) {
   return cells.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')
 }
 
-export function AttendanceClient({ event, members, initialAttendance, orgId, canEdit, appUrl, timeZone, initialTab }: Props) {
+export function AttendanceClient({ event, members, initialAttendance, orgId, canEdit, appUrl, volunteerUrl, timeZone, initialTab }: Props) {
   const [tab, setTab] = useState<'attendance' | 'shifts'>(initialTab)
   const [attendance, setAttendance] = useState(initialAttendance)
   const [search, setSearch] = useState('')
@@ -50,6 +54,9 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   const [copiedLink, setCopiedLink] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [repeatOpen, setRepeatOpen] = useState(false)
+  const [addTo, setAddTo] = useState<{ id: string; title: string } | null>(null)
+  const [messageOpen, setMessageOpen] = useState(false)
 
   const signupUrl = `${appUrl}/signup/${event.checkin_token}`
 
@@ -110,6 +117,24 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
       setShiftError(data.error || 'Could not create shift.')
     }
     setShiftSaving(false)
+  }
+
+  // Keeps a shift's sign-up count in step after a coordinator adds or removes someone.
+  function updateSignups(shiftId: string, change: (signups: ShiftWithSignups['signups']) => ShiftWithSignups['signups']) {
+    setShifts((prev) => prev.map((s) => {
+      if (s.id !== shiftId) return s
+      const signups = change(s.signups)
+      return { ...s, signups, signup_count: signups.filter((r) => r.status === 'confirmed').length }
+    }))
+  }
+
+  function addedSignup(shiftId: string, signup: AddedSignup) {
+    updateSignups(shiftId, (signups) => [...signups, signup])
+  }
+
+  async function removeSignup(shiftId: string, signupId: string) {
+    const res = await fetch(`/api/shifts/${shiftId}/signups/${signupId}`, { method: 'DELETE' })
+    if (res.ok) updateSignups(shiftId, (signups) => signups.map((r) => (r.id === signupId ? { ...r, status: 'cancelled' } : r)))
   }
 
   async function deleteShift(id: string) {
@@ -197,6 +222,11 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
               {event.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location}</span>}
               {event.team && <Badge variant="secondary">{event.team.name}</Badge>}
             </div>
+            {canEdit && (
+              <Button size="sm" variant="outline" className="mt-3" onClick={() => setRepeatOpen(true)}>
+                <Repeat className="h-4 w-4" /> Repeat this event
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-6">
             <div className="text-center">
@@ -331,6 +361,13 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                 <ExternalLink className="h-4 w-4" /> Preview
               </Button>
             </div>
+            {volunteerUrl && (
+              <p className="mt-3 border-t border-canopy-200 pt-3 text-xs text-canopy-700">
+                Recruiting for several services at once? Share your{' '}
+                <a href={volunteerUrl} target="_blank" rel="noreferrer" className="font-medium underline">church-wide sign-up link</a>
+                {' '}instead. It lists every upcoming shift, so volunteers can pick more than one.
+              </p>
+            )}
           </div>
 
           {/* Controls */}
@@ -341,6 +378,11 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
             <div className="flex flex-wrap gap-2">
               {shifts.some((s) => s.signups.length > 0) && (
                 <Button size="sm" variant="outline" onClick={exportSignups}>Export CSV</Button>
+              )}
+              {canEdit && shifts.some((s) => s.signup_count > 0) && (
+                <Button size="sm" variant="outline" onClick={() => setMessageOpen(true)}>
+                  <Mail className="h-4 w-4" /> Email volunteers
+                </Button>
               )}
               {canEdit && (
                 <Button size="sm" variant="outline" onClick={importSignups} loading={importing}>
@@ -377,7 +419,7 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
               return (
                 <div key={shift.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                   <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-100">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-[12rem]">
                       <p className="text-sm font-semibold text-gray-900">{shift.title}</p>
                       {shift.description && <p className="text-xs text-gray-500 mt-0.5">{shift.description}</p>}
                       {(shift.starts_at || shift.ends_at) && (
@@ -391,7 +433,12 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                       {confirmed.length}/{shift.capacity} filled · {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left` : 'Full'}
                     </span>
                     {canEdit && (
-                      <button onClick={() => { if (confirm(`Delete shift "${shift.title}"?`)) deleteShift(shift.id) }} className="text-gray-400 hover:text-red-500 p-1">
+                      <Button size="sm" variant="outline" onClick={() => setAddTo({ id: shift.id, title: shift.title })}>
+                        <UserPlus className="h-4 w-4" /> Add
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <button onClick={() => { if (confirm(`Delete shift "${shift.title}"?`)) deleteShift(shift.id) }} className="text-gray-400 hover:text-red-500 p-1" aria-label={`Delete shift ${shift.title}`}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
@@ -409,7 +456,16 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                             <p className="text-sm font-medium text-gray-900">{r.first_name} {r.last_name}</p>
                             <p className="text-xs text-gray-500">{r.email}{r.phone ? ` · ${r.phone}` : ''}</p>
                           </div>
-                          <span className="text-xs text-gray-400">{formatDateTimeIn(r.signed_up_at, timeZone)}</span>
+                          <span className="hidden text-xs text-gray-400 sm:inline">{formatDateTimeIn(r.signed_up_at, timeZone)}</span>
+                          {canEdit && (
+                            <button
+                              onClick={() => { if (confirm(`Take ${r.first_name} ${r.last_name} off ${shift.title}?`)) removeSignup(shift.id, r.id) }}
+                              className="p-1 text-gray-400 hover:text-red-500"
+                              aria-label={`Remove ${r.first_name} ${r.last_name} from ${shift.title}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -441,6 +497,32 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
           </div>
         </DialogContent>
       </Dialog>
+
+      {canEdit && (
+        <RepeatEventDialog open={repeatOpen} onOpenChange={setRepeatOpen} event={event} timeZone={timeZone} />
+      )}
+      {canEdit && addTo && (
+        <AddVolunteerDialog
+          open={!!addTo}
+          onOpenChange={(open) => { if (!open) setAddTo(null) }}
+          shift={addTo}
+          members={members}
+          takenEmails={new Set(
+            (shifts.find((s) => s.id === addTo.id)?.signups || [])
+              .filter((r) => r.status === 'confirmed')
+              .map((r) => r.email.toLowerCase())
+          )}
+          onAdded={(signup) => addedSignup(addTo.id, signup)}
+        />
+      )}
+      {canEdit && (
+        <MessageVolunteersDialog
+          open={messageOpen}
+          onOpenChange={setMessageOpen}
+          event={event}
+          shifts={shifts.map((s) => ({ id: s.id, title: s.title, emails: s.signups.filter((r) => r.status === 'confirmed').map((r) => r.email) }))}
+        />
+      )}
     </div>
   )
 }

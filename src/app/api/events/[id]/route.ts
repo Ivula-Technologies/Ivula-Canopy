@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
-  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'title', 'description', 'event_type', 'location', 'starts_at', 'ends_at', 'is_recurring', 'recurrence_rule', 'checkin_enabled', 'status'])
+  const body = pickAllowedFields(nullifyEmptyStrings(await req.json()), ['team_id', 'title', 'description', 'event_type', 'location', 'budget', 'starts_at', 'ends_at', 'is_recurring', 'recurrence_rule', 'checkin_enabled', 'status'])
   const { data: event, error } = await admin
     .from('events')
     .update(body)
