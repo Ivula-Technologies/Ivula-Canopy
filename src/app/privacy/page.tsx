@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         <li><strong>Records you add:</strong> members, teams, events, attendance, volunteer hours, tasks, announcements, expenses, donors and donations.</li>
         <li><strong>Volunteer sign-ups:</strong> when someone signs up for a shift from a public link, the name, email, phone number and note they enter.</li>
         <li><strong>Billing:</strong> handled by Stripe. We see your plan, payment status and the last digits of your card, never the full card number.</li>
-        <li><strong>Basic usage data:</strong> server logs and anonymous page-speed measurements, used to keep Canopy fast and working.</li>
+        <li><strong>Basic usage data:</strong> server logs, used to keep Canopy fast and working.</li>
       </ul>
 
       <h2>How we use it</h2>
