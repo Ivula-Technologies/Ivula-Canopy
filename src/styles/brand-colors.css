@@ -1,0 +1,17 @@
+/* Ivula Canopy brand colors.
+   Imported from src/app/globals.css right after Tailwind, so every token
+   below becomes a utility class (bg-canopy-blue, text-growth-green, ...).
+   See docs/BRAND_COLORS.md for usage guidance. */
+@theme {
+  --color-canopy-blue: #2e7d9a;
+  --color-growth-green: #5ead65;
+  --color-community-gold: #e8a34c;
+}
+
+/* Semantic aliases, so components can say "primary" instead of a hue.
+   `inline` makes the generated utilities use the brand value directly. */
+@theme inline {
+  --color-brand-primary: var(--color-canopy-blue);
+  --color-brand-secondary: var(--color-growth-green);
+  --color-brand-accent: var(--color-community-gold);
+}
