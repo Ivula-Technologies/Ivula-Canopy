@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { BOOKING_URL } from '@/lib/booking'
 
 export function LandingNav() {
   return (
@@ -21,6 +22,14 @@ export function LandingNav() {
 
       {/* Action Buttons */}
       <div className="flex gap-3 items-center">
+        <a
+          href={BOOKING_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="hidden lg:inline-block text-canopy-700 px-4 py-2.5 rounded-lg hover:bg-canopy-50 transition-colors duration-200 font-medium"
+        >
+          Book a demo
+        </a>
         <Link
           href="/login"
           className="hidden sm:inline-block text-canopy-700 px-4 py-2.5 rounded-lg hover:bg-canopy-50 transition-colors duration-200 font-medium"
