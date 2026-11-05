@@ -13,8 +13,11 @@ export interface Organization {
   website?: string
   phone?: string
   address?: string
+  /** IANA time zone, e.g. America/Chicago. Added by migration 011. */
+  timezone?: string | null
   stripe_customer_id?: string
   stripe_subscription_id?: string
+  stripe_price_id?: string
   subscription_status: SubscriptionStatus
   trial_ends_at?: string
   current_period_end?: string

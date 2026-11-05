@@ -46,6 +46,8 @@ export async function createCheckoutSession({
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
+    // Lets founding customers enter a discount code created in Stripe.
+    allow_promotion_codes: true,
     subscription_data: {
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata: { organization_id: orgId },

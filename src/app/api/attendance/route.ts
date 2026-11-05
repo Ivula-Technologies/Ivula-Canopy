@@ -8,13 +8,25 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to record attendance' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = await req.json()
 
+  // The event and the person must both belong to this organization.
+  const [{ data: event }, { data: member }] = await Promise.all([
+    admin.from('events').select('id').eq('id', body?.event_id ?? '').eq('organization_id', orgId).maybeSingle(),
+    admin.from('members').select('id').eq('id', body?.member_id ?? '').eq('organization_id', orgId).maybeSingle(),
+  ])
+  if (!event || !member) return NextResponse.json({ error: 'Event or member not found' }, { status: 404 })
+
   const { data: record, error } = await admin
     .from('attendance')
-    .upsert(body, { onConflict: 'event_id,member_id' })
+    .upsert(
+      { event_id: event.id, member_id: member.id, organization_id: orgId, method: body.method || 'admin', hours: body.hours ?? null },
+      { onConflict: 'event_id,member_id' }
+    )
     .select()
     .single()
 
@@ -31,6 +43,8 @@ export async function DELETE(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_events) return NextResponse.json({ error: 'You do not have permission to record attendance' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const { searchParams } = new URL(req.url)
@@ -46,6 +60,7 @@ export async function DELETE(req: NextRequest) {
     .delete()
     .eq('event_id', event_id)
     .eq('member_id', member_id)
+    .eq('organization_id', orgId)
 
   if (error) {
     console.error('DELETE /api/attendance:', error.message)

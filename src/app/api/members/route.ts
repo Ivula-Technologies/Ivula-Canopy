@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { nullifyEmptyStrings } from '@/lib/utils'
 import { getUserAccess } from '@/lib/permissions'
 import { enforceSubscription } from '@/lib/subscription-guard'
+import { enforcePeopleLimit } from '@/lib/plan-guard'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -14,12 +15,17 @@ export async function POST(req: NextRequest) {
 
   const access = await getUserAccess(supabase, user.id)
   if (!access.permissions.manage_members) return NextResponse.json({ error: 'You do not have permission to add members' }, { status: 403 })
+  const orgId = access.organizationId
+  if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   const admin = await createServiceClient()
   const body = nullifyEmptyStrings(await req.json())
+
+  const overLimit = await enforcePeopleLimit(admin, user.id)
+  if (overLimit) return overLimit
   const { data: member, error } = await admin
     .from('members')
-    .insert(body)
+    .insert({ ...body, organization_id: orgId })
     .select()
     .single()
 

@@ -2,16 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email'
 import { slugify } from '@/lib/utils'
+import { isValidTimeZone } from '@/lib/timezone'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, adminId, adminEmail, adminName } = await req.json()
+    const { name, adminId, adminEmail, adminName, timezone } = await req.json()
 
     if (!name || !adminId || !adminEmail) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const supabase = await createServiceClient()
+
+    // This route runs right after sign-up, often before the email is
+    // confirmed, so there is no session to check. Instead make sure the
+    // account is real, the email matches it, and it doesn't already belong
+    // to an organization, so nobody can pull another user into a new org.
+    const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(adminId)
+    if (authUserError || !authUser?.user || authUser.user.email?.toLowerCase() !== String(adminEmail).toLowerCase()) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 400 })
+    }
+    const { data: currentProfile } = await supabase
+      .from('profiles').select('organization_id').eq('id', adminId).maybeSingle()
+    if (currentProfile?.organization_id) {
+      return NextResponse.json({ error: 'This account already belongs to an organization' }, { status: 409 })
+    }
 
     // Ensure unique slug
     let slug = slugify(name)
@@ -35,6 +50,13 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (orgError) throw orgError
+
+    // Saved separately so sign-up still works on a database that hasn't run
+    // migration 011 yet; the app falls back to Eastern Time until then.
+    if (isValidTimeZone(timezone)) {
+      const { error: tzError } = await supabase.from('organizations').update({ timezone }).eq('id', org.id)
+      if (tzError) console.warn('Could not save organization time zone (run migration 011):', tzError.message)
+    }
 
     // Seed the org's default roles and capture the Administrator role for the creator
     const { data: seededRoles, error: rolesError } = await supabase

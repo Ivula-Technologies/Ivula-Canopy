@@ -4,7 +4,12 @@ export function LandingFooter() {
   return (
     <footer className="bg-canopy-100 text-black py-8">
       <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-        <p>© 2026 Ivula Technologies. Building Solutions. Solving Problems.</p>
+        <p>
+          © 2026 Ivula Technologies. Building Solutions. Solving Problems.{' '}
+          <Link href="/privacy" className="underline-offset-4 hover:underline">Privacy</Link>
+          {' · '}
+          <Link href="/terms" className="underline-offset-4 hover:underline">Terms</Link>
+        </p>
         <div className="flex gap-6">
           <Link href="/login" className="hover:text-canopy-700 transition-colors">Sign in</Link>
           <Link href="/signup" className="hover:text-canopy-700 transition-colors">Get Started</Link>

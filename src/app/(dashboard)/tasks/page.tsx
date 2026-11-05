@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { getPermissionsFromProfile } from '@/lib/permissions'
+import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { TasksClient } from './tasks-client'
 
 export default async function TasksPage() {
@@ -10,7 +10,7 @@ export default async function TasksPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, assigned_role:roles(name, manage_members, delete_members, manage_teams, manage_events, manage_announcements, manage_billing, manage_staff)')
+    .select(PROFILE_WITH_ROLE)
     .eq('id', user.id)
     .single()
   if (!profile?.organization_id) redirect('/onboarding')
