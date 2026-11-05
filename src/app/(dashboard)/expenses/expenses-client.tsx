@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Expense } from '@/types'
+import { formatDate, todayISODate } from '@/lib/utils'
 
 const CATEGORIES = ['program', 'operations', 'staffing', 'travel', 'supplies', 'other']
 
@@ -19,7 +20,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: 'bg-gray-100 text-gray-700',
 }
 
-const emptyForm = { title: '', amount: '', category: 'other', expense_date: new Date().toISOString().slice(0, 10), paid_to: '', notes: '', event_id: '' }
+const emptyForm = { title: '', amount: '', category: 'other', expense_date: todayISODate(), paid_to: '', notes: '', event_id: '' }
 
 interface Props {
   initialExpenses: (Expense & { event?: { title: string } | null })[]
@@ -187,7 +188,7 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
                       {exp.category}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{new Date(exp.expense_date).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-gray-500">{formatDate(exp.expense_date)}</td>
                   <td className="px-4 py-3 text-gray-500">{exp.paid_to || '—'}</td>
                   <td className="px-4 py-3 text-gray-500">{(exp.event as { title: string } | null)?.title || '—'}</td>
                   <td className="px-4 py-3 text-right font-semibold text-gray-900">${Number(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>

@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { UserPlus, Pencil, Trash2, Mail, Plus, ShieldCheck } from 'lucide-react'
+import { US_TIME_ZONES, formatDateIn, orgTimeZone } from '@/lib/timezone'
+import { hasSubscription } from '@/lib/subscription'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageHeader } from '@/components/layout/page-header'
-import { getSubscriptionLabel, formatDate, getInitials } from '@/lib/utils'
+import { getSubscriptionLabel, getInitials } from '@/lib/utils'
 import { PERMISSION_META, PERMISSION_KEYS, type PermissionKey } from '@/lib/permissions'
 import type { Organization, Profile } from '@/types'
 import { PLANS, getPlan, formatPeopleLimit, type PlanId } from '@/lib/plans'
@@ -45,6 +48,7 @@ interface Props {
   canManageStaff: boolean
   canManageBilling: boolean
   currentPlanId: PlanId | null
+  peopleCount: number
 }
 
 const emptyRoleForm = {
@@ -59,7 +63,12 @@ const emptyRoleForm = {
   manage_staff: false,
 }
 
-export function SettingsClient({ org, profile, canManageStaff, canManageBilling, currentPlanId }: Props) {
+export function SettingsClient({ org, profile, canManageStaff, canManageBilling, currentPlanId, peopleCount }: Props) {
+  const router = useRouter()
+  const savedTimeZone = orgTimeZone(org)
+  const [timeZone, setTimeZone] = useState(savedTimeZone)
+  const [orgError, setOrgError] = useState('')
+  const [billingNotice, setBillingNotice] = useState<'success' | 'cancelled' | null>(null)
   const [orgForm, setOrgForm] = useState({
     name: org.name,
     description: org.description || '',
@@ -205,15 +214,37 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
     setRemovingId(null)
   }
 
+  // Stripe sends people back here after checkout. The webhook can land a few
+  // seconds after them, so refresh once to pick up the new plan.
+  useEffect(() => {
+    const billing = new URLSearchParams(window.location.search).get('billing')
+    if (billing !== 'success' && billing !== 'cancelled') return
+    setBillingNotice(billing)
+    window.history.replaceState(null, '', window.location.pathname)
+    if (billing === 'success') {
+      const timer = setTimeout(() => router.refresh(), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [router])
+
   async function saveOrg() {
     setSaving(true)
-    await fetch(`/api/organizations/${org.id}`, {
+    setOrgError('')
+    const res = await fetch(`/api/organizations/${org.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orgForm),
+      // Only send the time zone when it changed, so the rest of the profile
+      // still saves on a database that hasn't added the column yet.
+      body: JSON.stringify(timeZone !== savedTimeZone ? { ...orgForm, timezone: timeZone } : orgForm),
     })
-    setSaved(true)
     setSaving(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setOrgError(data.error || 'Could not save. Please try again.')
+      return
+    }
+    setSaved(true)
+    router.refresh()
     setTimeout(() => setSaved(false), 2000)
   }
 
@@ -253,7 +284,13 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
     return PERMISSION_KEYS.filter((k) => r[k]).length
   }
 
-  const subLabel = getSubscriptionLabel(org.subscription_status, org.trial_ends_at)
+  const subscribed = hasSubscription(org)
+  const subLabel = subscribed
+    ? (org.subscription_status === 'past_due' ? 'Payment failed' : 'Active')
+    : getSubscriptionLabel(org.subscription_status, org.trial_ends_at)
+  const currentPlan = getPlan(currentPlanId)
+  // The smallest plan that holds everyone already in Canopy.
+  const fittingPlanId = PLANS.find((p) => p.peopleLimit === null || p.peopleLimit >= peopleCount)?.id
 
   return (
     <div>
@@ -274,42 +311,75 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
               <Input label="Phone" value={orgForm.phone} onChange={(e) => setOrgForm({ ...orgForm, phone: e.target.value })} />
             </div>
             <Input label="Address" value={orgForm.address} onChange={(e) => setOrgForm({ ...orgForm, address: e.target.value })} />
+            <div>
+              <Select value={timeZone} onValueChange={setTimeZone}>
+                <SelectTrigger label="Time zone">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {!US_TIME_ZONES.some((z) => z.id === timeZone) && (
+                    <SelectItem value={timeZone}>{timeZone.replace(/_/g, ' ')}</SelectItem>
+                  )}
+                  {US_TIME_ZONES.map((z) => (
+                    <SelectItem key={z.id} value={z.id}>{z.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-gray-500">Event and shift times, sign-up pages and volunteer emails use this time zone.</p>
+            </div>
+            {orgError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{orgError}</div>
+            )}
             <Button onClick={saveOrg} loading={saving}>{saved ? '✓ Saved' : 'Save Changes'}</Button>
           </CardContent>
         </Card>
 
         {/* Billing — only if the role allows it */}
         {canManageBilling && (
-          <Card>
+          <Card id="billing" className="scroll-mt-20">
             <CardHeader>
               <CardTitle>Billing & Subscription</CardTitle>
               <CardDescription>Manage your plan and payment method</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between mb-4 p-4 rounded-lg bg-gray-50">
+              {billingNotice === 'success' && (
+                <div className="mb-4 rounded-lg bg-canopy-50 border border-canopy-200 px-4 py-3 text-sm text-canopy-800">
+                  Thank you! Your payment details are saved. Your plan can take a few seconds to show here.
+                </div>
+              )}
+              {billingNotice === 'cancelled' && (
+                <div className="mb-4 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 text-sm text-gray-600">
+                  Checkout was cancelled and nothing was charged. You can choose a plan any time.
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-3 mb-4 p-4 rounded-lg bg-gray-50">
                 <div>
                   <p className="font-medium text-gray-900">
-                    {org.subscription_status === 'active' && getPlan(currentPlanId)
-                      ? `${getPlan(currentPlanId)!.name} plan`
-                      : 'Current plan'}
+                    {subscribed && currentPlan ? `${currentPlan.name} plan` : subscribed ? 'Your plan' : 'Free trial'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {org.subscription_status === 'active'
-                      ? `Renews ${org.current_period_end ? formatDate(org.current_period_end) : 'monthly'}`
+                    {subscribed && org.subscription_status === 'past_due'
+                      ? 'Your last payment didn’t go through. Update your card to keep access.'
+                      : subscribed && org.subscription_status === 'trialing' && org.trial_ends_at
+                      ? `First payment on ${formatDateIn(org.trial_ends_at, savedTimeZone)}, when your trial ends`
+                      : subscribed
+                      ? `Renews ${org.current_period_end ? formatDateIn(org.current_period_end, savedTimeZone) : 'monthly'}`
                       : org.trial_ends_at
-                      ? `Trial ends ${formatDate(org.trial_ends_at)}`
+                      ? `Trial ends ${formatDateIn(org.trial_ends_at, savedTimeZone)}. Choose a plan to keep everything running.`
                       : 'No active subscription'}
                   </p>
                 </div>
-                <Badge variant={org.subscription_status === 'active' ? 'default' : org.subscription_status === 'trialing' ? 'warning' : 'destructive'}>
+                <Badge variant={subscribed && org.subscription_status !== 'past_due' ? 'default' : org.subscription_status === 'trialing' ? 'warning' : 'destructive'}>
                   {subLabel}
                 </Badge>
               </div>
               {billingError && (
                 <div className="mb-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{billingError}</div>
               )}
-              {org.subscription_status === 'active' ? (
-                <Button variant="outline" onClick={manageSubscription} loading={billingLoading}>Manage Subscription</Button>
+              {subscribed ? (
+                <Button variant="outline" onClick={manageSubscription} loading={billingLoading}>
+                  {org.subscription_status === 'past_due' ? 'Update payment method' : 'Manage subscription'}
+                </Button>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-3">
                   {PLANS.map((plan) => (
@@ -320,10 +390,16 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
                         <span className="text-sm font-normal text-gray-500">/mo</span>
                       </p>
                       <p className="mt-1 text-xs text-gray-500">{formatPeopleLimit(plan)}</p>
+                      {plan.id === fittingPlanId && (
+                        <p className="mt-2 text-xs font-medium text-canopy-700">
+                          Fits your {peopleCount.toLocaleString('en-US')} {peopleCount === 1 ? 'person' : 'people'}
+                        </p>
+                      )}
+                      <div className="flex-1" />
                       <Button
                         className="mt-4"
                         size="sm"
-                        variant={plan.id === 'growth' ? 'default' : 'outline'}
+                        variant={plan.id === fittingPlanId ? 'default' : 'outline'}
                         onClick={() => startSubscription(plan.id)}
                         loading={billingLoading}
                       >
@@ -533,7 +609,7 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Member since</span>
-                <span className="text-gray-900">{formatDate(profile.created_at)}</span>
+                <span className="text-gray-900">{formatDateIn(profile.created_at, savedTimeZone)}</span>
               </div>
             </div>
           </CardContent>

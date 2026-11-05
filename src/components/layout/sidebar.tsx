@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Organization, Profile } from '@/types'
+import { OPEN_MENU_EVENT } from '@/components/layout/mobile-tab-bar'
 import { getInitials, getSubscriptionLabel } from '@/lib/utils'
 
 const navItems = [
@@ -47,6 +48,13 @@ export function Sidebar({ org, profile }: SidebarProps) {
   const router = useRouter()
   const supabase = createClient()
   const [open, setOpen] = useState(false)
+
+  // The phone tab bar's "More" button opens this drawer.
+  useEffect(() => {
+    const openMenu = () => setOpen(true)
+    window.addEventListener(OPEN_MENU_EVENT, openMenu)
+    return () => window.removeEventListener(OPEN_MENU_EVENT, openMenu)
+  }, [])
 
   async function handleSignOut() {
     await supabase.auth.signOut()

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { orgTimeZone } from '@/lib/timezone'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { cleanVolunteer, sendSignupConfirmation, signUpForShift } from '@/lib/shift-signup'
 
 // GET — public: fetch event + shifts for the signup page (no auth)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -44,116 +47,49 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
 
 // POST — public: volunteer signs up for a shift (no auth)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  // High enough for a whole congregation signing up on church Wi-Fi after an
+  // announcement; low enough to stop a script filling every shift.
+  const limited = rateLimit(`signup:${clientIp(req)}`, 100, 10 * 60_000)
+  if (limited) return limited
   const { token } = await params
   const admin = await createServiceClient()
 
   const { data: event } = await admin
     .from('events')
-    .select('id, title, organization_id, organizations(name)')
+    .select('id, title, location, organization_id, organizations(*)')
     .eq('checkin_token', token)
     .single()
 
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 })
 
-  const body = await req.json()
-  const { shift_id, first_name, last_name, email, phone, notes } = body
-
-  if (!shift_id || !first_name || !last_name || !email) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  const body = await req.json().catch(() => ({}))
+  const volunteer = cleanVolunteer(body)
+  if ('error' in volunteer || !body.shift_id) {
+    return NextResponse.json({ error: 'error' in volunteer ? volunteer.error : 'Missing required fields' }, { status: 400 })
   }
 
-  // Check the shift belongs to this event and has capacity
+  // Check the shift belongs to this event
   const { data: shift } = await admin
     .from('shifts')
     .select('id, title, capacity, starts_at, ends_at')
-    .eq('id', shift_id)
+    .eq('id', body.shift_id)
     .eq('event_id', event.id)
     .single()
 
   if (!shift) return NextResponse.json({ error: 'Shift not found' }, { status: 404 })
 
-  const { count } = await admin
-    .from('shift_signups')
-    .select('id', { count: 'exact', head: true })
-    .eq('shift_id', shift_id)
-    .eq('status', 'confirmed')
-
-  if ((count || 0) >= shift.capacity) {
-    return NextResponse.json({ error: 'This shift is full. Please choose another.' }, { status: 409 })
-  }
-
-  // Prevent double-signup by same email for same shift
-  const { data: existing } = await admin
-    .from('shift_signups')
-    .select('id')
-    .eq('shift_id', shift_id)
-    .eq('email', email.toLowerCase().trim())
-    .eq('status', 'confirmed')
-    .single()
-
-  if (existing) {
-    return NextResponse.json({ error: 'You are already signed up for this shift.' }, { status: 409 })
-  }
-
-  // Match to a member by email if possible
-  const { data: member } = await admin
-    .from('members')
-    .select('id')
-    .eq('organization_id', event.organization_id)
-    .eq('email', email.toLowerCase().trim())
-    .single()
-
-  const { data: signup, error } = await admin
-    .from('shift_signups')
-    .insert({
-      shift_id,
-      event_id: event.id,
-      organization_id: event.organization_id,
-      member_id: member?.id || null,
-      first_name: first_name.trim(),
-      last_name: last_name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone?.trim() || null,
-      notes: notes?.trim() || null,
-      status: 'confirmed',
-    })
-    .select()
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const result = await signUpForShift(admin, { orgId: event.organization_id, eventId: event.id, shift, volunteer })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
 
   // Send confirmation email (non-blocking)
-  const orgName = (event.organizations as unknown as { name: string } | null)?.name || 'The organization'
-  sendConfirmationEmail(signup, shift, event.title, orgName).catch(console.error)
+  const org = event.organizations as unknown as { name: string; timezone?: string | null } | null
+  sendSignupConfirmation({
+    to: volunteer.email,
+    firstName: volunteer.first_name,
+    orgName: org?.name || 'The organization',
+    timeZone: orgTimeZone(org),
+    shifts: [{ shiftTitle: shift.title, eventTitle: event.title, startsAt: shift.starts_at, location: event.location, cancelToken: result.signup.cancel_token }],
+  }).catch(console.error)
 
-  return NextResponse.json({ signup }, { status: 201 })
-}
-
-async function sendConfirmationEmail(
-  signup: { first_name: string; email: string; cancel_token: string },
-  shift: { title: string; starts_at?: string | null; ends_at?: string | null },
-  eventTitle: string,
-  orgName: string
-) {
-  const { getResend } = await import('@/lib/email')
-  const resend = getResend()
-  if (!resend) return
-
-  const shiftTime = shift.starts_at
-    ? new Date(shift.starts_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-    : ''
-
-  await resend.emails.send({
-    from: `${orgName} <no-reply@ivulatechnologies.com>`,
-    to: signup.email,
-    subject: `You're signed up — ${eventTitle}`,
-    html: `
-      <p>Hi ${signup.first_name},</p>
-      <p>You're confirmed for <strong>${shift.title}</strong>${shiftTime ? ` on ${shiftTime}` : ''} at <strong>${eventTitle}</strong> with ${orgName}.</p>
-      <p>We'll see you there!</p>
-      <p style="margin-top:24px;font-size:12px;color:#999;">
-        Need to cancel? <a href="${process.env.NEXT_PUBLIC_APP_URL}/signup/cancel/${signup.cancel_token}">Click here to cancel your spot</a>.
-      </p>
-    `,
-  })
+  return NextResponse.json({ signup: result.signup }, { status: 201 })
 }

@@ -37,8 +37,28 @@ export function pickAllowedFields<T extends Record<string, unknown>>(obj: T, all
   return out
 }
 
-export function formatDate(date: string | Date): string {
-  return format(new Date(date), 'MMM d, yyyy')
+// Date-only values ("2026-10-20", from date columns such as donated_at) are
+// calendar days, not instants. new Date() reads them as UTC midnight, which is
+// the previous evening anywhere in the US, so parse them as local dates.
+export function parseDate(date: string | Date): Date {
+  if (typeof date === 'string') {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  }
+  return new Date(date)
+}
+
+// A missing or malformed date shows as blank rather than crashing the page.
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return ''
+  const parsed = parseDate(date)
+  return isNaN(parsed.getTime()) ? '' : format(parsed, 'MMM d, yyyy')
+}
+
+// Today's date as YYYY-MM-DD on the viewer's own calendar (toISOString()
+// would give tomorrow's date on a US evening).
+export function todayISODate(): string {
+  return format(new Date(), 'yyyy-MM-dd')
 }
 
 export function formatDateTime(date: string | Date): string {
