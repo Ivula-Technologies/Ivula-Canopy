@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="October 20, 2026">
+    <LegalPage title="Privacy Policy" updated="November 5, 2026">
       <p>
         Ivula Canopy (&ldquo;Canopy&rdquo;) is made by Ivula Technologies (&ldquo;we&rdquo;). Churches, nonprofits and
         community groups use Canopy to keep track of their people, volunteers, events and giving. This page explains
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         <li><strong>Records you add:</strong> members, teams, events, attendance, volunteer hours, tasks, announcements, expenses, donors and donations.</li>
         <li><strong>Volunteer sign-ups:</strong> when someone signs up for a shift from a public link, the name, email, phone number and note they enter.</li>
         <li><strong>Billing:</strong> handled by Stripe. We see your plan, payment status and the last digits of your card, never the full card number.</li>
-        <li><strong>Basic usage data:</strong> server logs and anonymous page-speed measurements, used to keep Canopy fast and working.</li>
+        <li><strong>Basic usage data:</strong> server logs, used to keep Canopy fast and working.</li>
       </ul>
 
       <h2>How we use it</h2>
@@ -48,6 +48,11 @@ export default function PrivacyPage() {
         <li><strong>Stripe</strong>: subscription payments.</li>
         <li><strong>Resend</strong>: email delivery.</li>
         <li><strong>Our web hosting provider</strong>: runs the Canopy application servers.</li>
+        <li>
+          <strong>Meta (Facebook and Instagram)</strong>: when we advertise there, the Meta Pixel runs on our home page
+          and our organization sign-up page only, to count which ads lead to new sign-ups. It never runs inside the
+          signed-in app or on the pages volunteers and members open, so it never sees your organization&apos;s records.
+        </li>
       </ul>
       <p>
         We share information beyond this only if the law requires it, or to protect someone&apos;s safety, and we will
