@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="November 5, 2026">
+    <LegalPage title="Privacy Policy" updated="November 9, 2026">
       <p>
         Ivula Canopy (&ldquo;Canopy&rdquo;) is made by Ivula Technologies (&ldquo;we&rdquo;). Churches, nonprofits and
         community groups use Canopy to keep track of their people, volunteers, events and giving. This page explains
@@ -29,6 +29,7 @@ export default function PrivacyPage() {
         <li><strong>Account details:</strong> the name, email address and password of each staff member who signs in.</li>
         <li><strong>Organization details:</strong> your organization&apos;s name, contact details, time zone and plan.</li>
         <li><strong>Records you add:</strong> members, teams, events, attendance, volunteer hours, tasks, announcements, expenses, donors and donations.</li>
+        <li><strong>Kids check-in:</strong> if your organization uses it, each child&apos;s name, birth date, grade, allergies, medical notes, guardian and who else may pick them up, plus a record of every check-in and pickup. Only staff with permission can see these records, and the pickup code is printed on the labels only.</li>
         <li><strong>Volunteer sign-ups:</strong> when someone signs up for a shift from a public link, the name, email, phone number and note they enter.</li>
         <li><strong>Billing:</strong> handled by Stripe. We see your plan, payment status and the last digits of your card, never the full card number.</li>
         <li><strong>Basic usage data:</strong> server logs, used to keep Canopy fast and working.</li>

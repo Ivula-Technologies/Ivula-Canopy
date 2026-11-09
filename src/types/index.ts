@@ -237,6 +237,38 @@ export interface Expense {
   event?: { title: string } | null
 }
 
+export interface Child {
+  id: string
+  organization_id: string
+  first_name: string
+  last_name: string
+  birth_date?: string | null
+  grade?: string | null
+  allergies?: string | null
+  medical_notes?: string | null
+  guardian_member_id?: string | null
+  guardian_name: string
+  guardian_phone?: string | null
+  authorized_pickups?: string | null
+  notes?: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+/** A kids check-in as the desk sees it. The pickup code is left out on purpose. */
+export interface ChildCheckin {
+  id: string
+  child_id: string
+  event_id?: string | null
+  room?: string | null
+  checked_in_at: string
+  checked_out_at?: string | null
+  picked_up_by?: string | null
+  checkout_method?: 'code' | 'override' | null
+  checkout_note?: string | null
+}
+
 export interface DashboardStats {
   total_members: number
   active_members: number

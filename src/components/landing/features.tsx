@@ -7,27 +7,28 @@ const features = [
       'Keep members, volunteers, staff, donors, and stakeholders organized with the context your team needs to serve them well.',
   },
   {
-    title: 'Volunteer Coordination',
+    title: 'Volunteer Scheduling',
     description:
-      'Group people into teams, ministries, committees, projects, or departments so coordinators always know who is responsible for what.',
+      'Post shifts, share one sign-up link for every opening, send reminders automatically, and email the people on each roster.',
   },
   {
     title: 'Events & Attendance',
     description:
-      'Plan activities, track participation, and understand which programs are helping people stay connected.',
+      'Plan one-off or repeating events, check people in with a QR code, and see which programs keep people connected.',
   },
   {
-    title: 'Engagement Dashboard',
+    title: 'Kids Check-in',
     description:
-      'Turn day-to-day activity into leadership-ready insight about participation trends, volunteer activity, and organizational growth.',
+      'Check families in at the door, print name labels with allergies, and hand each child back only to an adult holding the matching pickup tag.',
   },
   {
     title: 'Announcements',
     description: 'Reach the right people quickly with centralized announcements instead of scattered texts and email threads.',
   },
   {
-    title: 'Reports & Exports',
-    description: 'Create clear reports and CSV exports for board meetings, staff reviews, donor updates, and operational planning.',
+    title: 'Dashboard & Reports',
+    description:
+      'See participation and volunteer trends at a glance, then export clear reports for board meetings, donor updates, and planning.',
   },
 ]
 
