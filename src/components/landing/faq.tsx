@@ -9,7 +9,7 @@ const questions = [
   {
     question: 'What can we manage with Ivula Canopy?',
     answer:
-      'Your team can organize people and volunteers, create teams and events, record attendance, share announcements, and produce reports and CSV exports for leadership and planning.',
+      'Your team can organize people and volunteers, schedule volunteer shifts, create teams and events, record attendance, check children in and out safely, keep donor records with receipts, share announcements, and produce reports and CSV exports for leadership and planning.',
   },
   {
     question: 'Do we need technical staff to get started?',

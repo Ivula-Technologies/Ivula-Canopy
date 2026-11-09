@@ -6,6 +6,7 @@ import { Reveal, Stagger, StaggerItem } from './motion'
 const included = [
   'Volunteer shifts with public sign-up links and reminders',
   'QR code check-in and attendance tracking',
+  'Kids check-in with name labels and pickup tags',
   'Volunteer hours portal',
   'Donor records and printable receipts',
   'Teams, events, tasks and announcements',
