@@ -18,6 +18,7 @@ A new database needs all of them; on the live database, run only the ones it doe
 | 011_org_timezone.sql | Each organization's time zone |
 | 012_shift_reminder_sent.sql | Records sent shift reminders so nobody gets two |
 | 013_volunteer_link.sql | One sign-up link per organization for every upcoming shift |
+| 014_kids_checkin.sql | Kids check-in: children's records, check-ins and pickup codes |
 
 `supabase/dangerous/reset_all_data.sql` deletes everything and is only for a
 throwaway test project. It is kept out of this folder so nobody runs it by

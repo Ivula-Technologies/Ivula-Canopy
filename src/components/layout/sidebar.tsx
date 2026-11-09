@@ -18,6 +18,7 @@ import {
   CheckSquare,
   Receipt,
   CalendarClock,
+  Baby,
 } from 'lucide-react'
 import { BOOKING_URL } from '@/lib/booking'
 import Image from 'next/image'
@@ -33,6 +34,7 @@ const navItems = [
   { href: '/members', label: 'Members', icon: Users },
   { href: '/teams', label: 'Teams', icon: UsersRound },
   { href: '/events', label: 'Events', icon: CalendarDays },
+  { href: '/kids', label: 'Kids check-in', icon: Baby },
   { href: '/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/donors', label: 'Donors', icon: Heart },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
