@@ -137,6 +137,12 @@ export function addDaysInZone(iso: string, days: number, timeZone: string): stri
   return fromZonedInput(`${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}T${time}`, timeZone)
 }
 
+/** Midnight at the start of the zone's calendar day that contains `date`, as an ISO timestamp. */
+export function startOfDayInZone(date: Date, timeZone: string): string {
+  const wall = toZonedInput(date.toISOString(), timeZone)
+  return fromZonedInput(`${wall.slice(0, 10)}T00:00`, timeZone) as string
+}
+
 /** Adds hours to a datetime-local value, used to suggest an end time. */
 export function addHoursToInput(value: string, hours: number): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDaysInZone, addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, orgTimeZone, toZonedInput } from './timezone'
+import { addDaysInZone, addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, orgTimeZone, startOfDayInZone, toZonedInput } from './timezone'
 
 describe('fromZonedInput', () => {
   it('reads the typed time as wall-clock time in the zone', () => {
@@ -81,5 +81,18 @@ describe('addDaysInZone', () => {
 
   it('returns null for an unreadable date', () => {
     expect(addDaysInZone('not a date', 7, 'America/Chicago')).toBeNull()
+  })
+})
+
+describe('startOfDayInZone', () => {
+  it('gives midnight of the church day, not the server day', () => {
+    // 3:30 AM UTC on Nov 3 is still Nov 2 in Chicago (UTC-6 after daylight saving ends).
+    expect(startOfDayInZone(new Date('2026-11-03T03:30:00Z'), 'America/Chicago')).toBe('2026-11-02T06:00:00.000Z')
+    expect(startOfDayInZone(new Date('2026-11-03T03:30:00Z'), 'UTC')).toBe('2026-11-03T00:00:00.000Z')
+  })
+
+  it('uses the offset in force that day', () => {
+    // July in New York is UTC-4.
+    expect(startOfDayInZone(new Date('2026-07-12T15:00:00Z'), 'America/New_York')).toBe('2026-07-12T04:00:00.000Z')
   })
 })
