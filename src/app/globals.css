@@ -40,7 +40,15 @@
 
   html {
     min-height: 100%;
-    scroll-behavior: smooth;
+  }
+
+  /* Smooth scrolling only for the home page's section links. Next.js 16 no
+     longer turns it off during page changes, so app pages keep the instant
+     jump to the top. */
+  @media (prefers-reduced-motion: no-preference) {
+    html:has([data-smooth-scroll]) {
+      scroll-behavior: smooth;
+    }
   }
 
   body {

@@ -62,7 +62,7 @@ const structuredData = {
 export default function LandingPage() {
   return (
     <LandingMotion>
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" data-smooth-scroll>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <AuthLinkForwarder />
       <LandingNav />

@@ -71,7 +71,7 @@ jobs:
 
           ## Requirements
           - cPanel hosting with Node.js Application Manager / Setup Node.js App
-          - Node.js 20 or newer
+          - Node.js 20.9 or newer (22 recommended)
           - HTTPS enabled on `canopy.ivulatechnologies.com`
           - Existing Supabase project and database migrations already applied
 
