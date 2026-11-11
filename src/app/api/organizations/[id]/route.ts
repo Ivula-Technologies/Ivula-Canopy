@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { getUserAccess } from '@/lib/permissions'
 import { isValidTimeZone } from '@/lib/timezone'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -7,6 +8,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Administrators only: anyone whose role can manage staff or billing. This
+  // used to rest on the old admin/leader label, so an Administrator invited
+  // from Settings saw "Saved" while nothing changed.
+  const access = await getUserAccess(supabase, user.id)
+  if (!access.organizationId || (access.organizationId !== id && !access.isSuperAdmin)) {
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+  }
+  if (!access.permissions.manage_staff && !access.permissions.manage_billing) {
+    return NextResponse.json({ error: 'Only administrators can change the organization profile.' }, { status: 403 })
+  }
 
   // Only the profile fields on the Settings page. Billing columns are owned
   // by the Stripe webhook and must never come from the browser.
@@ -24,11 +36,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   if (!Object.keys(updates).length) return NextResponse.json({ ok: true })
 
-  const { error } = await supabase
+  const admin = await createServiceClient()
+  const { data, error } = await admin
     .from('organizations')
     .update(updates)
     .eq('id', id)
+    .select('id')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!data?.length) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
   return NextResponse.json({ ok: true })
 }

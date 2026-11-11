@@ -82,7 +82,7 @@ jobs:
           4. Create a production Node.js app for `canopy.ivulatechnologies.com`.
           5. Set the application root to the extracted folder.
           6. Set the startup file to `server.js`.
-          7. Use Node.js 20+.
+          7. Use Node.js 20.9 or newer (22 recommended).
 
           ## Supabase browser configuration
           The production browser bundle has already been built with the Canopy Supabase project URL and publishable key.

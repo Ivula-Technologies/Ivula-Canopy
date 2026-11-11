@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { createCheckoutSession, createStripeCustomer } from '@/lib/stripe'
 import { isPlanId, priceIdForPlan } from '@/lib/plans'
+import { getUserAccess } from '@/lib/permissions'
 
 export async function POST(_req: NextRequest) {
   try {
@@ -19,12 +20,16 @@ export async function POST(_req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: profile } = await supabase
-      .from('profiles').select('organization_id').eq('id', user.id).single()
-    if (!profile?.organization_id) return NextResponse.json({ error: 'No organization' }, { status: 400 })
+    // Choosing a plan charges the church's card, so only people whose role
+    // includes "Manage billing" may start it.
+    const access = await getUserAccess(supabase, user.id)
+    if (!access.organizationId) return NextResponse.json({ error: 'No organization' }, { status: 400 })
+    if (!access.permissions.manage_billing) {
+      return NextResponse.json({ error: 'Only people who manage billing can choose a plan.' }, { status: 403 })
+    }
 
     const { data: org } = await supabase
-      .from('organizations').select('*').eq('id', profile.organization_id).single()
+      .from('organizations').select('*').eq('id', access.organizationId).single()
     if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
 
     // An org that already pays should change plans in the billing portal,
@@ -63,7 +68,9 @@ export async function POST(_req: NextRequest) {
       priceId,
       orgId: org.id,
       trialDays,
-      successUrl: `${appUrl}/settings?billing=success`,
+      // Stripe fills in the session id, so Settings can save the new plan at
+      // once even before the webhook arrives.
+      successUrl: `${appUrl}/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${appUrl}/settings?billing=cancelled`,
     })
 

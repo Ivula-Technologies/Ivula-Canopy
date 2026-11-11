@@ -9,16 +9,22 @@ export function getResend() {
 }
 const FROM = process.env.RESEND_FROM_EMAIL || 'hello@ivulatechnologies.com'
 
+// Names, titles and messages are typed by people, so they are escaped before
+// going into email HTML ("Kids <3 VBS" or "Food & Fellowship" must show as typed).
+export function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+}
+
 export async function sendWelcomeEmail(to: string, orgName: string, adminName: string) {
   return getResend().emails.send({
     from: FROM,
     to,
     subject: `Welcome to Ivula Canopy — ${orgName} is live!`,
     html: `
-      <h2>Welcome, ${adminName}!</h2>
-      <p>Your organization <strong>${orgName}</strong> has been set up on Ivula Canopy.</p>
+      <h2>Welcome, ${escapeHtml(adminName)}!</h2>
+      <p>Your organization <strong>${escapeHtml(orgName)}</strong> has been set up on Ivula Canopy.</p>
       <p>You have a 14-day free trial. No credit card required to start.</p>
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">Go to your dashboard →</a></p>
+      <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://canopy.ivulatechnologies.com'}/dashboard">Go to your dashboard →</a></p>
       <br/>
       <p>— The Ivula Canopy Team</p>
     `,
@@ -32,7 +38,7 @@ export async function sendMemberInviteEmail(to: string, orgName: string, inviteU
     subject: `You've been invited to join ${orgName} on Ivula Canopy`,
     html: `
       <h2>You're invited!</h2>
-      <p><strong>${orgName}</strong> has invited you to join their community on Ivula Canopy.</p>
+      <p><strong>${escapeHtml(orgName)}</strong> has invited you to join their community on Ivula Canopy.</p>
       <p><a href="${inviteUrl}">Accept Invitation →</a></p>
       <br/>
       <p>— The Ivula Canopy Team</p>
@@ -49,11 +55,11 @@ export async function sendAnnouncementEmail(
   if (recipients.length === 0) return { sent: 0 }
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
-      <p style="color:#6b7280; font-size:13px; margin-bottom:4px;">${orgName} announcement</p>
-      <h2 style="color:#1b3d33; margin-top:0;">${title}</h2>
-      <div style="color:#374151; font-size:15px; line-height:1.6; white-space:pre-line;">${body}</div>
+      <p style="color:#6b7280; font-size:13px; margin-bottom:4px;">${escapeHtml(orgName)} announcement</p>
+      <h2 style="color:#1b3d33; margin-top:0;">${escapeHtml(title)}</h2>
+      <div style="color:#374151; font-size:15px; line-height:1.6; white-space:pre-line;">${escapeHtml(body)}</div>
       <hr style="border:none; border-top:1px solid #e5e7eb; margin:24px 0;"/>
-      <p style="color:#9ca3af; font-size:12px;">Sent via Ivula Canopy on behalf of ${orgName}.</p>
+      <p style="color:#9ca3af; font-size:12px;">Sent via Ivula Canopy on behalf of ${escapeHtml(orgName)}.</p>
     </div>
   `
   // Send individually so each recipient only sees their own address.
@@ -83,19 +89,15 @@ export async function sendEventReminderEmail(
     to,
     subject: `Reminder: ${eventTitle} is coming up`,
     html: `
-      <h2>Hi ${memberName},</h2>
+      <h2>Hi ${escapeHtml(memberName)},</h2>
       <p>This is a reminder about an upcoming event:</p>
-      <h3>${eventTitle}</h3>
-      <p><strong>When:</strong> ${eventDate}</p>
-      ${eventLocation ? `<p><strong>Where:</strong> ${eventLocation}</p>` : ''}
+      <h3>${escapeHtml(eventTitle)}</h3>
+      <p><strong>When:</strong> ${escapeHtml(eventDate)}</p>
+      ${eventLocation ? `<p><strong>Where:</strong> ${escapeHtml(eventLocation)}</p>` : ''}
       <br/>
       <p>— The Ivula Canopy Team</p>
     `,
   })
-}
-
-export function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 }
 
 export async function sendTrialReminderEmail(to: string, orgName: string, kind: 'three_days' | 'ended') {

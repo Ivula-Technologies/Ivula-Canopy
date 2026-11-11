@@ -74,12 +74,14 @@ export async function signUpForShift(
     .maybeSingle()
   if (existing) return { ok: false, status: 409, error: 'You are already signed up for this shift.' }
 
-  // Link the sign-up to a member record when the email matches one.
+  // Link the sign-up to a member record when the email matches one. Older
+  // records may have capitals in the email, so match without case.
   const { data: member } = await admin
     .from('members')
     .select('id')
     .eq('organization_id', orgId)
-    .eq('email', volunteer.email)
+    .ilike('email', volunteer.email.replace(/[\\%_]/g, '\\$&'))
+    .limit(1)
     .maybeSingle()
 
   const { data: signup, error } = await admin
