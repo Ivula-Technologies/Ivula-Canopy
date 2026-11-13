@@ -48,6 +48,8 @@ interface Props {
   profile: Profile
   canManageStaff: boolean
   canManageBilling: boolean
+  /** Administrators (Manage staff or Manage billing) can change the profile. */
+  canEditOrg: boolean
   currentPlanId: PlanId | null
   peopleCount: number
 }
@@ -64,7 +66,7 @@ const emptyRoleForm = {
   manage_staff: false,
 }
 
-export function SettingsClient({ org, profile, canManageStaff, canManageBilling, currentPlanId, peopleCount }: Props) {
+export function SettingsClient({ org, profile, canManageStaff, canManageBilling, canEditOrg, currentPlanId, peopleCount }: Props) {
   const router = useRouter()
   const savedTimeZone = orgTimeZone(org)
   const [timeZone, setTimeZone] = useState(savedTimeZone)
@@ -182,7 +184,11 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      setInviteSuccess(`Invitation sent to ${inviteForm.email}. They'll get a link to set up their account.`)
+      setInviteSuccess(
+        data.existingLogin
+          ? `${inviteForm.email} already had a Canopy login and now has access. They can sign in with their usual password, or use "Forgot password".`
+          : `Invitation sent to ${inviteForm.email}. They'll get a link to set up their account.`
+      )
       setInviteForm({ email: '', role_id: '' })
       loadStaff()
     } else {
@@ -302,9 +308,12 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
         <Card>
           <CardHeader>
             <CardTitle>Organization Profile</CardTitle>
-            <CardDescription>Update your organization&apos;s public information</CardDescription>
+            <CardDescription>
+              {canEditOrg ? 'Update your organization\u2019s public information' : 'Only administrators can change these details.'}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <fieldset disabled={!canEditOrg} className="space-y-4">
             <Input label="Organization name" value={orgForm.name} onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })} />
             <Textarea label="Description" value={orgForm.description} onChange={(e) => setOrgForm({ ...orgForm, description: e.target.value })} rows={2} />
             <div className="grid grid-cols-2 gap-4">
@@ -331,7 +340,8 @@ export function SettingsClient({ org, profile, canManageStaff, canManageBilling,
             {orgError && (
               <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{orgError}</div>
             )}
-            <Button onClick={saveOrg} loading={saving}>{saved ? '✓ Saved' : 'Save Changes'}</Button>
+            {canEditOrg && <Button onClick={saveOrg} loading={saving}>{saved ? '✓ Saved' : 'Save Changes'}</Button>}
+            </fieldset>
           </CardContent>
         </Card>
 

@@ -54,6 +54,14 @@ export default function SignupPage() {
       return
     }
 
+    // Supabase answers a sign-up for an email that already has a confirmed
+    // login with a placeholder user that has no identities.
+    if (authData.user.identities?.length === 0) {
+      setError('An account with this email already exists. Please sign in instead.')
+      setLoading(false)
+      return
+    }
+
     // 2. Create organization via API
     const res = await fetch('/api/organizations', {
       method: 'POST',
@@ -68,7 +76,11 @@ export default function SignupPage() {
       }),
     })
 
-    if (!res.ok) {
+    // 409 means this account already has its organization: someone pressed
+    // "try again" on the check-your-email screen, and Supabase has just sent
+    // the confirmation email again.
+    const alreadyCreated = res.status === 409
+    if (!res.ok && !alreadyCreated) {
       const data = await res.json().catch(() => ({}))
       setError(data.error || 'Failed to create organization. Please try again.')
       setLoading(false)
@@ -76,7 +88,7 @@ export default function SignupPage() {
     }
 
     // The organization now exists on a free trial, so count it as a trial signup for ads
-    trackMetaEvent('StartTrial', { value: 0, currency: 'USD' })
+    if (!alreadyCreated) trackMetaEvent('StartTrial', { value: 0, currency: 'USD' })
 
     // If email confirmation is required (no session returned), show confirmation screen
     if (!authData.session) {

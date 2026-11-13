@@ -1,7 +1,9 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function middleware(request: NextRequest) {
+// Next.js 16 renamed middleware to proxy. It runs on Node.js and refreshes the
+// Supabase session cookie, then sends signed-out visitors of private pages to /login.
+export async function proxy(request: NextRequest) {
   return await updateSession(request)
 }
 

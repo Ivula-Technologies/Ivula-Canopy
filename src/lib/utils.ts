@@ -102,3 +102,14 @@ export function getSubscriptionLabel(status: string, trialEndsAt?: string): stri
   }
   return labels[status] || status
 }
+
+// The member fields staff may set from the Members page. Emails are stored in
+// lower case, like imports, so volunteer sign-ups and hours match the record
+// whatever case was typed.
+export const MEMBER_FIELDS = ['first_name', 'last_name', 'email', 'phone', 'date_of_birth', 'gender', 'address', 'join_date', 'status', 'notes', 'custom_fields'] as const
+
+export function cleanMemberInput(body: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = pickAllowedFields(nullifyEmptyStrings(body), MEMBER_FIELDS)
+  if (typeof out.email === 'string') out.email = out.email.trim().toLowerCase() || null
+  return out
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, parseDate } from './utils'
+import { cleanMemberInput, formatDate, parseDate } from './utils'
 import { safeNextPath } from './site-url'
 
 describe('dates', () => {
@@ -22,5 +22,17 @@ describe('safeNextPath', () => {
     expect(safeNextPath('/\\evil.example')).toBe('/dashboard')
     expect(safeNextPath('https://evil.example')).toBe('/dashboard')
     expect(safeNextPath(null)).toBe('/dashboard')
+  })
+})
+
+describe('cleanMemberInput', () => {
+  it('keeps only member fields and lower-cases the email', () => {
+    expect(
+      cleanMemberInput({ first_name: 'Ann', email: '  Ann.Lee@Church.ORG ', phone: '', organization_id: 'other', profile_id: 'x', id: 'y' })
+    ).toEqual({ first_name: 'Ann', email: 'ann.lee@church.org', phone: null })
+  })
+
+  it('treats a blank email as no email', () => {
+    expect(cleanMemberInput({ email: '   ' })).toEqual({ email: null })
   })
 })
