@@ -2,6 +2,7 @@
 
 Run each one once, in order, in the Supabase SQL editor of the Canopy project.
 A new database needs all of them; on the live database, run only the ones it does not have yet.
+Once 015 is in, `/api/health` lists any file that still has not been run under `sqlNotRun`.
 
 | File | What it does |
 | --- | --- |
@@ -19,6 +20,7 @@ A new database needs all of them; on the live database, run only the ones it doe
 | 012_shift_reminder_sent.sql | Records sent shift reminders so nobody gets two |
 | 013_volunteer_link.sql | One sign-up link per organization for every upcoming shift |
 | 014_kids_checkin.sql | Kids check-in: children's records, check-ins and pickup codes |
+| 015_reliability.sql | Sign-up and email limits kept in the database, daily job heartbeats for /api/health, faster lookups, and the SQL check /api/health uses |
 
 `supabase/dangerous/reset_all_data.sql` deletes everything and is only for a
 throwaway test project. It is kept out of this folder so nobody runs it by

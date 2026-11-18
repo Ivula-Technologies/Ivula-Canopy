@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { stripeId as idOf, syncSubscription } from '@/lib/stripe-sync'
 import type Stripe from 'stripe'
+import { reportError } from '@/lib/monitoring'
 
 // Every billing event is handled the same way: fetch the subscription's
 // current state from Stripe and copy it onto the organization. That makes
@@ -11,7 +12,7 @@ import type Stripe from 'stripe'
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
   if (!secret || !process.env.STRIPE_SECRET_KEY) {
-    console.error('Stripe webhook: STRIPE_WEBHOOK_SECRET or STRIPE_SECRET_KEY is not set')
+    await reportError('Stripe webhook', 'STRIPE_WEBHOOK_SECRET or STRIPE_SECRET_KEY is not set')
     return NextResponse.json({ error: 'Billing is not configured' }, { status: 500 })
   }
 
@@ -33,8 +34,9 @@ export async function POST(req: NextRequest) {
     const sub = await stripe.subscriptions.retrieve(subscriptionId)
     await syncSubscription(sub)
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.error(`Stripe webhook ${event.type} ${event.id}:`, msg)
+    // Stripe retries for up to three days, so one failure fixes itself;
+    // the alert is there for the ones that keep failing.
+    await reportError('Stripe webhook', err, { event: event.type, eventId: event.id, subscription: subscriptionId })
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 })
   }
 

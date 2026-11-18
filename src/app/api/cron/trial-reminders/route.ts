@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendTrialReminderEmail } from '@/lib/email'
+import { runDailyJob } from '@/lib/job-runs'
 
 // Run once a day from a cPanel cron job (same CRON_SECRET as shift reminders).
 // Emails org admins 3 days before the trial ends and on the day it ends. Each
@@ -14,7 +15,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const admin = await createServiceClient()
+  return runDailyJob('trial-reminders', (admin) => sendTrialReminders(admin))
+}
+
+async function sendTrialReminders(admin: Awaited<ReturnType<typeof createServiceClient>>) {
   const now = Date.now()
   const windows = [
     { kind: 'three_days' as const, from: now + 2 * DAY, to: now + 3 * DAY },
@@ -32,10 +36,7 @@ export async function GET(req: NextRequest) {
       .is('stripe_subscription_id', null)
       .gt('trial_ends_at', new Date(w.from).toISOString())
       .lte('trial_ends_at', new Date(w.to).toISOString())
-    if (error) {
-      errors.push(error.message)
-      continue
-    }
+    if (error) throw new Error(`Loading trials failed: ${error.message}`)
 
     for (const org of orgs ?? []) {
       const { data: admins } = await admin
@@ -53,5 +54,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ sent, errors }, { status: errors.length ? 207 : 200 })
+  return { summary: { sent }, errors }
 }

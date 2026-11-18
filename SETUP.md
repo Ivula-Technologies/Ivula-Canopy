@@ -1,6 +1,6 @@
 # Ivula Canopy — Launch Setup Guide
 
-> Production runs on cPanel (Setup Node.js App), not Vercel. The "Build cPanel Package" GitHub Action builds the upload, and its CPANEL_DEPLOYMENT.md lists the steps. Database changes are listed in `supabase/migrations/README.md`. The Vercel steps below only matter for preview builds.
+> Production runs on cPanel (Setup Node.js App), not Vercel. The "Build cPanel Package" GitHub Action builds the upload, and its CPANEL_DEPLOYMENT.md lists the steps. Database changes are listed in `supabase/migrations/README.md`. The Vercel steps below only matter for preview builds. Day-to-day running (alerts, uptime checks, backups, restoring, staging) is in `docs/OPERATIONS.md`.
 
 ## Stack
 - **Frontend/Backend:** Next.js 15 (App Router) → Vercel

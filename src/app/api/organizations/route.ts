@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email'
 import { slugify } from '@/lib/utils'
 import { isValidTimeZone } from '@/lib/timezone'
+import { reportError } from '@/lib/monitoring'
 
 export async function POST(req: NextRequest) {
   try {
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
     // Don't fail signup if seeding breaks (e.g. roles table missing) — the
     // admin still gets full access via the legacy-role fallback. But log it
     // loudly so a broken roles table never silently locks admins out again.
-    if (rolesError) console.error('Role seeding failed for org', org.id, ':', rolesError.message)
+    if (rolesError) await reportError('POST /api/organizations roles', rolesError.message, { org: org.id })
     const adminRoleId = seededRoles?.find((r) => r.name === 'Administrator')?.id || null
 
     // Wait for the auth trigger to create the profile row (it runs async after signUp)
@@ -116,8 +117,8 @@ export async function POST(req: NextRequest) {
       }),
     ])
 
-    if (profileUpdate.error) console.error('Profile update error:', profileUpdate.error)
-    if (memberInsert.error) console.error('Member insert error:', memberInsert.error)
+    if (profileUpdate.error) await reportError('POST /api/organizations profile', profileUpdate.error.message, { org: org.id })
+    if (memberInsert.error) await reportError('POST /api/organizations member', memberInsert.error.message, { org: org.id })
 
     // Send welcome email (non-blocking — never slows down signup)
     sendWelcomeEmail(adminEmail, name, adminName || 'Admin').catch(() => {})
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ org }, { status: 201 })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : JSON.stringify(error)
-    console.error('POST /api/organizations:', msg)
+    await reportError('POST /api/organizations', error)
     return NextResponse.json({ error: msg || 'Failed to create organization' }, { status: 500 })
   }
 }

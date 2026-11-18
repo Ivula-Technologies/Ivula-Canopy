@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { orgTimeZone } from '@/lib/timezone'
-import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { clientIp } from '@/lib/rate-limit'
+import { durableRateLimit } from '@/lib/durable-rate-limit'
 import { cleanVolunteer, sendSignupConfirmation, signUpForShift } from '@/lib/shift-signup'
 
 // GET — public: fetch event + shifts for the signup page (no auth)
@@ -49,9 +50,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   // High enough for a whole congregation signing up on church Wi-Fi after an
   // announcement; low enough to stop a script filling every shift.
-  const limited = rateLimit(`signup:${clientIp(req)}`, 100, 10 * 60_000)
-  if (limited) return limited
   const { token } = await params
+  // Per internet address (a church on one Wi-Fi shares one), plus a ceiling
+  // per link so a script using many addresses, or faking them, still can't
+  // fill every shift.
+  const limited = (await durableRateLimit(`signup:${clientIp(req)}`, 100, 10 * 60_000))
+    ?? (await durableRateLimit(`signup-link:${token.slice(0, 64)}`, 500, 10 * 60_000))
+  if (limited) return limited
   const admin = await createServiceClient()
 
   const { data: event } = await admin

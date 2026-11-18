@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getUserAccess } from '@/lib/permissions'
 import { enforceSubscription } from '@/lib/subscription-guard'
-import { rateLimit } from '@/lib/rate-limit'
+import { durableRateLimit } from '@/lib/durable-rate-limit'
 import { cleanMessage, messageHtml, sendVolunteerMessage, uniqueEmails } from '@/lib/volunteer-message'
 
 // POST — emails everyone signed up for this event, or for one of its shifts.
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!orgId) return NextResponse.json({ error: 'No organization' }, { status: 403 })
 
   // Plenty for real use; stops a stuck button or a script from spamming volunteers.
-  const limited = rateLimit(`message:${user.id}`, 10, 10 * 60_000)
+  const limited = await durableRateLimit(`message:${user.id}`, 10, 10 * 60_000)
   if (limited) return limited
 
   const request = cleanMessage(await req.json().catch(() => ({})))

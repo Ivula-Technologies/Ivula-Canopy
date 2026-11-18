@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { orgTimeZone } from '@/lib/timezone'
-import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { clientIp } from '@/lib/rate-limit'
+import { durableRateLimit } from '@/lib/durable-rate-limit'
 import { cleanVolunteer, parseShiftIds, sendSignupConfirmation, signUpForShift, type ConfirmedShift } from '@/lib/shift-signup'
 import { orgByVolunteerToken } from '@/lib/volunteer-link'
 
@@ -10,9 +11,13 @@ import { orgByVolunteerToken } from '@/lib/volunteer-link'
 // shift doesn't stop the others; the reply says which ones didn't go through.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   // Same budget as the one-event link: enough for a congregation on church Wi-Fi.
-  const limited = rateLimit(`serve:${clientIp(req)}`, 100, 10 * 60_000)
-  if (limited) return limited
   const { token } = await params
+  // Per internet address (a church on one Wi-Fi shares one), plus a ceiling
+  // per link so a script using many addresses, or faking them, still can't
+  // fill every shift.
+  const limited = (await durableRateLimit(`serve:${clientIp(req)}`, 100, 10 * 60_000))
+    ?? (await durableRateLimit(`serve-link:${token.slice(0, 64)}`, 500, 10 * 60_000))
+  if (limited) return limited
   const admin = await createServiceClient()
 
   const org = await orgByVolunteerToken(admin, token)

@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { createCheckoutSession, createStripeCustomer } from '@/lib/stripe'
 import { isPlanId, priceIdForPlan } from '@/lib/plans'
 import { getUserAccess } from '@/lib/permissions'
+import { reportError } from '@/lib/monitoring'
 
 export async function POST(_req: NextRequest) {
   try {
@@ -45,7 +46,7 @@ export async function POST(_req: NextRequest) {
     // columns are writable only by the service role (migration 010).
     let customerId = org.stripe_customer_id
     if (!customerId) {
-      const customer = await createStripeCustomer(user.email!, org.name)
+      const customer = await createStripeCustomer(user.email!, org.name, org.id)
       customerId = customer.id
       const admin = await createServiceClient()
       const { error: saveError } = await admin
@@ -77,7 +78,7 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ url: session.url })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Checkout failed'
-    console.error('POST /api/stripe/checkout:', msg)
+    await reportError('POST /api/stripe/checkout', error)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

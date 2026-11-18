@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createBillingPortalSession } from '@/lib/stripe'
 import { getUserAccess } from '@/lib/permissions'
+import { reportError } from '@/lib/monitoring'
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,8 +28,7 @@ export async function POST(req: NextRequest) {
     const session = await createBillingPortalSession(org.stripe_customer_id, `${appUrl}/settings`)
     return NextResponse.json({ url: session.url })
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Could not open billing'
-    console.error('POST /api/stripe/portal:', msg)
+    await reportError('POST /api/stripe/portal', error)
     return NextResponse.json({ error: 'Could not open billing right now. Please try again.' }, { status: 500 })
   }
 }
