@@ -54,9 +54,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p backup
-          supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f backup/roles.sql
-          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
-          supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --use-copy -f backup/data.sql
+          # The same three commands as Supabase's backup guide.
+          supabase db dump --remote="$SUPABASE_DB_URL" --role-only -f backup/roles.sql
+          supabase db dump --remote="$SUPABASE_DB_URL" -f backup/schema.sql
+          supabase db dump --remote="$SUPABASE_DB_URL" --data-only --use-copy \
+            -x "storage.buckets_vectors" -x "storage.vector_indexes" -f backup/data.sql
           # A dump with no data in it means something went wrong.
           test -s backup/schema.sql
           test -s backup/data.sql

@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // - every Canopy SQL file has been run (sqlNotRun lists any that weren't),
 // - no daily cron job has stopped running or keeps failing.
 // A job that has never run yet doesn't fail the check, so a new install
-// isn't flagged before its first night.
+// isn't flagged before its first night; job status that can't be read does.
 const REQUIRED = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -63,7 +63,9 @@ export async function GET() {
     }
   }
 
-  const jobsOk = jobs === 'unknown' || Object.values(jobs).every((s) => s === 'ok' || s === 'not_run_yet')
+  // 'unknown' means job_runs couldn't be read, so nobody would notice the
+  // reminders stopping: that counts as a failure too.
+  const jobsOk = jobs !== 'unknown' && Object.values(jobs).every((s) => s === 'ok' || s === 'not_run_yet')
   const ok = missing.length === 0 && database === 'ok' && sqlNotRun.length === 0 && jobsOk
   return NextResponse.json(
     {

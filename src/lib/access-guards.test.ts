@@ -36,6 +36,7 @@ vi.mock('@/lib/stripe', () => ({
   createBillingPortalSession: async () => ({ url: 'https://billing.stripe.test/session' }),
   createCheckoutSession: async () => ({ url: 'https://checkout.stripe.test/session' }),
   createStripeCustomer: async () => ({ id: 'cus_new' }),
+  deleteStripeCustomer: async () => {},
 }))
 
 const all = PERMISSION_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), { ...NO_PERMISSIONS })

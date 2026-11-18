@@ -30,10 +30,20 @@ export async function createStripeCustomer(email: string, orgName: string, orgId
       name: orgName,
       metadata: { platform: 'ivula-canopy', ...(orgId ? { organization_id: orgId } : {}) },
     },
-    // A double click (or two admins at once) gets the same customer back
-    // from Stripe instead of a second one. Stripe keeps keys for 24 hours.
+    // A double click gets the same customer back from Stripe instead of a
+    // second one (Stripe keeps keys for 24 hours). Two different admins at
+    // once are handled by ensureStripeCustomer() in stripe-customer.ts.
     orgId ? { idempotencyKey: `canopy-customer-${orgId}-${email.toLowerCase()}-${orgName}`.slice(0, 255) } : undefined
   )
+}
+
+/** Best effort: removes a customer made by a request that lost a race. */
+export async function deleteStripeCustomer(customerId: string) {
+  try {
+    await stripe.customers.del(customerId)
+  } catch {
+    // An unused customer with no subscription costs nothing; leave it.
+  }
 }
 
 export async function createCheckoutSession({

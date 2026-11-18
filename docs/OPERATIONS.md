@@ -68,9 +68,15 @@ To restore (to a new Supabase project, or to the same one if it was wiped):
 gpg --decrypt canopy-db-YYYY-MM-DD.tar.gz.gpg > backup.tar.gz   # asks for BACKUP_PASSPHRASE
 mkdir backup && tar -xzf backup.tar.gz -C backup && cd backup
 psql "$NEW_SESSION_POOLER_URL" --single-transaction --variable ON_ERROR_STOP=1 \
-  --file roles.sql --file schema.sql \
-  --command 'SET session_replication_role = replica' --file data.sql
+  --file roles.sql \
+  --command 'ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated' \
+  --file schema.sql \
+  --command 'SET session_replication_role = replica' \
+  --file data.sql \
+  --command 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated'
 ```
+
+The first `ALTER DEFAULT PRIVILEGES` line matters: without it a new Supabase project gives signed-in users full access to every restored table, and the restore would undo limits such as staff not seeing kids' pickup codes. The last line puts Supabase's normal default back, so later SQL files work as before. If psql stops on a line about `supabase_admin` or `cli_login_postgres`, Supabase's [backup and restore guide](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore) says which line to comment out.
 
 If it went to a new project, update `NEXT_PUBLIC_SUPABASE_URL`, the publishable key and `SUPABASE_SERVICE_ROLE_KEY` in cPanel, set Supabase > Authentication > URL Configuration (Site URL and redirect URLs) as before, and Restart. Try a restore into a throwaway project once, so the first real one isn't the first time.
 

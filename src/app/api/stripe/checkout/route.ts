@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { createCheckoutSession, createStripeCustomer } from '@/lib/stripe'
+import { createClient } from '@/lib/supabase/server'
+import { createCheckoutSession } from '@/lib/stripe'
+import { ensureStripeCustomer } from '@/lib/stripe-customer'
 import { isPlanId, priceIdForPlan } from '@/lib/plans'
 import { getUserAccess } from '@/lib/permissions'
 import { reportError } from '@/lib/monitoring'
@@ -42,19 +43,8 @@ export async function POST(_req: NextRequest) {
       )
     }
 
-    // Create Stripe customer now if it wasn't created at signup. Billing
-    // columns are writable only by the service role (migration 010).
-    let customerId = org.stripe_customer_id
-    if (!customerId) {
-      const customer = await createStripeCustomer(user.email!, org.name, org.id)
-      customerId = customer.id
-      const admin = await createServiceClient()
-      const { error: saveError } = await admin
-        .from('organizations')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', org.id)
-      if (saveError) throw saveError
-    }
+    // Create the Stripe customer now if it wasn't created at signup.
+    const customerId = await ensureStripeCustomer(org, user.email!)
 
     // Only the unused part of the 14-day app trial carries over. An org whose
     // trial already ended is charged today instead of getting 14 more free days.
