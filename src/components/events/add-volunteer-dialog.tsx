@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { Member } from '@/types'
 
-export type AddedSignup = { id: string; first_name: string; last_name: string; email: string; phone?: string; status: string; signed_up_at: string }
+export type AddedSignup = { id: string; member_id?: string | null; first_name: string; last_name: string; email: string; phone?: string; status: string; signed_up_at: string }
 
 interface Props {
   open: boolean

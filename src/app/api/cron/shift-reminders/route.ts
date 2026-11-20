@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { escapeHtml, getResend } from '@/lib/email'
 import { formatForEmail, orgTimeZone } from '@/lib/timezone'
+import { runDailyJob } from '@/lib/job-runs'
 
 // Run once a day from a cPanel cron job. Each run reminds volunteers whose
 // shift starts 12 to 36 hours from now. The window is exactly 24 hours wide,
@@ -39,23 +40,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const admin = await createServiceClient()
+  return runDailyJob('shift-reminders', (admin) => sendShiftReminders(admin))
+}
+
+async function sendShiftReminders(admin: Admin) {
   const now = Date.now()
   const windowStart = new Date(now + 12 * HOUR).toISOString()
   const windowEnd = new Date(now + 36 * HOUR).toISOString()
 
-  const { data: shifts } = await admin
+  const { data: shifts, error: shiftsError } = await admin
     .from('shifts')
     .select('id, title, starts_at, ends_at, events(title, location), organizations(*)')
     .gte('starts_at', windowStart)
     .lt('starts_at', windowEnd)
+  if (shiftsError) throw new Error(`Loading shifts failed: ${shiftsError.message}`)
 
-  if (!shifts?.length) return NextResponse.json({ shifts: 0, emails: 0 })
+  if (!shifts?.length) return { summary: { shifts: 0, emails: 0 } }
 
   const resend = getResend()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://canopy.ivulatechnologies.com'
   const e = escapeHtml
   let emailCount = 0
+  const errors: string[] = []
   // Switched off for the rest of the run if migration 012 hasn't been applied.
   const tracking = { on: true }
 
@@ -90,10 +96,14 @@ export async function GET(req: NextRequest) {
       return r.status === 'fulfilled' && !r.value.error
     }).map((s) => s.id)
     emailCount += sentIds.length
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') errors.push(`signup ${signups[i].id}: ${String(r.reason)}`)
+      else if (r.value.error) errors.push(`signup ${signups[i].id}: ${r.value.error.message}`)
+    })
     if (sentIds.length && tracking.on) {
       await admin.from('shift_signups').update({ reminder_sent_at: new Date().toISOString() }).in('id', sentIds)
     }
   }
 
-  return NextResponse.json({ shifts: shifts.length, emails: emailCount })
+  return { summary: { shifts: shifts.length, emails: emailCount }, errors }
 }

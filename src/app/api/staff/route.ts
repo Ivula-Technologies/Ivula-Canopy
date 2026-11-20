@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getUserAccess } from '@/lib/permissions'
 import { siteUrl } from '@/lib/site-url'
+import { reportError } from '@/lib/monitoring'
 
 // GET — list all staff accounts in this org, with their role
 export async function GET() {
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) {
-    console.error('POST /api/staff invite:', error.message)
+    await reportError('POST /api/staff invite', error.message)
     // Supabase won't invite an email that already has a Canopy login, such as
     // a teammate removed earlier and now coming back.
     if (/already (been )?registered|already exists/i.test(error.message)) {

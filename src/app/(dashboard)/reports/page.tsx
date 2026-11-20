@@ -1,8 +1,10 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/layout/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate } from '@/lib/utils'
+import { links } from '@/lib/links'
 
 export default async function ReportsPage() {
   const supabase = await createClient()
@@ -31,26 +33,38 @@ export default async function ReportsPage() {
     .eq('organization_id', orgId)
     .order('created_at')
 
-  // Top attended events
-  const { data: topEvents } = await supabase
-    .from('events')
-    .select('id, title, starts_at')
-    .eq('organization_id', orgId)
-    .eq('status', 'completed')
-    .order('starts_at', { ascending: false })
-    .limit(10)
-
-  const eventAttendanceCounts: { title: string; count: number; date: string }[] = []
-  if (topEvents) {
-    for (const ev of topEvents) {
-      const { count } = await supabase
-        .from('attendance')
-        .select('*', { count: 'exact', head: true })
-        .eq('event_id', ev.id)
-      eventAttendanceCounts.push({ title: ev.title, count: count || 0, date: ev.starts_at })
-    }
-    eventAttendanceCounts.sort((a, b) => b.count - a.count)
+  // Top attended of the last 10 events that have happened. Events keep the
+  // status they were created with, so "happened" means started before now and
+  // not cancelled; counting status = 'completed' found none.
+  type RecentEvent = { id: string; title: string; starts_at: string; status: string | null; attendance?: { count: number }[] | null }
+  const recentQuery = (fields: string) =>
+    supabase
+      .from('events')
+      .select(fields)
+      .eq('organization_id', orgId)
+      .lt('starts_at', now.toISOString())
+      .order('starts_at', { ascending: false })
+      .limit(15)
+      .overrideTypes<RecentEvent[], { merge: false }>()
+  // The database counts check-ins per event in one go; if that form of query
+  // isn't available, count each of the ten events on its own instead.
+  const counted = await recentQuery('id, title, starts_at, status, attendance(count)')
+  let recentEvents = counted.data
+  if (counted.error) {
+    const { data: plain } = await recentQuery('id, title, starts_at, status')
+    recentEvents = await Promise.all(
+      (plain || []).filter((ev) => ev.status !== 'cancelled').slice(0, 10).map(async (ev) => {
+        const { count } = await supabase.from('attendance').select('id', { count: 'exact', head: true }).eq('event_id', ev.id)
+        return { ...ev, attendance: [{ count: count || 0 }] }
+      })
+    )
   }
+
+  const eventAttendanceCounts = (recentEvents || [])
+    .filter((ev) => ev.status !== 'cancelled')
+    .slice(0, 10)
+    .map((ev) => ({ id: ev.id, title: ev.title, count: ev.attendance?.[0]?.count ?? 0, date: ev.starts_at }))
+    .sort((a, b) => b.count - a.count)
 
   // Build monthly buckets
   const months: Record<string, number> = {}
@@ -132,14 +146,15 @@ export default async function ReportsPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Top Events by Attendance</CardTitle>
+            <p className="text-sm text-gray-500">Your last 10 events. Open one to see who came.</p>
           </CardHeader>
           <CardContent>
             {eventAttendanceCounts.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No completed events yet.</p>
+              <p className="text-sm text-gray-400 text-center py-8">No past events yet.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {eventAttendanceCounts.slice(0, 8).map((ev, i) => (
-                  <div key={i} className="flex items-center gap-4">
+                  <Link key={ev.id} href={links.event(ev.id, 'attendance')} className="flex items-center gap-4 rounded-lg px-2 py-2 hover:bg-gray-50">
                     <span className="text-xs text-gray-400 w-4">{i + 1}</span>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
@@ -154,7 +169,7 @@ export default async function ReportsPage() {
                       </div>
                     </div>
                     <span className="text-xs text-gray-400 w-20 text-right">{formatDate(ev.date)}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

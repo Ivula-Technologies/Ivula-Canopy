@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, CheckSquare, Pencil, Trash2, Circle, Clock, AlertTriangle, ChevronDown, Download } from 'lucide-react'
+import { Plus, CheckSquare, Pencil, Trash2, Circle, Clock, AlertTriangle, ChevronDown, Download, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Task, TaskStatus, TaskPriority } from '@/types'
 import { parseDate, todayISODate } from '@/lib/utils'
+import { dropQueryParams, links, type TaskFilter } from '@/lib/links'
 
 type TaskRow = Task & {
   team?: { name: string } | null
@@ -26,6 +28,12 @@ interface Props {
   members: MemberOption[]
   orgId: string
   canEdit: boolean
+  /** Filters a link arrived with: a status tab, one person's or one team's tasks. */
+  initialFilter?: TaskFilter
+  assigneeId?: string
+  teamId?: string
+  /** ?open=<id>: open (or, without edit rights, point out) that task. */
+  openId?: string
 }
 
 const PRIORITY_META: Record<TaskPriority, { label: string; color: string }> = {
@@ -46,46 +54,75 @@ const emptyForm = {
   status: 'todo' as TaskStatus, due_date: '', team_id: '', assigned_to_member_id: '',
 }
 
+function taskForm(task: TaskRow) {
+  return {
+    title: task.title,
+    description: task.description || '',
+    priority: task.priority,
+    status: task.status,
+    due_date: task.due_date || '',
+    team_id: task.team_id || '',
+    assigned_to_member_id: task.assigned_to_member_id || '',
+  }
+}
+
 function isOverdue(task: TaskRow) {
   return task.due_date && task.status !== 'done' && parseDate(task.due_date) < parseDate(todayISODate())
 }
 
-export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Props) {
+export function TasksClient({ initialTasks, teams, members, orgId, canEdit, initialFilter, assigneeId, teamId, openId }: Props) {
   const router = useRouter()
+  // Arrived with ?open=<id>: that task starts open for editing, or outlined for someone who can't edit.
+  const linked = openId ? initialTasks.find((t) => t.id === openId) : undefined
+  const editLinked = !!linked && canEdit
   const [tasks, setTasks] = useState<TaskRow[]>(initialTasks)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(editLinked)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(editLinked ? linked!.id : null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [form, setForm] = useState(emptyForm)
-  const [filter, setFilter] = useState<TaskStatus | 'all'>('all')
-  const [collapsedDone, setCollapsedDone] = useState(true)
+  const [form, setForm] = useState(() => (editLinked ? taskForm(linked!) : emptyForm))
+  const [filter, setFilter] = useState<TaskFilter>(initialFilter || 'all')
+  const [collapsedDone, setCollapsedDone] = useState(initialFilter !== 'done' && linked?.status !== 'done')
+  const [assignee, setAssignee] = useState(assigneeId || null)
+  const [team, setTeam] = useState(teamId || null)
+  const highlightId = linked && !canEdit ? linked.id : null
 
-  const todo       = tasks.filter((t) => t.status === 'todo')
-  const inProgress = tasks.filter((t) => t.status === 'in_progress')
-  const done       = tasks.filter((t) => t.status === 'done')
+  // Only one person's or one team's tasks when a link asked for that.
+  const scoped = tasks.filter((t) => (!assignee || t.assigned_to_member_id === assignee) && (!team || t.team_id === team))
+  const todo       = scoped.filter((t) => t.status === 'todo')
+  const inProgress = scoped.filter((t) => t.status === 'in_progress')
+  const done       = scoped.filter((t) => t.status === 'done')
 
   const counts = { todo: todo.length, in_progress: inProgress.length, done: done.length }
 
+  const assigneeName = (() => {
+    if (!assignee) return ''
+    const m = members.find((x) => x.id === assignee)
+    if (m) return `${m.first_name} ${m.last_name}`
+    const t = tasks.find((x) => x.assigned_to_member_id === assignee && x.assigned_to)
+    return t?.assigned_to ? `${t.assigned_to.first_name} ${t.assigned_to.last_name}` : 'one person'
+  })()
+  const teamName = team ? teams.find((x) => x.id === team)?.name || 'one team' : ''
+
+  useEffect(() => {
+    if (!openId) return
+    if (highlightId) document.getElementById(`task-${highlightId}`)?.scrollIntoView({ block: 'center' })
+    // Reloading shouldn't open it again.
+    dropQueryParams('open')
+  }, [openId, highlightId])
+
   function openCreate() {
     setEditingId(null)
-    setForm(emptyForm)
+    // From one person's or one team's tasks, a new task starts out theirs.
+    setForm({ ...emptyForm, assigned_to_member_id: assignee || '', team_id: team || '' })
     setSaveError('')
     setOpen(true)
   }
 
   function openEdit(task: TaskRow) {
     setEditingId(task.id)
-    setForm({
-      title: task.title,
-      description: task.description || '',
-      priority: task.priority,
-      status: task.status,
-      due_date: task.due_date || '',
-      team_id: task.team_id || '',
-      assigned_to_member_id: task.assigned_to_member_id || '',
-    })
+    setForm(taskForm(task))
     setSaveError('')
     setOpen(true)
   }
@@ -148,7 +185,10 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
     const overdue = isOverdue(task)
     const pm = PRIORITY_META[task.priority]
     return (
-      <div className={`bg-white rounded-xl border p-4 transition-shadow hover:shadow-sm ${overdue ? 'border-red-200' : 'border-gray-200'}`}>
+      <div
+        id={`task-${task.id}`}
+        className={`scroll-mt-24 bg-white rounded-xl border p-4 transition-shadow hover:shadow-sm ${overdue ? 'border-red-200' : 'border-gray-200'} ${highlightId === task.id ? 'ring-2 ring-canopy-500' : ''}`}
+      >
         <div className="flex items-start gap-3">
           {/* Status toggle button */}
           <button
@@ -159,19 +199,42 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
             {STATUS_COLS.find((s) => s.key === task.status)?.icon}
           </button>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-              {task.title}
-            </p>
+            {canEdit ? (
+              <button
+                onClick={() => openEdit(task)}
+                className={`text-left text-sm font-medium hover:text-canopy-700 hover:underline ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-900'}`}
+              >
+                {task.title}
+              </button>
+            ) : (
+              <p className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                {task.title}
+              </p>
+            )}
             {task.description && (
               <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{task.description}</p>
             )}
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pm.color}`}>{pm.label}</span>
-              {task.team && <Badge variant="secondary" className="text-xs">{task.team.name}</Badge>}
+              {task.team && (
+                task.team_id ? (
+                  <Link href={links.team(task.team_id)}>
+                    <Badge variant="secondary" className="text-xs hover:bg-gray-200">{task.team.name}</Badge>
+                  </Link>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">{task.team.name}</Badge>
+                )
+              )}
               {task.assigned_to && (
-                <span className="text-xs text-gray-500">
-                  → {task.assigned_to.first_name} {task.assigned_to.last_name}
-                </span>
+                task.assigned_to_member_id ? (
+                  <Link href={links.member(task.assigned_to_member_id)} className="text-xs text-gray-500 hover:text-canopy-700 hover:underline">
+                    → {task.assigned_to.first_name} {task.assigned_to.last_name}
+                  </Link>
+                ) : (
+                  <span className="text-xs text-gray-500">
+                    → {task.assigned_to.first_name} {task.assigned_to.last_name}
+                  </span>
+                )
               )}
               {task.due_date && (
                 <span className={`flex items-center gap-1 text-xs ${overdue ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
@@ -200,7 +263,12 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
     )
   }
 
-  const overdueTasks = tasks.filter((t) => isOverdue(t))
+  const overdueTasks = scoped.filter((t) => isOverdue(t))
+  // Which tasks each tab shows. "Open" is everything not done; "Overdue" is open and past its date.
+  const shownInTab = (t: TaskRow) =>
+    filter === 'all' || filter === t.status ||
+    (filter === 'open' && t.status !== 'done') ||
+    (filter === 'overdue' && !!isOverdue(t))
 
   function exportCSV() {
     const allTasks = [...tasks.filter((t) => t.status === 'todo'), ...tasks.filter((t) => t.status === 'in_progress'), ...tasks.filter((t) => t.status === 'done')]
@@ -240,7 +308,11 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
 
       {/* Status tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {[{ key: 'all' as const, label: 'All', count: tasks.length }, ...STATUS_COLS.map((s) => ({ key: s.key, label: s.label, count: counts[s.key] }))].map((tab) => (
+        {[
+          { key: 'all' as TaskFilter, label: 'All', count: scoped.length },
+          { key: 'open' as TaskFilter, label: 'Open', count: counts.todo + counts.in_progress },
+          ...STATUS_COLS.map((s) => ({ key: s.key as TaskFilter, label: s.label, count: counts[s.key] })),
+        ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setFilter(tab.key)}
@@ -254,12 +326,38 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
         ))}
       </div>
 
-      {overdueTasks.length > 0 && (filter === 'all' || filter === 'todo' || filter === 'in_progress') && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
-          <p className="text-sm font-medium text-red-700 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" /> {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}
-          </p>
+      {(assignee || team) && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <span>Showing tasks for</span>
+          {assignee && (
+            <button
+              onClick={() => { setAssignee(null); dropQueryParams('assignee') }}
+              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+              title="Show everyone's tasks"
+            >
+              {assigneeName} <X className="h-3 w-3" />
+            </button>
+          )}
+          {team && (
+            <button
+              onClick={() => { setTeam(null); dropQueryParams('team') }}
+              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+              title="Show every team's tasks"
+            >
+              {teamName} <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
+      )}
+
+      {overdueTasks.length > 0 && filter !== 'done' && (
+        <button
+          onClick={() => setFilter(filter === 'overdue' ? 'open' : 'overdue')}
+          className="mb-4 flex w-full items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-left text-sm font-medium text-red-700 hover:bg-red-100"
+        >
+          <AlertTriangle className="h-4 w-4" /> {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? 's' : ''}
+          <span className="ml-auto text-xs font-normal">{filter === 'overdue' ? 'Show all open' : 'Show only these'}</span>
+        </button>
       )}
 
       {tasks.length === 0 ? (
@@ -269,8 +367,10 @@ export function TasksClient({ initialTasks, teams, members, orgId, canEdit }: Pr
         </div>
       ) : (
         <div className="space-y-6">
-          {STATUS_COLS.filter((col) => filter === 'all' || filter === col.key).map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.key)
+          {STATUS_COLS.filter((col) =>
+            filter === 'all' || filter === col.key || ((filter === 'open' || filter === 'overdue') && col.key !== 'done')
+          ).map((col) => {
+            const colTasks = scoped.filter((t) => t.status === col.key && shownInTab(t))
             if (colTasks.length === 0 && filter !== 'all') return null
             const isDoneCol = col.key === 'done'
             const isCollapsed = isDoneCol && collapsedDone

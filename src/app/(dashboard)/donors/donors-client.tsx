@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Search, Heart, Pencil, Trash2, DollarSign, ChevronDown, ChevronUp, FileText } from 'lucide-react'
@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Donor, Donation } from '@/types'
 import { formatDate, todayISODate } from '@/lib/utils'
+import { links } from '@/lib/links'
 
 type DonorRow = Donor & { total_donated: number; donation_count: number }
 type MemberOption = { id: string; first_name: string; last_name: string }
@@ -23,6 +24,8 @@ interface Props {
   orgId: string
   canEdit: boolean
   canDelete: boolean
+  /** ?open=<donor id>: show that donor's gifts straight away. */
+  openId?: string
 }
 
 const PAYMENT_METHODS = ['cash', 'cheque', 'bank_transfer', 'online', 'other']
@@ -38,7 +41,7 @@ function formatCurrency(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 })
 }
 
-export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete }: Props) {
+export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete, openId }: Props) {
   const router = useRouter()
   const [donors, setDonors] = useState<DonorRow[]>(initialDonors)
   const [search, setSearch] = useState('')
@@ -52,8 +55,22 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
   const [donationForm, setDonationForm] = useState(emptyDonationForm)
   const [activeDonor, setActiveDonor] = useState<DonorRow | null>(null)
   const [donations, setDonations] = useState<Donation[]>([])
-  const [expandedDonorId, setExpandedDonorId] = useState<string | null>(null)
-  const [loadingDonations, setLoadingDonations] = useState(false)
+  // Arrived from a person's page (?open=<donor id>): start with that donor's gifts open.
+  const linkedDonor = openId && initialDonors.some((d) => d.id === openId) ? openId : null
+  const [expandedDonorId, setExpandedDonorId] = useState<string | null>(linkedDonor)
+  const [loadingDonations, setLoadingDonations] = useState(!!linkedDonor)
+
+  useEffect(() => {
+    if (!linkedDonor) return
+    let cancelled = false
+    document.getElementById(`donor-${linkedDonor}`)?.scrollIntoView({ block: 'start' })
+    fetch(`/api/donations?donor_id=${linkedDonor}`)
+      .then((res) => (res.ok ? res.json() : { donations: [] }))
+      .then(({ donations: d }) => { if (!cancelled) setDonations(d || []) })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingDonations(false) })
+    return () => { cancelled = true }
+  }, [linkedDonor])
 
   const filtered = donors.filter((d) =>
     `${d.first_name} ${d.last_name} ${d.email ?? ''}`.toLowerCase().includes(search.toLowerCase())
@@ -224,24 +241,39 @@ export function DonorsClient({ initialDonors, members, orgId, canEdit, canDelete
           </div>
         ) : (
           filtered.map((donor) => (
-            <div key={donor.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div
+              key={donor.id}
+              id={`donor-${donor.id}`}
+              className={`scroll-mt-20 bg-white rounded-xl border overflow-hidden ${expandedDonorId === donor.id ? 'border-canopy-300' : 'border-gray-200'}`}
+            >
               <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                  {donor.is_anonymous ? '?' : `${donor.first_name[0]}${donor.last_name[0]}`}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+                {/* Tapping the donor or their total opens their gifts. */}
+                <button
+                  onClick={() => toggleDonorDonations(donor)}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  aria-expanded={expandedDonorId === donor.id}
+                >
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+                    {donor.is_anonymous ? '?' : `${donor.first_name[0]}${donor.last_name[0]}`}
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900">
                       {donor.is_anonymous ? 'Anonymous Donor' : `${donor.first_name} ${donor.last_name}`}
                     </p>
-                    {donor.member_id && <Badge variant="secondary" className="text-xs">Member</Badge>}
+                    {donor.email && <p className="text-xs text-gray-500">{donor.email}</p>}
                   </div>
-                  {donor.email && <p className="text-xs text-gray-500">{donor.email}</p>}
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-emerald-600">{formatCurrency(donor.total_donated)}</p>
-                  <p className="text-xs text-gray-400">{donor.donation_count} gift{donor.donation_count !== 1 ? 's' : ''}</p>
-                </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold text-emerald-600">{formatCurrency(donor.total_donated)}</p>
+                    <p className="text-xs text-gray-400">{donor.donation_count} gift{donor.donation_count !== 1 ? 's' : ''}</p>
+                  </div>
+                </button>
+                {donor.member_id && (
+                  <Link href={links.member(donor.member_id)} title="Open their member page">
+                    <Badge variant="secondary" className="text-xs hover:bg-gray-200">
+                      {donor.member && !donor.is_anonymous ? `${donor.member.first_name} ${donor.member.last_name}` : 'Member'}
+                    </Badge>
+                  </Link>
+                )}
                 <div className="flex items-center gap-1">
                   {canEdit && (
                     <>

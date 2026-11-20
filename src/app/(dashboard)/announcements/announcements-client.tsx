@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, Pin, Megaphone, Pencil, Trash2, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
 import { formatDateIn } from '@/lib/timezone'
 import type { Announcement } from '@/types'
+import { links } from '@/lib/links'
 
 type AnnouncementCard = Announcement & { team?: { name: string } | null }
 
@@ -36,6 +38,15 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
   const [form, setForm] = useState(emptyForm)
+
+  // Opened from the dashboard or a team page (#announcement-<id>): bring that one into view and outline it.
+  useEffect(() => {
+    if (!window.location.hash.startsWith('#announcement-')) return
+    const el = document.getElementById(window.location.hash.slice(1))
+    if (!el) return
+    el.classList.add('border-canopy-400', 'ring-2', 'ring-canopy-200')
+    requestAnimationFrame(() => el.scrollIntoView({ block: 'center' }))
+  }, [])
 
   function openCreate() {
     setEditingId(null)
@@ -188,13 +199,25 @@ export function AnnouncementsClient({ initialAnnouncements, teams, orgId, orgNam
           </div>
         ) : (
           announcements.map((a) => (
-            <div key={a.id} className="bg-white rounded-xl border border-gray-200 p-5">
+            <div
+              key={a.id}
+              id={`announcement-${a.id}`}
+              className="scroll-mt-20 bg-white rounded-xl border border-gray-200 p-5"
+            >
               <div className="flex items-start gap-3">
                 {a.is_pinned && <Pin className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />}
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-gray-900">{a.title}</h3>
-                    {a.team && <Badge variant="secondary" className="text-xs">{a.team.name}</Badge>}
+                    {a.team && (
+                      a.team_id ? (
+                        <Link href={links.team(a.team_id)}>
+                          <Badge variant="secondary" className="text-xs hover:bg-gray-200">{a.team.name}</Badge>
+                        </Link>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">{a.team.name}</Badge>
+                      )
+                    )}
                     {a.is_pinned && <Badge variant="warning" className="text-xs">Pinned</Badge>}
                   </div>
                   <p className="text-sm text-gray-600 whitespace-pre-line">{a.body}</p>

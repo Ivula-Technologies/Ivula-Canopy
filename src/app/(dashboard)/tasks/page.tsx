@@ -1,9 +1,15 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
+import { choice, idParam, TASK_FILTERS } from '@/lib/links'
 import { TasksClient } from './tasks-client'
 
-export default async function TasksPage() {
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const query = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -29,8 +35,18 @@ export default async function TasksPage() {
   const { permissions } = getPermissionsFromProfile(profile)
   const canEdit = permissions.manage_members || permissions.manage_events
 
+  const status = choice(query, 'status', TASK_FILTERS)
+  const assignee = idParam(query, 'assignee')
+  const team = idParam(query, 'team')
+
   return (
     <TasksClient
+      // A new filter in the address bar starts the board fresh.
+      key={`${status}|${assignee}|${team}`}
+      initialFilter={status}
+      assigneeId={assignee}
+      teamId={team}
+      openId={idParam(query, 'open')}
       initialTasks={tasks || []}
       teams={teams || []}
       members={members || []}

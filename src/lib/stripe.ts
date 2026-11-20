@@ -7,6 +7,11 @@ function getStripe() {
   if (!_stripe) {
     _stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing_key', {
       apiVersion: '2026-05-27.dahlia',
+      // Retry brief network blips and Stripe 5xx answers. The SDK sends the
+      // same idempotency key on each retry, so nothing is created twice.
+      maxNetworkRetries: 2,
+      // Fail in 20 seconds rather than leave a church admin waiting.
+      timeout: 20_000,
     })
   }
   return _stripe
@@ -18,12 +23,27 @@ export const stripe = new Proxy({} as Stripe, {
   },
 })
 
-export async function createStripeCustomer(email: string, orgName: string) {
-  return stripe.customers.create({
-    email,
-    name: orgName,
-    metadata: { platform: 'ivula-canopy' },
-  })
+export async function createStripeCustomer(email: string, orgName: string, orgId?: string) {
+  return stripe.customers.create(
+    {
+      email,
+      name: orgName,
+      metadata: { platform: 'ivula-canopy', ...(orgId ? { organization_id: orgId } : {}) },
+    },
+    // A double click gets the same customer back from Stripe instead of a
+    // second one (Stripe keeps keys for 24 hours). Two different admins at
+    // once are handled by ensureStripeCustomer() in stripe-customer.ts.
+    orgId ? { idempotencyKey: `canopy-customer-${orgId}-${email.toLowerCase()}-${orgName}`.slice(0, 255) } : undefined
+  )
+}
+
+/** Best effort: removes a customer made by a request that lost a race. */
+export async function deleteStripeCustomer(customerId: string) {
+  try {
+    await stripe.customers.del(customerId)
+  } catch {
+    // An unused customer with no subscription costs nothing; leave it.
+  }
 }
 
 export async function createCheckoutSession({

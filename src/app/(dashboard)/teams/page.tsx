@@ -1,9 +1,15 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
+import { idParam } from '@/lib/links'
 import { TeamsClient } from './teams-client'
 
-export default async function TeamsPage() {
+export default async function TeamsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const query = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -47,6 +53,7 @@ export default async function TeamsPage() {
       members={members || []}
       orgId={profile.organization_id}
       canEdit={permissions.manage_teams}
+      editId={idParam(query, 'edit')}
     />
   )
 }

@@ -1,0 +1,87 @@
+name: Back up database
+
+# Every night GitHub copies the whole Canopy database (sign-in accounts,
+# churches, members, events, donations) into an encrypted file and keeps it
+# for 30 days under this workflow's runs. Nothing to run or watch: GitHub
+# emails the repo owner if a backup fails.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   SUPABASE_DB_URL     Supabase > Connect > "Session pooler" connection string,
+#                       with the database password filled in.
+#   BACKUP_PASSPHRASE   A long random phrase. Keep it in your password manager:
+#                       without it the backups can't be opened.
+# Until both are set the job is skipped with a notice instead of failing.
+# How to restore: docs/OPERATIONS.md.
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: backup-database
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+
+    steps:
+      - name: Check the backup secrets are set
+        id: config
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::notice::Backups are off: add SUPABASE_DB_URL and BACKUP_PASSPHRASE as repository secrets (see docs/OPERATIONS.md)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install the Supabase CLI
+        if: steps.config.outputs.enabled == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump roles, schema and data
+        if: steps.config.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          # The same three commands as Supabase's backup guide.
+          supabase db dump --remote="$SUPABASE_DB_URL" --role-only -f backup/roles.sql
+          supabase db dump --remote="$SUPABASE_DB_URL" -f backup/schema.sql
+          supabase db dump --remote="$SUPABASE_DB_URL" --data-only --use-copy \
+            -x "storage.buckets_vectors" -x "storage.vector_indexes" -f backup/data.sql
+          # A dump with no data in it means something went wrong.
+          test -s backup/schema.sql
+          test -s backup/data.sql
+          grep -q "organizations" backup/data.sql
+          ls -l backup
+
+      - name: Encrypt
+        if: steps.config.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          name="canopy-db-$(date -u +%Y-%m-%d)"
+          tar -czf "$name.tar.gz" -C backup .
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 -o "$name.tar.gz.gpg" "$name.tar.gz"
+          rm -rf backup "$name.tar.gz"
+          echo "BACKUP_FILE=$name.tar.gz.gpg" >> "$GITHUB_ENV"
+
+      - name: Keep the encrypted backup for 30 days
+        if: steps.config.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error

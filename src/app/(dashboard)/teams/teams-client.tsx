@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, Users, Pencil, Trash2, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
-import { getInitials } from '@/lib/utils'
+import { TeamMembersDialog } from '@/components/teams/team-members-dialog'
+import { dropQueryParams, links } from '@/lib/links'
 import type { Team } from '@/types'
 
 const TEAM_TYPES = ['department', 'committee', 'ministry', 'project', 'program', 'volunteer_group']
@@ -24,27 +26,46 @@ interface Props {
   members: MemberOption[]
   orgId: string
   canEdit: boolean
+  /** ?edit=<id> from a team's own page: open that team's form straight away. */
+  editId?: string
 }
 
 const emptyForm = {
   name: '', description: '', team_type: 'department', leader_id: '', color: TEAM_COLORS[0],
 }
 
-export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
+function teamForm(team: TeamCard) {
+  return {
+    name: team.name || '',
+    description: team.description || '',
+    team_type: team.team_type || 'department',
+    leader_id: team.leader_id || '',
+    color: team.color || TEAM_COLORS[0],
+  }
+}
+
+export function TeamsClient({ initialTeams, members, orgId, canEdit, editId }: Props) {
   const router = useRouter()
+  // Opened from a team's page with ?edit=<id>: start with that team's form open, and go back there after.
+  const linked = canEdit && editId ? initialTeams.find((t) => t.id === editId) : undefined
+  const returnTo = linked ? links.team(linked.id) : null
   const [teams, setTeams] = useState(initialTeams)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(!!linked)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(linked?.id ?? null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState(() => (linked ? teamForm(linked) : emptyForm))
 
   // Manage members state
   const [managingTeam, setManagingTeam] = useState<TeamCard | null>(null)
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
-  const [loadingMembers, setLoadingMembers] = useState(false)
-  const [memberSearch, setMemberSearch] = useState('')
+
+  // Reloading shouldn't open the form again.
+  useEffect(() => { if (editId) dropQueryParams('edit') }, [editId])
+
+  function goBackIfOpenedFromTeamPage() {
+    if (returnTo) router.push(returnTo)
+  }
 
   function openCreate() {
     setEditingId(null)
@@ -55,67 +76,9 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
 
   function openEdit(team: TeamCard) {
     setEditingId(team.id)
-    setForm({
-      name: team.name || '',
-      description: team.description || '',
-      team_type: team.team_type || 'department',
-      leader_id: team.leader_id || '',
-      color: team.color || TEAM_COLORS[0],
-    })
+    setForm(teamForm(team))
     setSaveError('')
     setOpen(true)
-  }
-
-  async function openManageMembers(team: TeamCard) {
-    setManagingTeam(team)
-    setMemberSearch('')
-    setLoadingMembers(true)
-    const res = await fetch(`/api/teams/${team.id}/members`)
-    if (res.ok) {
-      const { memberIds } = await res.json()
-      setSelectedMemberIds(new Set(memberIds))
-    }
-    setLoadingMembers(false)
-  }
-
-  function toggleMember(id: string) {
-    setSelectedMemberIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  async function handleSaveMembers() {
-    if (!managingTeam) return
-    const teamId = managingTeam.id
-    const newCount = selectedMemberIds.size
-    const prevCount = managingTeam.member_count
-
-    // Close dialog immediately — feels instant to the user
-    setManagingTeam(null)
-    // Optimistically update the count on the card
-    setTeams((prev) =>
-      prev.map((t) => (t.id === teamId ? { ...t, member_count: newCount } : t))
-    )
-
-    // Persist to DB in the background
-    const res = await fetch(`/api/teams/${teamId}/members`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ memberIds: [...selectedMemberIds] }),
-    })
-
-    if (res.ok) {
-      // Bust Next.js router cache so the server re-fetches on next navigation
-      router.refresh()
-    } else {
-      // Revert the optimistic update if the save failed
-      setTeams((prev) =>
-        prev.map((t) => (t.id === teamId ? { ...t, member_count: prevCount } : t))
-      )
-    }
   }
 
   async function handleSave() {
@@ -142,6 +105,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
       setForm(emptyForm)
       setEditingId(null)
       router.refresh()
+      goBackIfOpenedFromTeamPage()
     } else {
       setSaveError(data.error || 'Could not save team. Please try again.')
     }
@@ -158,10 +122,6 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
     setDeletingId(null)
   }
 
-  const filteredMembers = members.filter((m) =>
-    `${m.first_name} ${m.last_name}`.toLowerCase().includes(memberSearch.toLowerCase())
-  )
-
   return (
     <div>
       <PageHeader
@@ -175,7 +135,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
       />
 
       {/* Create / Edit team dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) goBackIfOpenedFromTeamPage() }}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{editingId ? 'Edit Team' : 'Create Team'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
@@ -219,7 +179,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
             <div className="mt-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{saveError}</div>
           )}
           <div className="flex gap-3 mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">Cancel</Button>
+            <Button variant="outline" onClick={() => { setOpen(false); goBackIfOpenedFromTeamPage() }} className="flex-1">Cancel</Button>
             <Button onClick={handleSave} loading={saving} disabled={!form.name} className="flex-1">
               {editingId ? 'Save Changes' : 'Create Team'}
             </Button>
@@ -228,63 +188,20 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
       </Dialog>
 
       {/* Manage members dialog */}
-      <Dialog open={!!managingTeam} onOpenChange={(v) => { if (!v) setManagingTeam(null) }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Members — {managingTeam?.name}</DialogTitle>
-          </DialogHeader>
-          {loadingMembers ? (
-            <div className="py-8 text-center text-sm text-gray-400">Loading…</div>
-          ) : (
-            <>
-              <p className="text-sm text-gray-500 mb-3">
-                Check the members you want in this team. Unchecked members will be removed.
-              </p>
-              <input
-                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-canopy-600 mb-3"
-                placeholder="Search members…"
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-              />
-              <div className="max-h-72 overflow-y-auto space-y-1 border border-gray-100 rounded-lg p-2">
-                {filteredMembers.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">No members found</p>
-                ) : (
-                  filteredMembers.map((m) => {
-                    const checked = selectedMemberIds.has(m.id)
-                    return (
-                      <label
-                        key={m.id}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${checked ? 'bg-canopy-50' : 'hover:bg-gray-50'}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleMember(m.id)}
-                          className="rounded"
-                        />
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900">
-                            {getInitials(`${m.first_name} ${m.last_name}`)}
-                          </div>
-                          <span className="text-sm font-medium text-gray-800">
-                            {m.first_name} {m.last_name}
-                          </span>
-                        </div>
-                      </label>
-                    )
-                  })
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mt-2">{selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} selected</p>
-              <div className="flex gap-3 mt-4">
-                <Button variant="outline" onClick={() => setManagingTeam(null)} className="flex-1">Cancel</Button>
-                <Button onClick={handleSaveMembers} className="flex-1">Save Members</Button>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <TeamMembersDialog
+        team={managingTeam}
+        members={members}
+        onClose={() => setManagingTeam(null)}
+        onSaving={(teamId, count) => setTeams((prev) => prev.map((t) => (t.id === teamId ? { ...t, member_count: count } : t)))}
+        onSaved={(teamId, ok) => {
+          if (ok) router.refresh()
+          else {
+            // Put the old count back if the save failed.
+            const before = initialTeams.find((t) => t.id === teamId)?.member_count ?? 0
+            setTeams((prev) => prev.map((t) => (t.id === teamId ? { ...t, member_count: before } : t)))
+          }
+        }}
+      />
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.length === 0 ? (
@@ -294,7 +211,7 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
           </div>
         ) : (
           teams.map((team) => (
-            <div key={team.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div key={team.id} className="relative bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-3 mb-3">
                 <div
                   className="h-10 w-10 flex-shrink-0 rounded-lg flex items-center justify-center"
@@ -303,11 +220,16 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                   <div className="h-5 w-5 rounded-full" style={{ backgroundColor: team.color || '#2f6552' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{team.name}</h3>
+                  <h3 className="font-semibold text-gray-900 truncate">
+                    {/* The stretched link makes the whole card open the team. */}
+                    <Link href={links.team(team.id)} className="after:absolute after:inset-0 hover:text-canopy-700">
+                      {team.name}
+                    </Link>
+                  </h3>
                   <Badge variant="secondary" className="text-xs mt-0.5">{team.team_type.replace('_', ' ')}</Badge>
                 </div>
                 {canEdit && (
-                  <div className="flex items-center gap-1">
+                  <div className="relative z-10 flex items-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => openEdit(team)} title="Edit team">
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -336,18 +258,18 @@ export function TeamsClient({ initialTeams, members, orgId, canEdit }: Props) {
                   <Users className="h-4 w-4" />
                   <span>{team.member_count} member{team.member_count !== 1 ? 's' : ''}</span>
                 </div>
-                {team.leader && (
-                  <span className="text-xs text-gray-400">
+                {team.leader && team.leader_id && (
+                  <Link href={links.member(team.leader_id)} className="relative z-10 text-xs text-gray-400 hover:text-canopy-700 hover:underline">
                     Lead: {team.leader.first_name} {team.leader.last_name}
-                  </span>
+                  </Link>
                 )}
               </div>
               {canEdit && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full mt-3"
-                  onClick={() => openManageMembers(team)}
+                  className="relative z-10 w-full mt-3"
+                  onClick={() => setManagingTeam(team)}
                 >
                   <UserCog className="h-4 w-4" /> Manage Members
                 </Button>

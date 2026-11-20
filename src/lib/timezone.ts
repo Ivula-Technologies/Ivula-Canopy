@@ -152,3 +152,19 @@ export function addHoursToInput(value: string, hours: number): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}T${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`
 }
+
+/**
+ * Midnight on the 1st of the zone's calendar month that contains `date`, and
+ * of the month after it, as ISO timestamps. "This month" on the dashboard and
+ * the list it opens use the same edges, so their numbers agree.
+ */
+export function monthRangeInZone(date: Date, timeZone: string): { start: string; end: string } {
+  const wall = toZonedInput(date.toISOString(), timeZone)
+  const [y, mo] = wall.slice(0, 7).split('-').map(Number)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const next = mo === 12 ? { y: y + 1, mo: 1 } : { y, mo: mo + 1 }
+  return {
+    start: fromZonedInput(`${y}-${pad(mo)}-01T00:00`, timeZone) as string,
+    end: fromZonedInput(`${next.y}-${pad(next.mo)}-01T00:00`, timeZone) as string,
+  }
+}
