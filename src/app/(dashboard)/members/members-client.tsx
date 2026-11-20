@@ -1,16 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, Download, UserPlus, Pencil, Trash2, Upload, Users } from 'lucide-react'
+import { Search, Download, UserPlus, Pencil, Trash2, Upload, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/layout/page-header'
+import { MemberFormDialog } from '@/components/members/member-form-dialog'
 import { getInitials, formatDate } from '@/lib/utils'
+import { dropQueryParams, links } from '@/lib/links'
 import type { Member } from '@/types'
 import { toCsv } from '@/lib/csv'
 import { ImportMembersDialog } from './import-members'
@@ -21,6 +20,13 @@ interface Props {
   orgId: string
   canEdit: boolean
   canDelete: boolean
+  /** Filters a link arrived with, e.g. the dashboard's "Active Members" box. */
+  initialStatus?: string
+  initialSearch?: string
+  /** "New this month": only people added on or after this moment. */
+  addedSince?: string | null
+  /** ?edit=<id>: open that person's form straight away. */
+  editId?: string
 }
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'warning'> = {
@@ -29,27 +35,24 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'w
   pending: 'warning',
 }
 
-const emptyForm = {
-  first_name: '', last_name: '', email: '', phone: '',
-  status: 'active', notes: '', gender: '', address: '',
-}
-
-export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Props) {
+export function MembersClient({ initialMembers, orgId, canEdit, canDelete, initialStatus, initialSearch, addedSince, editId }: Props) {
   const router = useRouter()
   const [members, setMembers] = useState<Member[]>(initialMembers)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [search, setSearch] = useState(initialSearch || '')
+  const [statusFilter, setStatusFilter] = useState(initialStatus || 'all')
+  const [onlyAddedSince, setOnlyAddedSince] = useState(addedSince || null)
+  // Arrived with ?edit=<id> (from that person's page): start with their form open.
+  const [editing, setEditing] = useState<Member | null>(() => (canEdit && editId ? initialMembers.find((m) => m.id === editId) ?? null : null))
+  const [open, setOpen] = useState(() => editing !== null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [form, setForm] = useState(emptyForm)
   const [importOpen, setImportOpen] = useState(false)
   const [notice, setNotice] = useState('')
 
   // router.refresh() re-renders the page with fresh rows; keep the list in step.
   useEffect(() => { setMembers(initialMembers) }, [initialMembers])
+
+  // Reloading shouldn't open the form again.
+  useEffect(() => { if (editId) dropQueryParams('edit') }, [editId])
 
   function handleImported(imported: number, skipped: number) {
     setNotice(
@@ -59,61 +62,30 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
     router.refresh()
   }
 
-  const filtered = members.filter((m) => {
-    const matchSearch = `${m.first_name} ${m.last_name} ${m.email}`.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = statusFilter === 'all' || m.status === statusFilter
-    return matchSearch && matchStatus
-  })
+  const filtered = members
+    .filter((m) => {
+      const matchSearch = `${m.first_name} ${m.last_name} ${m.email}`.toLowerCase().includes(search.toLowerCase())
+      const matchStatus = statusFilter === 'all' || m.status === statusFilter
+      const matchAdded = !onlyAddedSince || new Date(m.created_at).getTime() >= new Date(onlyAddedSince).getTime()
+      return matchSearch && matchStatus && matchAdded
+    })
+    // Newest first when looking at who joined this month.
+    .sort((a, b) => (onlyAddedSince ? b.created_at.localeCompare(a.created_at) : 0))
 
   function openCreate() {
-    setEditingId(null)
-    setForm(emptyForm)
-    setSaveError('')
+    setEditing(null)
     setOpen(true)
   }
 
   function openEdit(member: Member) {
-    setEditingId(member.id)
-    setForm({
-      first_name: member.first_name || '',
-      last_name: member.last_name || '',
-      email: member.email || '',
-      phone: member.phone || '',
-      status: member.status || 'active',
-      notes: member.notes || '',
-      gender: member.gender || '',
-      address: member.address || '',
-    })
-    setSaveError('')
+    setEditing(member)
     setOpen(true)
   }
 
-  async function handleSave() {
-    setSaving(true)
-    setSaveError('')
-    const res = await fetch(
-      editingId ? `/api/members/${editingId}` : '/api/members',
-      {
-        method: editingId ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, organization_id: orgId }),
-      }
-    )
-    const data = await res.json().catch(() => ({}))
-    if (res.ok) {
-      if (editingId) {
-        setMembers((prev) => prev.map((m) => (m.id === editingId ? data.member : m)))
-      } else {
-        setMembers((prev) => [data.member, ...prev])
-      }
-      setOpen(false)
-      setForm(emptyForm)
-      setEditingId(null)
-      router.refresh()
-    } else {
-      setSaveError(data.error || 'Could not save member. Please try again.')
-    }
-    setSaving(false)
+  function handleSaved(saved: Member, created: boolean) {
+    setMembers((prev) => (created ? [saved, ...prev] : prev.map((m) => (m.id === saved.id ? saved : m))))
+    setEditing(null)
+    router.refresh()
   }
 
   async function handleDelete(id: string) {
@@ -167,85 +139,19 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
         <div className="mb-4 rounded-lg bg-canopy-50 border border-canopy-200 px-4 py-3 text-sm text-canopy-800">{notice}</div>
       )}
 
-      {/* Create / Edit dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingId ? 'Edit Member' : 'Add New Member'}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="First name *"
-              value={form.first_name}
-              onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-            />
-            <Input
-              label="Last name *"
-              value={form.last_name}
-              onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <Input
-              label="Phone"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-            <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
-              <SelectTrigger label="Gender">
-                <SelectValue placeholder="Select..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-                <SelectItem value="prefer_not">Prefer not to say</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger label="Status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Input
-            label="Address"
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-          />
-          <Textarea
-            label="Notes"
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            rows={2}
-          />
-          {saveError && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{saveError}</div>
-          )}
-          <div className="flex gap-3 mt-2">
-            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              loading={saving}
-              disabled={!form.first_name || !form.last_name}
-              className="flex-1"
-            >
-              {editingId ? 'Save Changes' : 'Add Member'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MemberFormDialog open={open} onOpenChange={setOpen} member={editing} orgId={orgId} onSaved={handleSaved} />
+
+      {onlyAddedSince && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <span>Showing people added this month.</span>
+          <button
+            onClick={() => { setOnlyAddedSince(null); dropQueryParams('added') }}
+            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+          >
+            Show everyone <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       {members.length <= 1 && !search && canEdit && (
         <div className="mb-6 rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center">
@@ -289,18 +195,20 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
       <div className="space-y-2 sm:hidden">
         {filtered.length === 0 ? (
           <p className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-400">
-            {search ? 'No members match your search' : 'No members yet.'}
+            {search || statusFilter !== 'all' || onlyAddedSince ? 'No members match these filters' : 'No members yet.'}
           </p>
         ) : (
           filtered.map((member) => (
             <div key={member.id} className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900">
-                {getInitials(`${member.first_name} ${member.last_name}`)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-gray-900">{member.first_name} {member.last_name}</p>
-                <p className="truncate text-xs text-gray-500">{member.email || member.phone || 'No contact details'}</p>
-              </div>
+              <Link href={links.member(member.id)} className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900">
+                  {getInitials(`${member.first_name} ${member.last_name}`)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-gray-900">{member.first_name} {member.last_name}</p>
+                  <p className="truncate text-xs text-gray-500">{member.email || member.phone || 'No contact details'}</p>
+                </div>
+              </Link>
               {member.status !== 'active' && (
                 <Badge variant={statusVariant[member.status] || 'secondary'}>{member.status}</Badge>
               )}
@@ -330,21 +238,28 @@ export function MembersClient({ initialMembers, orgId, canEdit, canDelete }: Pro
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={canEdit || canDelete ? 5 : 4} className="px-4 py-12 text-center text-gray-400">
-                  {search ? 'No members match your search' : 'No members yet. Add your first member!'}
+                  {search || statusFilter !== 'all' || onlyAddedSince ? 'No members match these filters' : 'No members yet. Add your first member!'}
                 </td>
               </tr>
             ) : (
               filtered.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={member.id}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    // The whole row opens the person; buttons and links inside keep their own job.
+                    if (!(e.target as HTMLElement).closest('a, button')) router.push(links.member(member.id))
+                  }}
+                >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <Link href={links.member(member.id)} className="group flex items-center gap-3">
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-xs font-bold text-canopy-900">
                         {getInitials(`${member.first_name} ${member.last_name}`)}
                       </div>
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 group-hover:text-canopy-700 group-hover:underline">
                         {member.first_name} {member.last_name}
                       </span>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-gray-500">
                     <div>{member.email}</div>

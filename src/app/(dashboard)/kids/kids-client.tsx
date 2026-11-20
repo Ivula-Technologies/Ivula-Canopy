@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { ageLabel, groupByFamily, matchesChildSearch, normalizePickupCode, suggestRoom } from '@/lib/kids'
 import { formatTimeIn } from '@/lib/timezone'
 import type { Child, ChildCheckin } from '@/types'
+import { links } from '@/lib/links'
 
 interface MemberOption {
   id: string
@@ -33,6 +34,9 @@ interface Props {
   canDesk: boolean
   canEdit: boolean
   canDelete: boolean
+  /** From a parent's member page: open the children list searched for one child. */
+  initialTab?: 'children' | 'log'
+  initialChildSearch?: string
 }
 
 interface PickupMatch {
@@ -84,7 +88,7 @@ function defaultEventId(events: Props['events']): string {
 export function KidsClient(props: Props) {
   const { lastRooms, events, members, timeZone, canDesk, canEdit, canDelete } = props
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>(canDesk ? 'desk' : 'children')
+  const [tab, setTab] = useState<Tab>(props.initialTab || (canDesk ? 'desk' : 'children'))
   const [children, setChildren] = useState<Child[]>(props.initialChildren)
   const [open, setOpen] = useState<ChildCheckin[]>(props.initialOpen)
   const [today, setToday] = useState<ChildCheckin[]>(props.initialToday)
@@ -245,7 +249,7 @@ export function KidsClient(props: Props) {
   }
 
   // ---------- Children records ----------
-  const [childSearch, setChildSearch] = useState('')
+  const [childSearch, setChildSearch] = useState(props.initialChildSearch || '')
   const [showArchived, setShowArchived] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -697,9 +701,16 @@ export function KidsClient(props: Props) {
                         {!child.is_active && <Badge variant="secondary" className="ml-2">Archived</Badge>}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {[ageLabel(child.birth_date), child.grade, `Parent: ${child.guardian_name}`, child.guardian_phone]
-                          .filter(Boolean)
-                          .join(' · ')}
+                        {[ageLabel(child.birth_date), child.grade].filter(Boolean).map((part) => `${part} · `).join('')}
+                        Parent:{' '}
+                        {child.guardian_member_id ? (
+                          <Link href={links.member(child.guardian_member_id)} className="text-gray-700 hover:text-canopy-700 hover:underline">
+                            {child.guardian_name}
+                          </Link>
+                        ) : (
+                          child.guardian_name
+                        )}
+                        {child.guardian_phone ? ` · ${child.guardian_phone}` : ''}
                       </p>
                     </div>
                     {child.allergies && <Badge variant="destructive">Allergy: {child.allergies}</Badge>}

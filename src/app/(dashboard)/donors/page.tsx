@@ -1,9 +1,15 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
+import { idParam } from '@/lib/links'
 import { DonorsClient } from './donors-client'
 
-export default async function DonorsPage() {
+export default async function DonorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const query = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -46,6 +52,7 @@ export default async function DonorsPage() {
       orgId={profile.organization_id}
       canEdit={permissions.manage_members}
       canDelete={permissions.delete_members}
+      openId={idParam(query, 'open')}
     />
   )
 }

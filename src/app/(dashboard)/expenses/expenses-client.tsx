@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Search, Receipt } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Trash2, Search, Receipt, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PageHeader } from '@/components/layout/page-header'
 import type { Expense } from '@/types'
 import { formatDate, todayISODate } from '@/lib/utils'
+import { dropQueryParams, links } from '@/lib/links'
 
 const CATEGORIES = ['program', 'operations', 'staffing', 'travel', 'supplies', 'other']
 
@@ -26,9 +28,11 @@ interface Props {
   initialExpenses: (Expense & { event?: { title: string } | null })[]
   events: { id: string; title: string; budget?: number | null }[]
   canEdit: boolean
+  /** ?event=<id>: only that event's spending, e.g. from its budget line. */
+  eventId?: string
 }
 
-export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
+export function ExpensesClient({ initialExpenses, events, canEdit, eventId }: Props) {
   const [expenses, setExpenses] = useState(initialExpenses)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -37,11 +41,18 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
   const [error, setError] = useState('')
   const [form, setForm] = useState(emptyForm)
   const [editId, setEditId] = useState<string | null>(null)
+  const [eventFilter, setEventFilter] = useState(eventId || null)
+  const eventFilterTitle = eventFilter
+    ? events.find((ev) => ev.id === eventFilter)?.title ||
+      (expenses.find((e) => e.event_id === eventFilter)?.event as { title: string } | null | undefined)?.title ||
+      'one event'
+    : ''
 
   const filtered = expenses.filter((e) => {
     const matchSearch = `${e.title} ${e.paid_to || ''} ${e.notes || ''}`.toLowerCase().includes(search.toLowerCase())
     const matchCat = categoryFilter === 'all' || e.category === categoryFilter
-    return matchSearch && matchCat
+    const matchEvent = !eventFilter || e.event_id === eventFilter
+    return matchSearch && matchCat && matchEvent
   })
 
   const total = filtered.reduce((s, e) => s + Number(e.amount), 0)
@@ -59,7 +70,8 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
       return { id: ev.id, title: ev.title, budget, spent, pct, barColor }
     })
 
-  function openAdd() { setForm(emptyForm); setEditId(null); setError(''); setOpen(true) }
+  // Adding while looking at one event's spending files it under that event.
+  function openAdd() { setForm({ ...emptyForm, event_id: eventFilter || '' }); setEditId(null); setError(''); setOpen(true) }
   function openEdit(exp: Expense) {
     setForm({ title: exp.title, amount: String(exp.amount), category: exp.category, expense_date: exp.expense_date, paid_to: exp.paid_to || '', notes: exp.notes || '', event_id: exp.event_id || '' })
     setEditId(exp.id); setError(''); setOpen(true)
@@ -120,6 +132,21 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
         </div>
       </div>
 
+      {eventFilter && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <span>
+            Showing spending for{' '}
+            <Link href={links.event(eventFilter)} className="font-medium text-canopy-700 hover:underline">{eventFilterTitle}</Link>.
+          </span>
+          <button
+            onClick={() => { setEventFilter(null); dropQueryParams('event') }}
+            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+          >
+            All expenses <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-48">
@@ -138,10 +165,16 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-3">Budget by Event</h2>
           <div className="space-y-3">
-            {budgetedEvents.map((b) => (
-              <div key={b.id} className="bg-white rounded-xl border border-gray-200 p-4">
+            {budgetedEvents.filter((b) => !eventFilter || b.id === eventFilter).map((b) => (
+              <div key={b.id} className="relative bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-gray-900">{b.title}</p>
+                  {/* The whole card filters the table to this event's spending. */}
+                  <button
+                    onClick={() => setEventFilter(b.id)}
+                    className="text-left text-sm font-medium text-gray-900 after:absolute after:inset-0 hover:text-canopy-700"
+                  >
+                    {b.title}
+                  </button>
                   <span className="text-xs font-medium text-gray-500">{Math.round(b.pct)}%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
@@ -181,7 +214,7 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map((exp) => (
-                <tr key={exp.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => canEdit && openEdit(exp)}>
+                <tr key={exp.id} className={`hover:bg-gray-50 transition-colors ${canEdit ? 'cursor-pointer' : ''}`} onClick={() => canEdit && openEdit(exp)}>
                   <td className="px-4 py-3 font-medium text-gray-900">{exp.title}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.other}`}>
@@ -190,7 +223,17 @@ export function ExpensesClient({ initialExpenses, events, canEdit }: Props) {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{formatDate(exp.expense_date)}</td>
                   <td className="px-4 py-3 text-gray-500">{exp.paid_to || '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{(exp.event as { title: string } | null)?.title || '—'}</td>
+                  <td className="px-4 py-3 text-gray-500">
+                    {exp.event_id && (exp.event as { title: string } | null)?.title ? (
+                      <Link
+                        href={links.event(exp.event_id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="hover:text-canopy-700 hover:underline"
+                      >
+                        {(exp.event as { title: string }).title}
+                      </Link>
+                    ) : '—'}
+                  </td>
                   <td className="px-4 py-3 text-right font-semibold text-gray-900">${Number(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   {canEdit && (
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>

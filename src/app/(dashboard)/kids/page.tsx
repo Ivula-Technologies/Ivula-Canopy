@@ -5,10 +5,16 @@ import { canManageChildren, canRunKidsDesk } from '@/lib/kids-server'
 import { addDaysInZone, orgTimeZone, startOfDayInZone } from '@/lib/timezone'
 import { PageHeader } from '@/components/layout/page-header'
 import { KidsClient } from './kids-client'
+import { choice, param } from '@/lib/links'
 
 export const metadata = { title: 'Kids check-in' }
 
-export default async function KidsPage() {
+export default async function KidsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const query = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -66,6 +72,9 @@ export default async function KidsPage() {
 
   return (
     <KidsClient
+      key={`${param(query, 'tab')}|${param(query, 'q')}`}
+      initialTab={choice(query, 'tab', ['children', 'log'] as const)}
+      initialChildSearch={param(query, 'q').slice(0, 100)}
       initialChildren={children || []}
       initialOpen={open || []}
       initialToday={today || []}

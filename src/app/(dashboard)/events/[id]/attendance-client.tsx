@@ -12,6 +12,7 @@ import { AddVolunteerDialog, type AddedSignup } from '@/components/events/add-vo
 import { MessageVolunteersDialog } from '@/components/events/message-volunteers-dialog'
 import { getInitials } from '@/lib/utils'
 import { formatDateTimeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
+import { links } from '@/lib/links'
 import type { Event, Attendance, Member, Shift } from '@/types'
 
 interface Props {
@@ -28,7 +29,7 @@ interface Props {
 
 type ShiftWithSignups = Omit<Shift, 'signups'> & {
   signup_count: number
-  signups: { id: string; first_name: string; last_name: string; email: string; phone?: string; status: string; signed_up_at: string }[]
+  signups: { id: string; member_id?: string | null; first_name: string; last_name: string; email: string; phone?: string; status: string; signed_up_at: string }[]
 }
 
 const emptyShiftForm = { title: '', description: '', starts_at: '', ends_at: '', capacity: '10' }
@@ -61,6 +62,9 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
   const signupUrl = `${appUrl}/signup/${event.checkin_token}`
 
   const attendedIds = new Set(attendance.map((a) => a.member_id))
+  // A volunteer's name opens their member page: by the link Canopy saved, or by email for older sign-ups.
+  const memberByEmail = new Map(members.filter((m) => m.email).map((m) => [m.email!.toLowerCase(), m.id]))
+  const memberIdFor = (r: { member_id?: string | null; email: string }) => r.member_id || memberByEmail.get(r.email.toLowerCase())
   const totalHours = attendance.reduce((sum, a) => sum + (a.hours || 0), 0)
   const filtered = members.filter((m) =>
     `${m.first_name} ${m.last_name} ${m.email}`.toLowerCase().includes(search.toLowerCase())
@@ -220,7 +224,18 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
             <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-500">
               <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{formatDateTimeIn(event.starts_at, timeZone)}</span>
               {event.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location}</span>}
-              {event.team && <Badge variant="secondary">{event.team.name}</Badge>}
+              {event.team && (
+                event.team_id ? (
+                  <Link href={links.team(event.team_id)}><Badge variant="secondary" className="hover:bg-gray-200">{event.team.name}</Badge></Link>
+                ) : (
+                  <Badge variant="secondary">{event.team.name}</Badge>
+                )
+              )}
+              {event.budget != null && Number(event.budget) > 0 && (
+                <Link href={links.expensesForEvent(event.id)} className="text-canopy-700 hover:underline">
+                  Budget ${Number(event.budget).toLocaleString()} · see spending
+                </Link>
+              )}
             </div>
             {canEdit && (
               <Button size="sm" variant="outline" className="mt-3" onClick={() => setRepeatOpen(true)}>
@@ -302,10 +317,10 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                   <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-canopy-100 text-sm font-bold text-canopy-900">
                     {getInitials(`${member.first_name} ${member.last_name}`)}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{member.first_name} {member.last_name}</p>
+                  <Link href={links.member(member.id)} className="group flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 group-hover:text-canopy-700 group-hover:underline">{member.first_name} {member.last_name}</p>
                     {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
-                  </div>
+                  </Link>
                   {canEdit && checked && (
                     <div className="flex items-center gap-1.5">
                       <input
@@ -453,7 +468,13 @@ export function AttendanceClient({ event, members, initialAttendance, orgId, can
                             {getInitials(`${r.first_name} ${r.last_name}`)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{r.first_name} {r.last_name}</p>
+                            {memberIdFor(r) ? (
+                              <Link href={links.member(memberIdFor(r)!)} className="text-sm font-medium text-gray-900 hover:text-canopy-700 hover:underline">
+                                {r.first_name} {r.last_name}
+                              </Link>
+                            ) : (
+                              <p className="text-sm font-medium text-gray-900">{r.first_name} {r.last_name}</p>
+                            )}
                             <p className="text-xs text-gray-500">{r.email}{r.phone ? ` · ${r.phone}` : ''}</p>
                           </div>
                           <span className="hidden text-xs text-gray-400 sm:inline">{formatDateTimeIn(r.signed_up_at, timeZone)}</span>

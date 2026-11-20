@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDaysInZone, addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, orgTimeZone, startOfDayInZone, toZonedInput } from './timezone'
+import { addDaysInZone, addHoursToInput, formatDateIn, fromZonedInput, isValidTimeZone, monthRangeInZone, orgTimeZone, startOfDayInZone, toZonedInput } from './timezone'
 
 describe('fromZonedInput', () => {
   it('reads the typed time as wall-clock time in the zone', () => {
@@ -94,5 +94,22 @@ describe('startOfDayInZone', () => {
   it('uses the offset in force that day', () => {
     // July in New York is UTC-4.
     expect(startOfDayInZone(new Date('2026-07-12T15:00:00Z'), 'America/New_York')).toBe('2026-07-12T04:00:00.000Z')
+  })
+})
+
+describe('monthRangeInZone', () => {
+  it('uses the church calendar month, not the server one', () => {
+    // 3 AM UTC on Dec 1 is still Nov 30 evening in Chicago.
+    expect(monthRangeInZone(new Date('2026-12-01T03:00:00Z'), 'America/Chicago')).toEqual({
+      start: '2026-11-01T05:00:00.000Z',
+      end: '2026-12-01T06:00:00.000Z',
+    })
+  })
+
+  it('rolls over the year in December', () => {
+    expect(monthRangeInZone(new Date('2026-12-15T12:00:00Z'), 'America/New_York')).toEqual({
+      start: '2026-12-01T05:00:00.000Z',
+      end: '2027-01-01T05:00:00.000Z',
+    })
   })
 })

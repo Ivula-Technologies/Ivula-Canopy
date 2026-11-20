@@ -8,9 +8,11 @@ import { InstallAppCard } from '@/components/pwa/install-app-card'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { dateBadgeIn, formatTimeIn, orgTimeZone } from '@/lib/timezone'
+import { dateBadgeIn, formatTimeIn, monthRangeInZone, orgTimeZone } from '@/lib/timezone'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
 import { hasSubscription } from '@/lib/subscription'
+import { links } from '@/lib/links'
+import { loadVolunteerSchedule } from '@/lib/volunteer-schedule'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -28,7 +30,10 @@ export default async function DashboardPage() {
 
   const orgId = profile.organization_id
   const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const { data: org } = await supabase.from('organizations').select('*').eq('id', orgId).single()
+  const timeZone = orgTimeZone(org)
+  // "This month" in the church's own time zone, the same edges the lists these boxes open use.
+  const monthStart = monthRangeInZone(now, timeZone).start
 
   // Parallel data fetches
   const [
@@ -42,7 +47,7 @@ export default async function DashboardPage() {
     { count: totalSignups },
     { data: donationRows },
     { count: openTasks },
-    { data: org },
+    schedule,
     { count: totalEvents },
     { count: totalShifts },
     { count: staffCount },
@@ -58,7 +63,7 @@ export default async function DashboardPage() {
     supabase.from('shift_signups').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).eq('status', 'confirmed'),
     supabase.from('donations').select('amount').eq('organization_id', orgId),
     supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('organization_id', orgId).neq('status', 'done'),
-    supabase.from('organizations').select('*').eq('id', orgId).single(),
+    loadVolunteerSchedule(supabase, orgId, now),
     supabase.from('events').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
     supabase.from('shifts').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
@@ -66,7 +71,6 @@ export default async function DashboardPage() {
     supabase.from('events').select('id').eq('organization_id', orgId).order('starts_at', { ascending: false }).limit(1).maybeSingle(),
   ])
 
-  const timeZone = orgTimeZone(org)
   const eventLink = (upcomingEvents?.[0]?.id ?? nextEvent?.id) ? `/events/${upcomingEvents?.[0]?.id ?? nextEvent?.id}?tab=shifts` : '/events'
 
   // First-week checklist: the path from an empty account to volunteers
@@ -88,16 +92,28 @@ export default async function DashboardPage() {
     ? Math.round(((attendanceThisMonth || 0) / totalMembers) * 100)
     : 0
 
-  const stats = [
-    { label: 'Total Members', value: totalMembers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/members' },
-    { label: 'Active Members', value: activeMembers || 0, icon: UserCheck, color: 'text-canopy-600', bg: 'bg-canopy-50', href: '/members' },
+  const { openSpots, signedUp } = schedule.totals
+
+  // Each box opens the list of exactly what it counts.
+  const stats: { label: string; value: string | number; icon: typeof Users; color: string; bg: string; href: string; hint?: string }[] = [
+    { label: 'Total Members', value: totalMembers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: links.members() },
+    { label: 'Active Members', value: activeMembers || 0, icon: UserCheck, color: 'text-canopy-600', bg: 'bg-canopy-50', href: links.members({ status: 'active' }) },
     { label: 'Active Teams', value: totalTeams || 0, icon: UsersRound, color: 'text-purple-600', bg: 'bg-purple-50', href: '/teams' },
-    { label: 'New This Month', value: newMembersThisMonth || 0, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', href: '/members' },
-    { label: 'Attendance / Month', value: attendanceThisMonth || 0, icon: CalendarDays, color: 'text-canopy-600', bg: 'bg-canopy-50', href: '/events' },
+    { label: 'New This Month', value: newMembersThisMonth || 0, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', href: links.members({ added: 'this-month' }) },
+    { label: 'Attendance / Month', value: attendanceThisMonth || 0, icon: CalendarDays, color: 'text-canopy-600', bg: 'bg-canopy-50', href: links.eventsThisMonth() },
     { label: 'Engagement Rate', value: `${engagementRate}%`, icon: TrendingUp, color: 'text-pink-600', bg: 'bg-pink-50', href: '/reports' },
-    { label: 'Volunteer Sign-ups', value: totalSignups || 0, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/events' },
+    {
+      label: 'Upcoming Sign-ups',
+      value: signedUp,
+      icon: UserPlus,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+      // Straight to the shifts that still need people when there are some.
+      href: links.volunteerSchedule(openSpots > 0 ? 'open' : undefined),
+      hint: openSpots > 0 ? `${openSpots} spot${openSpots !== 1 ? 's' : ''} still open` : undefined,
+    },
     { label: 'Total Raised', value: `$${totalRaised.toLocaleString()}`, icon: Heart, color: 'text-rose-600', bg: 'bg-rose-50', href: '/donors' },
-    { label: 'Open Tasks', value: openTasks || 0, icon: CheckSquare, color: 'text-amber-600', bg: 'bg-amber-50', href: '/tasks' },
+    { label: 'Open Tasks', value: openTasks || 0, icon: CheckSquare, color: 'text-amber-600', bg: 'bg-amber-50', href: links.tasks({ status: 'open' }) },
   ]
 
   return (
@@ -149,7 +165,7 @@ export default async function DashboardPage() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-8">
-        {stats.map(({ label, value, icon: Icon, color, bg, href }) => (
+        {stats.map(({ label, value, icon: Icon, color, bg, href, hint }) => (
           <Link key={label} href={href}>
             <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-4 sm:p-6">
@@ -160,6 +176,7 @@ export default async function DashboardPage() {
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{value}</p>
                     <p className="text-xs text-gray-500">{label}</p>
+                    {hint && <p className="mt-0.5 text-xs font-medium text-amber-700">{hint}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -241,13 +258,13 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {recentAnnouncements.map((a) => (
-                  <div key={a.id} className="flex items-start gap-3 rounded-lg p-3 hover:bg-gray-50">
+                  <Link key={a.id} href={links.announcement(a.id)} className="flex items-start gap-3 rounded-lg p-3 hover:bg-gray-50">
                     {a.is_pinned && <Badge variant="warning" className="flex-shrink-0 mt-0.5">Pinned</Badge>}
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{a.title}</p>
                       <p className="text-xs text-gray-500">{formatDate(a.published_at)}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

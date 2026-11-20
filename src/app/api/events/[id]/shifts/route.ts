@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const admin = await createServiceClient()
   const { data: shifts } = await admin
     .from('shifts')
-    .select('*, signups:shift_signups(id, first_name, last_name, email, phone, status, signed_up_at)')
+    .select('*, signups:shift_signups(id, member_id, first_name, last_name, email, phone, status, signed_up_at)')
     .eq('event_id', id)
     .eq('organization_id', profile.organization_id)
     .order('starts_at', { ascending: true, nullsFirst: true })

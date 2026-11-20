@@ -1,9 +1,16 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getPermissionsFromProfile, PROFILE_WITH_ROLE } from '@/lib/permissions'
+import { idParam } from '@/lib/links'
 import { ExpensesClient } from './expenses-client'
 
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const query = await searchParams
+  const eventId = idParam(query, 'event')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -24,6 +31,8 @@ export default async function ExpensesPage() {
 
   return (
     <ExpensesClient
+      key={eventId || 'all'}
+      eventId={eventId}
       initialExpenses={expenses || []}
       events={events || []}
       canEdit={permissions.manage_events}

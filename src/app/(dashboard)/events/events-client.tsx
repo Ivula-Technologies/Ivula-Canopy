@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Search, QrCode, Users, MapPin, Clock, Pencil, Trash2, CalendarDays } from 'lucide-react'
+import { Plus, Search, QrCode, Users, MapPin, Clock, Pencil, Trash2, CalendarDays, UserCheck, X, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -14,9 +14,14 @@ import { PageHeader } from '@/components/layout/page-header'
 import type { Event } from '@/types'
 import { addHoursToInput, dateBadgeIn, formatTimeIn, fromZonedInput, toZonedInput } from '@/lib/timezone'
 import { VolunteerLinkCard } from '@/components/events/volunteer-link-card'
+import { dropQueryParams, links } from '@/lib/links'
 
 interface Props {
   initialEvents: Event[]
+  /** Check-ins per event id. */
+  attendanceCounts: Record<string, number>
+  /** ?when=this-month: only events in this calendar month. */
+  month: { start: string; end: string } | null
   teams: { id: string; name: string }[]
   orgId: string
   canEdit: boolean
@@ -50,7 +55,7 @@ const emptyForm = {
   location: '', starts_at: '', ends_at: '', team_id: '', budget: '',
 }
 
-export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, timeZone, volunteerUrl }: Props) {
+export function EventsClient({ initialEvents, attendanceCounts, month: initialMonth, teams, orgId, canEdit, appUrl, timeZone, volunteerUrl }: Props) {
   const router = useRouter()
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [search, setSearch] = useState('')
@@ -61,10 +66,13 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [qrEvent, setQrEvent] = useState<Event | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [month, setMonth] = useState(initialMonth)
 
   const filtered = events.filter((e) =>
-    e.title.toLowerCase().includes(search.toLowerCase())
+    e.title.toLowerCase().includes(search.toLowerCase()) &&
+    (!month || (new Date(e.starts_at) >= new Date(month.start) && new Date(e.starts_at) < new Date(month.end)))
   )
+  const monthCheckins = month ? filtered.reduce((sum, e) => sum + (attendanceCounts[e.id] || 0), 0) : 0
   // Soonest first for what's coming up, most recent first for what's done, so
   // a season of repeated Sundays doesn't push next week to the bottom.
   const upcoming = filtered
@@ -218,6 +226,31 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
 
       {volunteerUrl && events.length > 0 && <VolunteerLinkCard url={volunteerUrl} />}
 
+      {events.length > 0 && (
+        <Link
+          href={links.volunteerSchedule()}
+          className="mb-4 flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm hover:shadow-sm"
+        >
+          <UserPlus className="h-4 w-4 text-emerald-600" />
+          <span className="flex-1 font-medium text-gray-900">Volunteer schedule</span>
+          <span className="text-xs text-gray-500">Every upcoming shift, who&apos;s on it and what&apos;s still open</span>
+        </Link>
+      )}
+
+      {month && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <span>
+            Showing this month: {filtered.length} event{filtered.length !== 1 ? 's' : ''}, {monthCheckins} check-in{monthCheckins !== 1 ? 's' : ''}.
+          </span>
+          <button
+            onClick={() => { setMonth(null); dropQueryParams('when') }}
+            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+          >
+            All events <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
       <div className="relative mb-6 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
@@ -230,9 +263,9 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          search ? (
+          search || month ? (
             <div className="text-center py-16 text-gray-400">
-              <p>No events match &ldquo;{search}&rdquo;.</p>
+              <p>{search ? <>No events match &ldquo;{search}&rdquo;.</> : 'No events this month.'}</p>
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
@@ -256,7 +289,7 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
               {group.list.map((event) => {
                 const badge = dateBadgeIn(event.starts_at, timeZone)
                 return (
-                <div key={event.id} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-3 hover:shadow-sm transition-shadow">
+                <div key={event.id} className="relative bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-3 hover:shadow-sm transition-shadow">
                   <div className="flex flex-col items-center text-center min-w-[50px] border-r border-gray-100 pr-4">
                     <span className="text-xs text-gray-400 uppercase font-medium">{badge.month}</span>
                     <span className="text-2xl font-bold text-gray-900 leading-none">{badge.day}</span>
@@ -264,7 +297,8 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
 
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <Link href={`/events/${event.id}`} className="font-semibold text-gray-900 hover:text-canopy-600 transition-colors">
+                      {/* The stretched link makes the whole row open the event. */}
+                      <Link href={links.event(event.id)} className="font-semibold text-gray-900 hover:text-canopy-600 transition-colors after:absolute after:inset-0 after:rounded-xl">
                         {event.title}
                       </Link>
                       <Badge variant={statusVariant[getEffectiveStatus(event)] || 'secondary'}>{getEffectiveStatus(event)}</Badge>
@@ -280,11 +314,22 @@ export function EventsClient({ initialEvents, teams, orgId, canEdit, appUrl, tim
                         </span>
                       )}
                       <Badge variant="secondary" className="text-xs">{event.event_type}</Badge>
+                      {event.team_id && event.team?.name && (
+                        <Link href={links.team(event.team_id)} className="relative z-10 hover:text-canopy-700 hover:underline">
+                          {event.team.name}
+                        </Link>
+                      )}
+                      {(attendanceCounts[event.id] || 0) > 0 && (
+                        <Link href={links.event(event.id, 'attendance')} className="relative z-10 flex items-center gap-1 text-canopy-700 hover:underline">
+                          <UserCheck className="h-3 w-3" />
+                          {attendanceCounts[event.id]} checked in
+                        </Link>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex w-full items-center justify-end gap-1 sm:w-auto sm:gap-2">
-                    <Link href={`/events/${event.id}`}>
+                  <div className="relative z-10 flex w-full items-center justify-end gap-1 sm:w-auto sm:gap-2">
+                    <Link href={links.event(event.id)}>
                       <Button variant="outline" size="sm">
                         <Users className="h-4 w-4" /> Volunteers &amp; attendance
                       </Button>
